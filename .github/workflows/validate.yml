@@ -1,0 +1,22 @@
+name: Validate interview questions
+on:
+  pull_request:
+    paths:
+      - 'data/questions.json'
+      - 'scripts/validate_questions.py'
+      - '.github/workflows/validate.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate question bank
+        run: python scripts/validate_questions.py
