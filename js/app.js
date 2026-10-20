@@ -31,7 +31,7 @@ function render(){let search=$('search').value.trim().toLowerCase(),cat=$('categ
   addText(body,'h3','What is it? — Concept');addText(body,'p',x.explanation||x.answer);
   if(x.why){addText(body,'h3','Why and when is it used?');addText(body,'p',x.why);}
   if(x.example){addText(body,'h3','Real-world / production example');addText(body,'p',x.example,'example');}
-  if(x.diagram){addText(body,'h3','Architecture / execution flow');addText(body,'p',x.diagram,'example');}if(x.runCommand){addText(body,'p','Run locally: '+x.runCommand,'complexity');}if(x.code){addText(body,'h3','Java example');let pre=document.createElement('pre');let code=document.createElement('code');code.textContent=x.code;pre.append(code);body.append(pre);}
+  if(x.diagram){addText(body,'h3','Architecture / execution flow');addText(body,'p',x.diagram,'example');}if(x.runCommand){addText(body,'p','Run locally: '+x.runCommand,'complexity');}if(x.code){addText(body,'h3',x.labType ? x.labType+' runnable lab' : 'Java example');if(x.labPath)addText(body,'p','Source file: '+x.labPath,'complexity');let pre=document.createElement('pre');let code=document.createElement('code');code.textContent=x.code;pre.append(code);body.append(pre);}
   if(x.tradeoffs){addText(body,'h3','Trade-offs and failure modes');addText(body,'p',x.tradeoffs);}
   if(Array.isArray(x.followups)&&x.followups.length){addText(body,'h3','Interview follow-up questions');let ul=document.createElement('ul');for(const f of x.followups)addText(ul,'li',f);body.append(ul);}
   if(x.detailStatus==='Guided study — example needs review')addText(body,'p','Study prompt only: verify this scenario and add a runnable code example before treating it as a complete answer.','note');
@@ -48,3 +48,19 @@ $('reset').onclick=()=>{if(confirm('Clear ALL personal interview and LeetCode co
 const csv=v=>'"'+String(v).replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"';
 $('export').onclick=()=>{let rows=['ID,Section,Question,Studied,Mastered',...all().map(x=>[x.key,x.category,x.question,!!studied[x.key],done(x)].map(csv).join(','))];let url=URL.createObjectURL(new Blob([rows.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=url;a.download='java-interview-progress.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 start();
+// Navigation width and visibility are personal browser preferences, separate from study progress.
+const SIDEBAR_PREF_KEY='crack-interview-java-sidebar-hidden-v1';
+const workspace=$('workspace'),sidebar=$('learningSidebar'),sidebarToggle=$('sidebarToggle');
+function applySidebar(hidden){
+  workspace.classList.toggle('sidebar-collapsed',hidden);
+  sidebar.hidden=hidden;
+  sidebarToggle.textContent=hidden?'☰ Show topics':'☰ Hide topics';
+  sidebarToggle.setAttribute('aria-expanded',String(!hidden));
+}
+let sidebarHidden=false;
+try{sidebarHidden=localStorage.getItem(SIDEBAR_PREF_KEY)==='true';}catch{}
+applySidebar(sidebarHidden);
+sidebarToggle.addEventListener('click',()=>{
+  sidebarHidden=!sidebarHidden;applySidebar(sidebarHidden);
+  try{localStorage.setItem(SIDEBAR_PREF_KEY,String(sidebarHidden));}catch{}
+});

@@ -136,3 +136,11 @@ These Markdown files mirror the question bank and are linked for offline revisio
 - [Kafka interview answers](docs/kafka-detailed.md)
 
 **Progress:** Studied and Mastered ticks remain local to your browser; V4 preserves existing question IDs and progress keys.
+
+## V6: runnable labs for all remaining 103 questions
+
+See [103 focused runnable labs](docs/v6-103-runnable-labs.md). Includes 73 Java 21, 16 PostgreSQL and 14 TypeScript examples. Framework/cloud examples are explicitly labeled as conceptual models, not full-stack integration projects.
+
+
+### Compact sidebar and individual progress (V6.1)
+The learning tree uses a compact 185–220 px column and **Hide topics / Show topics** control. Sidebar preference is saved in the current browser profile. Studied and Mastered progress remains in browser `localStorage`, keyed per question; it is **not shared between different visitors' browsers**, and it is **not synced across devices**. Users sharing the same browser profile share progress. Export CSV for backup; true account-based syncing would require authentication and a backend.

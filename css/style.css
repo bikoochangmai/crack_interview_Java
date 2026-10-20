@@ -11,3 +11,19 @@
 .study-actions label{display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;font-weight:650}
 .mastered-label{color:#087b45}
 .studied-label{color:#345a7d}
+
+/* V6.1: compact, hideable navigation with readable content */
+.wrap{max-width:1480px}
+.workspace{grid-template-columns:minmax(185px,220px) minmax(0,1fr);gap:16px}
+.workspace>.layout-controls{grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.layout-controls button{padding:8px 12px;font-size:13px}
+.privacy-note{font-size:12px;color:var(--muted)}
+.sidebar{padding:11px;min-width:0}
+.sidebar-head h2{font-size:16px}
+.tree-link{font-size:11px;overflow-wrap:anywhere}
+.tree-count{font-size:10px}
+.workspace.sidebar-collapsed{grid-template-columns:minmax(0,1fr)}
+.workspace.sidebar-collapsed .sidebar{display:none}
+.content{width:100%;min-width:0}
+@media(max-width:750px){.workspace,.workspace.sidebar-collapsed{grid-template-columns:minmax(0,1fr)}.sidebar{position:static;max-height:340px}.tree-link{font-size:12px}}
+@media print{.layout-controls{display:none!important}}
