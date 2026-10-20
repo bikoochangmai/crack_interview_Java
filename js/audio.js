@@ -11,9 +11,10 @@
   const player=()=>document.getElementById('mobileAudioPlayer');
   const setStatus=s=>{if(status())status().textContent=s;};
   const setTitle=s=>{const el=document.getElementById('mobileAudioTitle');if(el)el.textContent=s;};
-  const setPlaying=()=>{const el=document.getElementById('mobileAudioPlay');if(el)el.textContent=audio.paused?'▶ Play':'⏸ Pause';};
+  const isPlaying=()=>fallback ? (supportsSpeech && window.speechSynthesis.speaking && !window.speechSynthesis.paused) : (!!audio.src && !audio.paused);
+  const setPlaying=()=>{const label=isPlaying()?'⏸ Pause':'▶ Play';const el=document.getElementById('mobileAudioPlay');if(el){el.textContent=label;el.setAttribute('aria-label',isPlaying()?'Pause audio':'Play audio');}document.querySelectorAll('[data-audio-toggle]').forEach(b=>{b.textContent=label;b.setAttribute('aria-label',isPlaying()?'Pause audio':'Play audio');});};
   const supportsSpeech=!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
-  const stopSpeech=()=>{token++;if(supportsSpeech)window.speechSynthesis.cancel();fallback=null;};
+  const stopSpeech=()=>{token++;if(supportsSpeech)window.speechSynthesis.cancel();fallback=null;setPlaying();};
   const idOf=x=>String(x.id);
   const pathFor=(x,kind)=>x.kind==='leetcode'?null:manifest[idOf(x)]?.[kind]||null;
   function updateMediaSession(x){
@@ -29,15 +30,15 @@
   function speakFallback(x,kind){
     if(!supportsSpeech){setStatus('No audio file yet. Generate audio locally using the included script.');return;}
     const body=document.querySelector(`[data-audio-id="${CSS.escape(String(x.id))}"] .answer`);
-    let text=kind==='question'?x.question:(x.explanation||x.answer||'');
+    let text=kind==='question'?x.question:kind==='full'?[x.question,x.answer,x.explanation,x.why,x.example,x.tradeoffs,...(Array.isArray(x.followups)?x.followups:[])].filter(Boolean).join('. '):[x.answer,x.explanation,x.why,x.example,x.tradeoffs, ...(Array.isArray(x.followups)?x.followups:[])].filter(Boolean).join('. ');
     if(!text.trim()){setStatus('No text available');return;}
-    stopSpeech();let my=token;let parts=text.match(/.{1,160}(?:\s|$)/g)||[text];let i=0;
-    const next=()=>{if(my!==token)return;if(i>=parts.length){setStatus('Finished browser narration');return;}
-      let u=new SpeechSynthesisUtterance(parts[i++]);u.lang='en-US';u.rate=prefs.rate;u.onend=next;u.onerror=()=>setStatus('Browser narration interrupted');window.speechSynthesis.speak(u);};
-    fallback={x,kind};setStatus('Browser voice fallback — may stop when screen locks');next();
+    stopSpeech();let my=token;let parts=text.match(/[\s\S]{1,160}(?:\s|$)/g)||[text];let i=0;
+    const next=()=>{if(my!==token)return;if(i>=parts.length){setStatus('Finished browser narration');fallback=null;setPlaying();return;}
+      let u=new SpeechSynthesisUtterance(parts[i++]);u.lang='en-US';u.rate=prefs.rate;u.onend=next;u.onerror=()=>{setStatus('Browser narration interrupted');setPlaying();};window.speechSynthesis.speak(u);};
+    fallback={x,kind};setStatus('Browser voice fallback — may stop when screen locks');next();setPlaying();
   }
   async function playItem(x,kind='question'){
-    stop();current={x,kind};setTitle((kind==='explanation'?'Explanation: ':'Question: ')+(x.question||x.title));
+    stop();current={x,kind};setTitle((kind==='full'?'Full answer: ':kind==='explanation'?'Explanation: ':'Question: ')+(x.question||x.title));
     player().hidden=false;
     const src=pathFor(x,kind);
     if(!src){speakFallback(x,kind);return;}
@@ -45,15 +46,20 @@
     try{await audio.play();setStatus('Playing recorded audio · lock screen to test');setPlaying();}
     catch(e){setStatus('Tap Play to allow audio on this device ('+e.name+').');setPlaying();}
   }
-  function step(delta){if(!queue.length)return;let i=index+delta;if(i<0||i>=queue.length){setStatus('End of available playlist');return;}index=i;playItem(queue[i],'question');}
+  function togglePlayback(){
+    if(fallback){if(!supportsSpeech)return;if(window.speechSynthesis.paused)window.speechSynthesis.resume();else window.speechSynthesis.pause();setPlaying();return;}
+    if(!audio.src)return;
+    if(audio.paused)audio.play().catch(()=>setStatus('Tap again or check audio permissions'));else audio.pause();setPlaying();
+  }
+  function step(delta){if(!queue.length)return;let i=index+delta;if(i<0||i>=queue.length){setStatus('End of available playlist');return;}index=i;playItem(queue[i],'full');}
   audio.addEventListener('ended',()=>{setPlaying();setStatus('Finished');if(prefs.autoNext)step(1);});
   audio.addEventListener('pause',setPlaying);audio.addEventListener('play',setPlaying);
   audio.addEventListener('error',()=>setStatus('Audio file unavailable or unsupported; check GitHub Pages assets.'));
   function makeButton(label,fn){const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b;}
   function attach(body,x){
     const p=document.createElement('div');p.className='audio-panel';
-    p.append(makeButton('▶ Question',()=>{queue=window.interviewAudioItems?.()||[];index=queue.findIndex(z=>z.kind===x.kind&&z.id===x.id);playItem(x,'question');}),makeButton('▶ Explanation',()=>playItem(x,'explanation')));
-    const note=document.createElement('span');note.className='audio-status';note.textContent=pathFor(x,'question')?'Recorded audio available (mobile lock-screen compatible)':'Browser narration fallback (screen-lock not guaranteed)';p.append(note);body.prepend(p);
+    const toggle=makeButton('▶ Play',()=>{if(current&&current.x.id===x.id&&current.kind==='full'){togglePlayback();return;}queue=window.interviewAudioItems?.()||[];index=queue.findIndex(z=>z.kind===x.kind&&z.id===x.id);playItem(x,'full');});toggle.dataset.audioToggle='1';p.append(toggle);
+    const note=document.createElement('span');note.className='audio-status';note.textContent=pathFor(x,'full')?'Full recorded narration available (mobile lock-screen compatible)':'Browser narration fallback (screen-lock not guaranteed)';p.append(note);body.prepend(p);
     body.parentElement?.setAttribute('data-audio-id',String(x.id));
   }
   async function init(){
@@ -64,10 +70,8 @@
     document.getElementById('mobileAudioPrev').onclick=()=>step(-1);
     document.getElementById('mobileAudioNext').onclick=()=>step(1);
     document.getElementById('mobileAudioStop').onclick=stop;
-    document.getElementById('mobileAudioPlay').onclick=()=>{
-      if(audio.src){if(audio.paused)audio.play().catch(()=>setStatus('Tap again or check audio permissions'));else audio.pause();}
-      else if(fallback){if(window.speechSynthesis.paused)window.speechSynthesis.resume();else window.speechSynthesis.pause();}
-    };
+    if(supportsSpeech){window.speechSynthesis.addEventListener?.('voiceschanged',setPlaying);}
+    document.getElementById('mobileAudioPlay').onclick=togglePlayback;
     const speed=document.getElementById('mobileAudioSpeed');speed.value=String(prefs.rate);speed.onchange=()=>{prefs.rate=Number(speed.value);audio.playbackRate=prefs.rate;save();};
     const auto=document.getElementById('mobileAudioAuto');auto.checked=!!prefs.autoNext;auto.onchange=()=>{prefs.autoNext=auto.checked;save();};
   }
