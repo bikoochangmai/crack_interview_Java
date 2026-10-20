@@ -144,3 +144,28 @@ See [103 focused runnable labs](docs/v6-103-runnable-labs.md). Includes 73 Java 
 
 ### Compact sidebar and individual progress (V6.1)
 The learning tree uses a compact 185–220 px column and **Hide topics / Show topics** control. Sidebar preference is saved in the current browser profile. Studied and Mastered progress remains in browser `localStorage`, keyed per question; it is **not shared between different visitors' browsers**, and it is **not synced across devices**. Users sharing the same browser profile share progress. Export CSV for backup; true account-based syncing would require authentication and a backend.
+
+## V6.2 Slide-out navigation
+The **Topics** button opens a true off-canvas left drawer. The question content occupies the full available width whether the drawer is open or closed. Close with the button, backdrop click, or Escape. Drawer preference is stored in this browser profile. Studied/Mastered progress storage keys are unchanged.
+
+
+### V6.3 navigation modes
+- **☰ Topics** opens the slide-out tree over the reading area. Close with Escape, backdrop click, or the close button.
+- **▤ Pin tree (V5 view)** keeps the original grouped learning tree beside the interview questions on desktop.
+- **↗ Slide-out instead** switches the pinned tree back to the overlay.
+- **☰ Hide tree** hides navigation completely to maximize reading width.
+- The selected layout is stored in browser localStorage; Studied/Mastered progress remains separate and unchanged.
+
+
+### V6.4 study and reading layouts
+The V5-style pinned learning tree is the default for first-time visitors. Select **Full-width reading** to hide the tree and give questions the entire content width; select **Return to study tree** to restore the pinned sidebar. **Topics** opens the slide-out drawer while reading. The selected layout is remembered per browser profile. Existing Studied/Mastered progress keys are unchanged.
+
+
+## V6.5 — Read Aloud
+
+Each question card has browser-native Question and Explanation narration, Pause, Resume, Stop, voice selection, speed (0.75–2×) and an optional read-code setting. Settings are stored per browser profile; existing Studied/Mastered progress keys are unchanged. Audio requires a browser with Web Speech API speech synthesis support and available voices; some voices may require network access. Narration starts only after the learner clicks a play button. Only one narration plays at a time.
+
+
+## V6.6 — Mobile background audio
+
+Recorded HTML5 audio playback with a persistent player and Media Session controls. Three short question MP3 samples are included; generate the remaining recordings on Windows using `scripts/generate_mobile_audio.ps1`. See [mobile audio guide](docs/mobile-background-audio.md). Browser TTS fallback does not reliably work on locked phones.

@@ -12,6 +12,7 @@ const all=()=>[...questions.map(q=>({...q,kind:'interview',key:'q:'+q.id})),...l
 const categories=()=>[...new Set(all().map(x=>x.category))];
 const done=x=>!!completed[x.key];
 function linkRepo(){let host=location.hostname;if(!host.endsWith('.github.io'))return;let owner=host.slice(0,-10),repo=location.pathname.split('/').filter(Boolean)[0]||owner+'.github.io';let root='https://github.com/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo);$('repo').href=root;$('contribute').href=root+'/blob/main/CONTRIBUTING.md';}
+window.interviewAudioItems=all;
 function metrics(){let data=all(),n=data.filter(done).length,p=data.length?Math.round(100*n/data.length):0;$('total').textContent=data.length;$('reviewed').textContent=n;$('percent').textContent=p+'%';$('areas').textContent=categories().length;$('progressFill').style.width=p+'%';$('progress').setAttribute('aria-valuenow',p);}
 function sectionData(){let result=new Map();for(const x of all()){if(!result.has(x.category))result.set(x.category,[]);result.get(x.category).push(x);}return result;}
 function navigation(){let nav=$('navTree');nav.replaceChildren();let allBtn=document.createElement('button');allBtn.type='button';allBtn.className='nav-all'+(!activeCategory?' selected':'');allBtn.textContent='All topics';allBtn.onclick=()=>choose('');nav.append(allBtn);
@@ -36,6 +37,7 @@ function render(){let search=$('search').value.trim().toLowerCase(),cat=$('categ
   if(Array.isArray(x.followups)&&x.followups.length){addText(body,'h3','Interview follow-up questions');let ul=document.createElement('ul');for(const f of x.followups)addText(ul,'li',f);body.append(ul);}
   if(x.detailStatus==='Guided study — example needs review')addText(body,'p','Study prompt only: verify this scenario and add a runnable code example before treating it as a complete answer.','note');
 }
+if(window.interviewAudio)window.interviewAudio.attach(body,x);
 let actions=document.createElement('div');actions.className='study-actions';let read=document.createElement('label');read.className='studied-label';let readCheck=document.createElement('input');readCheck.type='checkbox';readCheck.checked=!!studied[x.key];readCheck.setAttribute('aria-label','Mark studied: '+x.question);readCheck.onchange=()=>{studied[x.key]=readCheck.checked;saveStudied();};read.append(readCheck,document.createTextNode(' Studied / read'));actions.append(read);let master=document.createElement('label');master.className='mastered-label';let masterCheck=document.createElement('input');masterCheck.type='checkbox';masterCheck.checked=done(x);masterCheck.setAttribute('aria-label','Mark mastered: '+x.question);masterCheck.onchange=()=>{completed[x.key]=masterCheck.checked;save();refresh();};master.append(masterCheck,document.createTextNode(' ✓ Mastered (green navigation tick)'));actions.append(master);body.append(actions);
 details.append(body);root.append(details);}}
  metrics();}
@@ -48,19 +50,41 @@ $('reset').onclick=()=>{if(confirm('Clear ALL personal interview and LeetCode co
 const csv=v=>'"'+String(v).replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"';
 $('export').onclick=()=>{let rows=['ID,Section,Question,Studied,Mastered',...all().map(x=>[x.key,x.category,x.question,!!studied[x.key],done(x)].map(csv).join(','))];let url=URL.createObjectURL(new Blob([rows.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=url;a.download='java-interview-progress.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 start();
-// Navigation width and visibility are personal browser preferences, separate from study progress.
-const SIDEBAR_PREF_KEY='crack-interview-java-sidebar-hidden-v1';
+// Three navigation modes: hidden (maximum reading width), slide-out, and V5-style docked tree.
+// The progress storage keys are unchanged and never touched by these controls.
+const NAV_MODE_KEY='crack-interview-java-nav-mode-v63';
 const workspace=$('workspace'),sidebar=$('learningSidebar'),sidebarToggle=$('sidebarToggle');
-function applySidebar(hidden){
-  workspace.classList.toggle('sidebar-collapsed',hidden);
-  sidebar.hidden=hidden;
-  sidebarToggle.textContent=hidden?'☰ Show topics':'☰ Hide topics';
-  sidebarToggle.setAttribute('aria-expanded',String(!hidden));
+const sidebarBackdrop=$('sidebarBackdrop'),dockToggle=$('dockToggle'),readingToggle=$('readingToggle');
+let navMode='docked';
+try {
+  const saved=localStorage.getItem(NAV_MODE_KEY);
+  if(['hidden','drawer','docked'].includes(saved)) navMode=saved;
+} catch {}
+function setNavMode(mode,focusToggle=false){
+  if(!['hidden','drawer','docked'].includes(mode)) return;
+  navMode=mode;
+  workspace.classList.toggle('drawer-open',mode==='drawer');
+  workspace.classList.toggle('nav-docked',mode==='docked');
+  workspace.classList.toggle('sidebar-collapsed',mode==='hidden');
+  sidebar.removeAttribute('hidden');
+  const closed=mode==='hidden';
+  sidebar.toggleAttribute('inert',closed);
+  sidebar.setAttribute('aria-hidden',String(closed));
+  sidebarBackdrop.hidden=mode!=='drawer';
+  sidebarToggle.textContent=closed?'☰ Topics':mode==='drawer'?'✕ Close topics':'☰ Hide tree';
+  sidebarToggle.setAttribute('aria-label',closed?'Open learning topics':mode==='drawer'?'Close slide-out topics':'Hide docked learning tree');
+  sidebarToggle.setAttribute('aria-expanded',String(!closed));
+  dockToggle.textContent=mode==='docked'?'↗ Slide-out instead':'▤ Pin tree (V5 view)';
+  dockToggle.setAttribute('aria-pressed',String(mode==='docked'));
+  readingToggle.textContent=mode==='docked'?'⛶ Full-width reading':'▤ Return to study tree';
+  readingToggle.setAttribute('aria-pressed',String(mode==='hidden'));
+  readingToggle.setAttribute('aria-label',mode==='docked'?'Switch to full-width reading mode':'Return to pinned study tree');
+  try{localStorage.setItem(NAV_MODE_KEY,mode);}catch{}
+  if(focusToggle)sidebarToggle.focus();
 }
-let sidebarHidden=false;
-try{sidebarHidden=localStorage.getItem(SIDEBAR_PREF_KEY)==='true';}catch{}
-applySidebar(sidebarHidden);
-sidebarToggle.addEventListener('click',()=>{
-  sidebarHidden=!sidebarHidden;applySidebar(sidebarHidden);
-  try{localStorage.setItem(SIDEBAR_PREF_KEY,String(sidebarHidden));}catch{}
-});
+setNavMode(navMode);
+sidebarToggle.addEventListener('click',()=>setNavMode(navMode==='hidden'?'drawer':'hidden'));
+dockToggle.addEventListener('click',()=>setNavMode(navMode==='docked'?'drawer':'docked'));
+readingToggle.addEventListener('click',()=>setNavMode(navMode==='docked'?'hidden':'docked'));
+sidebarBackdrop.addEventListener('click',()=>setNavMode('hidden',true));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&navMode==='drawer')setNavMode('hidden',true);});

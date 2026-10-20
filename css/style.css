@@ -27,3 +27,69 @@
 .content{width:100%;min-width:0}
 @media(max-width:750px){.workspace,.workspace.sidebar-collapsed{grid-template-columns:minmax(0,1fr)}.sidebar{position:static;max-height:340px}.tree-link{font-size:12px}}
 @media print{.layout-controls{display:none!important}}
+
+/* V6.2: true off-canvas navigation; content is always full-width */
+.wrap{max-width:1720px}
+.workspace,.workspace.sidebar-collapsed{display:block;position:relative;margin-top:24px;min-width:0}
+.workspace>.layout-controls{display:block;position:sticky;top:10px;z-index:1201;width:max-content;margin:0 0 18px}
+#sidebarToggle{background:#264b70;border:1px solid #668ab1;color:#fff;box-shadow:0 4px 14px #0006;font-size:14px;padding:9px 13px}
+.sidebar,.workspace.sidebar-collapsed .sidebar{display:block!important;position:fixed;top:0;left:0;bottom:0;width:min(340px,88vw);max-height:100dvh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;z-index:1200;border-radius:0 14px 14px 0;padding:68px 16px 22px;background:#142239;box-shadow:14px 0 36px #0008;transform:translateX(-105%);transition:transform .24s ease;visibility:hidden}
+.workspace.drawer-open .sidebar{transform:translateX(0);visibility:visible}
+.workspace.drawer-open #sidebarToggle{position:fixed;top:12px;left:min(352px,calc(88vw + 12px));z-index:1203}
+.sidebar-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.57);z-index:1199}
+.sidebar-backdrop[hidden]{display:none!important}
+.workspace .content{width:100%;min-width:0}
+.content .filters{grid-template-columns:minmax(210px,2fr) repeat(3,minmax(145px,1fr))}
+.tree-link{font-size:13px}
+@media(max-width:900px){.content .filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.content .filters{grid-template-columns:1fr}.workspace.drawer-open #sidebarToggle{left:auto;right:12px;top:12px}.sidebar{width:min(340px,88vw)}}
+@media(prefers-reduced-motion:reduce){.sidebar{transition:none}}
+@media print{.sidebar,.sidebar-backdrop,.layout-controls{display:none!important}}
+
+/* V6.3: original V5 learning tree as optional pinned sidebar, alongside slide-out mode. */
+.workspace.nav-docked{display:grid;grid-template-columns:minmax(235px,285px) minmax(0,1fr);column-gap:20px;align-items:start}
+.workspace.nav-docked>.layout-controls{grid-column:1/-1;position:static;width:auto;display:flex;gap:10px;margin:0 0 14px;z-index:auto}
+.workspace.nav-docked .sidebar{display:block!important;position:sticky;grid-column:1;grid-row:2;top:12px;left:auto;bottom:auto;width:auto;height:auto;max-height:calc(100dvh - 24px);transform:none;visibility:visible;box-shadow:none;border-radius:14px;padding:15px;overflow-y:auto;z-index:auto}
+.workspace.nav-docked .content{grid-column:2;grid-row:2;min-width:0}
+.workspace.nav-docked #sidebarToggle{position:static}
+.workspace.nav-docked .sidebar-backdrop{display:none!important}
+.workspace.nav-docked .tree-link{font-size:12px}
+.workspace.nav-docked .tree-group>summary{cursor:pointer}
+#dockToggle{background:#193650;border:1px solid #547b9e;color:#e5f0ff;font-size:13px;padding:9px 13px}
+#dockToggle[aria-pressed="true"]{background:#25537a}
+@media(max-width:800px){
+ .workspace.nav-docked{display:block}
+ .workspace.nav-docked .sidebar{position:relative;top:auto;max-height:45dvh;margin-bottom:18px;width:100%}
+ .workspace.nav-docked .content{width:100%}
+}
+@media print{#dockToggle{display:none!important}}
+
+/* V6.4: study tree by default, explicit full-width reading toggle. */
+#readingToggle{background:#286298;border:1px solid #75a4cd;color:white;font-size:13px;padding:9px 13px;cursor:pointer}
+.workspace>.layout-controls{display:flex;flex-wrap:wrap;gap:10px;width:auto;align-items:center}
+.workspace.nav-docked>.layout-controls{display:flex;flex-wrap:wrap}
+@media(max-width:540px){.workspace>.layout-controls{position:relative;top:auto}}
+@media print{#readingToggle{display:none!important}}
+
+/* V6.5 — per-question audio narration */
+.audio-panel{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0;padding:12px;border:1px solid #55758d;border-radius:10px;background:#15283d}
+.audio-panel button,.audio-panel select{font:inherit;font-size:13px;padding:7px 10px;border-radius:7px;min-height:34px}
+.audio-panel button{cursor:pointer;background:#285b81;color:#fff;border:1px solid #6089a6}
+.audio-panel button:disabled{opacity:.45;cursor:not-allowed}
+.audio-panel label{display:flex;align-items:center;gap:5px;font-size:12px;color:#e0ebf6}
+.audio-panel select{max-width:180px;background:#112239;color:#fff;border:1px solid #6089a6}
+.audio-panel .audio-status{flex-basis:100%;font-size:12px;color:#c6d8e7}
+.audio-panel .audio-status[role=status]{min-height:1.2em}
+@media(prefers-reduced-motion:reduce){.audio-panel *{scroll-behavior:auto}}
+
+/* V6.6 persistent mobile audio controls: audio element continues when page is hidden */
+.mobile-audio-player{position:fixed;bottom:0;left:0;right:0;z-index:2000;background:#102338;color:#f1f7ff;border-top:2px solid #6389a7;box-shadow:0 -6px 22px #0008;padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mobile-audio-player[hidden]{display:none!important}
+.mobile-audio-meta{display:flex;flex-direction:column;gap:2px;min-width:180px;flex:1;max-width:480px}
+.mobile-audio-meta strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-audio-meta span{font-size:11px;color:#c5d7e6}
+.mobile-audio-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.mobile-audio-controls button,.mobile-audio-controls select{background:#285b81;border:1px solid #6389a7;border-radius:6px;color:white;padding:8px;min-height:40px;cursor:pointer}
+.mobile-audio-controls label{font-size:12px;display:flex;align-items:center;gap:5px}
+body:has(.mobile-audio-player:not([hidden])){padding-bottom:115px}
+@media(max-width:600px){.mobile-audio-player{align-items:stretch}.mobile-audio-controls{justify-content:space-between}body:has(.mobile-audio-player:not([hidden])){padding-bottom:175px}}
