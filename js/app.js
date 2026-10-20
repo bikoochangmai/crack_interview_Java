@@ -1,92 +1,50 @@
-'use strict';
+"use strict";
 const $ = id => document.getElementById(id);
-const STORAGE_KEY = 'java-interview-prep-reviewed-v2';
-let questions = [];
-let reviewed = {};
-try { reviewed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (_) { reviewed = {}; }
-const save = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewed)); } catch (_) {} };
-const safeCsv = value => '"' + String(value).replace(/"/g, '""').replace(/^[=+@\-\t\r]/, "'") + '"';
-function configureLinks() {
-  // The canonical repo URL is discovered from the published GitHub Pages URL.
-  // A project page uses USER.github.io/REPO/; a user page uses USER.github.io/.
-  const host = location.hostname;
-  if (!host.endsWith('.github.io')) {
-    $('contribute').textContent = 'How to contribute (see README)';
-    $('contribute').href = 'https://github.com';
-    return;
-  }
-  const owner = host.slice(0, -'.github.io'.length);
-  const project = location.pathname.split('/').filter(Boolean)[0];
-  const repo = project && project.toLowerCase() !== 'index.html' ? project : `${owner}.github.io`;
-  const root = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
-  $('repo').href = root;
-  $('contribute').href = `${root}/edit/main/data/questions.json`;
+const OLD_KEY = 'java-interview-prep-reviewed-v2';
+const KEY = 'crack-interview-java-progress-v3';
+let questions=[], leetcode=[], completed={}, studied={}, activeCategory='';
+const STUDY_KEY='crack-interview-java-studied-v1';
+try { studied=JSON.parse(localStorage.getItem(STUDY_KEY)||'{}'); if(!studied || typeof studied!=='object' || Array.isArray(studied)) studied={}; } catch { studied={}; }
+const saveStudied=()=>{try{localStorage.setItem(STUDY_KEY,JSON.stringify(studied));}catch{}};
+try { completed=JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY) || '{}'); if(!completed || Array.isArray(completed) || typeof completed!=='object') completed={}; } catch { completed={}; }
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(completed));}catch{}};
+const all=()=>[...questions.map(q=>({...q,kind:'interview',key:'q:'+q.id})),...leetcode.map(p=>({...p,category:'LeetCode / '+p.topic,priority:p.difficulty,question:p.title,answer:p.approach,kind:'leetcode',key:'lc:'+p.id}))];
+const categories=()=>[...new Set(all().map(x=>x.category))];
+const done=x=>!!completed[x.key];
+function linkRepo(){let host=location.hostname;if(!host.endsWith('.github.io'))return;let owner=host.slice(0,-10),repo=location.pathname.split('/').filter(Boolean)[0]||owner+'.github.io';let root='https://github.com/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo);$('repo').href=root;$('contribute').href=root+'/blob/main/CONTRIBUTING.md';}
+function metrics(){let data=all(),n=data.filter(done).length,p=data.length?Math.round(100*n/data.length):0;$('total').textContent=data.length;$('reviewed').textContent=n;$('percent').textContent=p+'%';$('areas').textContent=categories().length;$('progressFill').style.width=p+'%';$('progress').setAttribute('aria-valuenow',p);}
+function sectionData(){let result=new Map();for(const x of all()){if(!result.has(x.category))result.set(x.category,[]);result.get(x.category).push(x);}return result;}
+function navigation(){let nav=$('navTree');nav.replaceChildren();let allBtn=document.createElement('button');allBtn.type='button';allBtn.className='nav-all'+(!activeCategory?' selected':'');allBtn.textContent='All topics';allBtn.onclick=()=>choose('');nav.append(allBtn);
+ let sections=sectionData();let groups=new Map();for(const [name,items] of sections){let group=name.startsWith('AI Engineering')?'AI Engineering':name.startsWith('System Design')?'System Design':name.startsWith('Microservices')?'Microservices':name.startsWith('Design Patterns')?'Design Patterns':name.startsWith('Azure')?'Azure Cloud':name.startsWith('Kafka')?'Apache Kafka':name.startsWith('LeetCode')?'LeetCode / DSA':name.startsWith('Java')||name.startsWith('Core Java')||name.startsWith('Concurrency')?'Java & JVM':name.startsWith('Spring')||name.startsWith('REST')?'Backend & Services':name.startsWith('SQL')?'Databases':name.startsWith('Angular')?'Frontend': 'Architecture & Leadership';if(!groups.has(group))groups.set(group,[]);groups.get(group).push([name,items]);}
+ for(const [group,entries] of groups){let details=document.createElement('details');details.className='tree-group';details.open=true;let summary=document.createElement('summary');summary.textContent=group;details.append(summary);
+ for(const [name,items] of entries){let line=document.createElement('div');line.className='tree-line'+(activeCategory===name?' selected':'');let check=document.createElement('input');check.type='checkbox';check.className='tree-check';check.checked=items.every(done);check.indeterminate=!check.checked&&items.some(done);check.title='Mark all items in '+name+' complete';check.setAttribute('aria-label','Complete section '+name);check.onchange=()=>{items.forEach(x=>completed[x.key]=check.checked);save();refresh();};let btn=document.createElement('button');btn.type='button';btn.className='tree-link';btn.textContent=name;btn.title=name;btn.onclick=()=>choose(name);let count=document.createElement('span');count.className='tree-count';count.textContent=items.filter(done).length+'/'+items.length;if(check.checked)count.textContent='✓ '+count.textContent;line.append(check,btn,count);details.append(line);}nav.append(details);}
 }
-function updateMetrics() {
-  const n = questions.filter(q => reviewed[q.id]).length;
-  const pct = questions.length ? Math.round(100 * n / questions.length) : 0;
-  $('total').textContent = questions.length;
-  $('reviewed').textContent = n;
-  $('percent').textContent = `${pct}%`;
-  $('areas').textContent = new Set(questions.map(q => q.category)).size;
-  $('progressFill').style.width = `${pct}%`;
-  $('progress').setAttribute('aria-valuenow', String(pct));
+function choose(category){activeCategory=category;$('category').value=category;refresh();}
+function addText(parent,tag,content,cls){let el=document.createElement(tag);if(cls)el.className=cls;el.textContent=content;parent.append(el);return el;}
+function render(){let search=$('search').value.trim().toLowerCase(),cat=$('category').value,priority=$('priority').value,status=$('status').value;
+ let data=all(),visible=data.filter(x=>(!cat||x.category===cat)&&(!priority||x.priority===priority)&&(!status||(status==='done'?done(x):!done(x)))&&(!search||[x.category,x.question,x.answer,x.example||'',x.problem||'',x.code||''].join(' ').toLowerCase().includes(search)));
+ $('count').textContent='Showing '+visible.length+' of '+data.length+' items';let root=$('questions');root.replaceChildren();if(!visible.length)addText(root,'p','No matching questions. Try clearing filters.','empty');let groups=new Map();for(const x of visible){if(!groups.has(x.category))groups.set(x.category,[]);groups.get(x.category).push(x);}
+ for(const [name,items] of groups){addText(root,'h2',name+' ('+items.length+')','group');for(const x of items){let details=document.createElement('details'),summary=document.createElement('summary'),check=document.createElement('input');check.type='checkbox';check.className='check';check.checked=done(x);check.setAttribute('aria-label','Mark complete: '+x.question);check.onclick=e=>e.stopPropagation();check.onchange=()=>{completed[x.key]=check.checked;save();refresh();};addText(summary,'span',x.kind==='leetcode'?x.id:'#'+x.id,'num');summary.prepend(check);addText(summary,'span',x.question,'question');addText(summary,'span',x.priority,'pill'+(x.priority==='Medium'?' medium':'')+(x.priority==='Easy'?' easy':''));details.append(summary);
+ let body=document.createElement('div');body.className='answer';if(x.kind==='leetcode'){addText(body,'h3','Problem');addText(body,'p',x.problem);addText(body,'h3','Worked example');addText(body,'p',x.example,'example');addText(body,'h3','Why this approach works');addText(body,'p',x.approach);addText(body,'h3','Interview walkthrough');addText(body,'p','Start with the brute-force idea, identify its bottleneck, then explain how the chosen data structure or algorithm improves it. Walk through the example input and discuss empty inputs, duplicates and boundary conditions.');addText(body,'p','Time: '+x.time+' · Space: '+x.space,'complexity');addText(body,'h3','Java solution');let pre=document.createElement('pre');let code=document.createElement('code');code.textContent=x.code;pre.append(code);body.append(pre);}else{
+  const isExpanded=x.detailStatus==='Expanded'||(!x.detailStatus&&!!x.why);
+  if(x.detailStatus&&x.detailStatus.includes('code pending'))addText(body,'p','Production scenario provided. A standalone runnable code example is still pending for this question.','note');
+  addText(body,'h3','What is it? — Concept');addText(body,'p',x.explanation||x.answer);
+  if(x.why){addText(body,'h3','Why and when is it used?');addText(body,'p',x.why);}
+  if(x.example){addText(body,'h3','Real-world / production example');addText(body,'p',x.example,'example');}
+  if(x.diagram){addText(body,'h3','Architecture / execution flow');addText(body,'p',x.diagram,'example');}if(x.runCommand){addText(body,'p','Run locally: '+x.runCommand,'complexity');}if(x.code){addText(body,'h3','Java example');let pre=document.createElement('pre');let code=document.createElement('code');code.textContent=x.code;pre.append(code);body.append(pre);}
+  if(x.tradeoffs){addText(body,'h3','Trade-offs and failure modes');addText(body,'p',x.tradeoffs);}
+  if(Array.isArray(x.followups)&&x.followups.length){addText(body,'h3','Interview follow-up questions');let ul=document.createElement('ul');for(const f of x.followups)addText(ul,'li',f);body.append(ul);}
+  if(x.detailStatus==='Guided study — example needs review')addText(body,'p','Study prompt only: verify this scenario and add a runnable code example before treating it as a complete answer.','note');
 }
-function render() {
-  const search = $('search').value.toLocaleLowerCase().trim();
-  const category = $('category').value, priority = $('priority').value, status = $('status').value;
-  const visible = questions.filter(q =>
-    (!search || `${q.category} ${q.question} ${q.answer}`.toLocaleLowerCase().includes(search)) &&
-    (!category || q.category === category) && (!priority || q.priority === priority) &&
-    (!status || (status === 'done' ? !!reviewed[q.id] : !reviewed[q.id]))
-  );
-  $('count').textContent = `Showing ${visible.length} of ${questions.length} questions`;
-  const root = $('questions'); root.replaceChildren();
-  const groups = new Map();
-  visible.forEach(q => { if (!groups.has(q.category)) groups.set(q.category, []); groups.get(q.category).push(q); });
-  for (const [categoryName, list] of groups) {
-    const heading = document.createElement('h2'); heading.className = 'group';
-    heading.textContent = `${categoryName} (${list.length})`; root.append(heading);
-    for (const q of list) {
-      const detail = document.createElement('details');
-      const summary = document.createElement('summary');
-      const check = document.createElement('input'); check.type = 'checkbox'; check.className = 'check';
-      check.checked = !!reviewed[q.id]; check.setAttribute('aria-label', `Mark reviewed: ${q.question}`);
-      check.addEventListener('click', event => event.stopPropagation());
-      check.addEventListener('change', () => { reviewed[q.id] = check.checked; save(); updateMetrics(); if ($('status').value) render(); });
-      const number = document.createElement('span'); number.className = 'num'; number.textContent = `#${q.id}`;
-      const question = document.createElement('span'); question.className = 'question'; question.textContent = q.question;
-      const pill = document.createElement('span'); pill.className = 'pill' + (q.priority === 'Medium' ? ' medium' : ''); pill.textContent = q.priority;
-      summary.append(check, number, question, pill);
-      const answer = document.createElement('div'); answer.className = 'answer'; answer.textContent = q.answer;
-      detail.append(summary, answer); root.append(detail);
-    }
-  }
-  updateMetrics();
-}
-async function start() {
-  configureLinks();
-  try {
-    const response = await fetch('data/questions.json', { cache: 'no-cache' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    if (!Array.isArray(data)) throw new Error('Expected an array of questions');
-    questions = data;
-    [...new Set(data.map(q => q.category))].sort().forEach(category => {
-      const option = document.createElement('option'); option.value = category; option.textContent = category; $('category').append(option);
-    });
-    render();
-  } catch (error) {
-    $('message').textContent = 'Unable to load questions.json. Publish through GitHub Pages or run a local HTTP server (python -m http.server 8000). Details: ' + error.message;
-  }
-}
-['search', 'category', 'priority', 'status'].forEach(id => $(id).addEventListener(id === 'search' ? 'input' : 'change', render));
-$('expand').addEventListener('click', () => document.querySelectorAll('details').forEach(el => { el.open = true; }));
-$('collapse').addEventListener('click', () => document.querySelectorAll('details').forEach(el => { el.open = false; }));
-$('reset').addEventListener('click', () => { if (confirm('Clear your personal revision checkmarks?')) { reviewed = {}; save(); render(); } });
-$('export').addEventListener('click', () => {
-  const lines = ['ID,Category,Question,Reviewed', ...questions.map(q => [q.id, q.category, q.question, !!reviewed[q.id]].map(safeCsv).join(','))];
-  const url = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
-  const link = document.createElement('a'); link.href = url; link.download = 'interview-progress.csv'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-});
+let actions=document.createElement('div');actions.className='study-actions';let read=document.createElement('label');read.className='studied-label';let readCheck=document.createElement('input');readCheck.type='checkbox';readCheck.checked=!!studied[x.key];readCheck.setAttribute('aria-label','Mark studied: '+x.question);readCheck.onchange=()=>{studied[x.key]=readCheck.checked;saveStudied();};read.append(readCheck,document.createTextNode(' Studied / read'));actions.append(read);let master=document.createElement('label');master.className='mastered-label';let masterCheck=document.createElement('input');masterCheck.type='checkbox';masterCheck.checked=done(x);masterCheck.setAttribute('aria-label','Mark mastered: '+x.question);masterCheck.onchange=()=>{completed[x.key]=masterCheck.checked;save();refresh();};master.append(masterCheck,document.createTextNode(' ✓ Mastered (green navigation tick)'));actions.append(master);body.append(actions);
+details.append(body);root.append(details);}}
+ metrics();}
+function refresh(){navigation();render();}
+async function start(){linkRepo();try{let results=await Promise.all(['data/questions.json','data/leetcode.json'].map(async url=>{let r=await fetch(url,{cache:'no-cache'});if(!r.ok)throw Error(url+': HTTP '+r.status);return r.json();}));[questions,leetcode]=results;if(!Array.isArray(questions)||!Array.isArray(leetcode))throw Error('Expected JSON arrays');for(const cat of categories()){let opt=document.createElement('option');opt.value=cat;opt.textContent=cat;$('category').append(opt);}refresh();}catch(e){$('message').textContent='Unable to load learning data. Use GitHub Pages or a local HTTP server. '+e.message;}}
+['search','priority','status'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));$('category').addEventListener('change',()=>{activeCategory=$('category').value;refresh();});
+$('expand').onclick=()=>document.querySelectorAll('#questions details').forEach(x=>x.open=true);$('collapse').onclick=()=>document.querySelectorAll('#questions details').forEach(x=>x.open=false);
+$('navToggle').onclick=()=>{let nav=$('navTree'),hidden=nav.hidden;nav.hidden=!hidden;$('navToggle').textContent=hidden?'Collapse':'Expand';$('navToggle').setAttribute('aria-expanded',String(hidden));};
+$('reset').onclick=()=>{if(confirm('Clear ALL personal interview and LeetCode completion marks on this browser?')){completed={};studied={};save();saveStudied();refresh();}};
+const csv=v=>'"'+String(v).replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"';
+$('export').onclick=()=>{let rows=['ID,Section,Question,Studied,Mastered',...all().map(x=>[x.key,x.category,x.question,!!studied[x.key],done(x)].map(csv).join(','))];let url=URL.createObjectURL(new Blob([rows.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=url;a.download='java-interview-progress.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 start();

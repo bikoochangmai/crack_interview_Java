@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'data/questions.json'
+      - 'data/leetcode.json'
+      - 'scripts/validate_leetcode.py'
       - 'scripts/validate_questions.py'
       - '.github/workflows/validate.yml'
   push:
@@ -20,3 +22,6 @@ jobs:
           python-version: '3.12'
       - name: Validate question bank
         run: python scripts/validate_questions.py
+
+      - name: Validate Java coding problems
+        run: python scripts/validate_leetcode.py

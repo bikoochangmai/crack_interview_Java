@@ -46,3 +46,12 @@ Under **Settings → Branches** or **Settings → Rules → Rulesets**, add a ru
 ## Keep Markdown in sync
 
 If you add or modify questions in `data/questions.json`, update the corresponding `docs/*.md` guide as well. For Kafka questions, update `docs/apache-kafka-senior-staff.md`. Do not add content from confidential PDFs to a public repository without permission.
+
+
+## Add real-world examples and Java DSA problems (v2)
+
+- Interview questions can include an optional `example` field in `data/questions.json`. Make it a concrete, technically correct production scenario, not a generic placeholder.
+- Add a new LeetCode-style problem to `data/leetcode.json` with a unique `LC###` ID, `title`, `difficulty`, `topic`, `problem`, `example`, `approach`, `time`, `space`, `language`, and `code`.
+- Create a corresponding `docs/leetcode/lc###-slug.md` with the Java solution and update `docs/leetcode/README.md`.
+- Write original summaries and original solutions; do not paste proprietary problem statements or confidential interview handbooks.
+- Run `py scripts/validate_questions.py` and `py scripts/validate_leetcode.py` before opening a PR.
