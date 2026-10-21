@@ -10,7 +10,14 @@
     "time": "O(n)",
     "space": "O(n)",
     "language": "Java 17+",
-    "code": "public int[] twoSum(int[] nums, int target) {\n    Map<Integer, Integer> seen = new HashMap<>();\n    for (int i = 0; i < nums.length; i++) {\n        int need = target - nums[i];\n        if (seen.containsKey(need)) return new int[]{seen.get(need), i};\n        seen.put(nums[i], i);\n    }\n    return new int[0];\n}"
+    "code": "public int[] twoSum(int[] nums, int target) {\n    Map<Integer, Integer> seen = new HashMap<>();\n    for (int i = 0; i < nums.length; i++) {\n        int need = target - nums[i];\n        if (seen.containsKey(need)) return new int[]{seen.get(need), i};\n        seen.put(nums[i], i);\n    }\n    return new int[0];\n}",
+    "constraints": "At least two integers; exactly one pair exists. Return zero-based indices in either order; never reuse an index.",
+    "bruteForce": "Compare every pair of distinct indices.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(1)",
+    "bruteCode": "public int[] twoSum(int[] nums, int target) {\n for(int i=0;i<nums.length;i++) for(int j=i+1;j<nums.length;j++)\n  if(nums[i]+nums[j]==target) return new int[]{i,j};\n return new int[0];\n}",
+    "walkthrough": "For [2,7,11,15], store 2 at index 0. At index 1 the complement is 2, so return [0,1]. Look up before inserting to avoid reusing the current index.",
+    "edgeCases": "[3,3], target=6 → [0,1]; negative values; pair at the end."
   },
   {
     "id": "LC002",
@@ -23,7 +30,14 @@
     "time": "O(n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public boolean isAnagram(String s, String t) {\n    if (s.length() != t.length()) return false;\n    int[] count = new int[26];\n    for (int i = 0; i < s.length(); i++) {\n        count[s.charAt(i) - 'a']++;\n        count[t.charAt(i) - 'a']--;\n    }\n    for (int n : count) if (n != 0) return false;\n    return true;\n}"
+    "code": "public boolean isAnagram(String s, String t) {\n    if (s.length() != t.length()) return false;\n    int[] count = new int[26];\n    for (int i = 0; i < s.length(); i++) {\n        count[s.charAt(i) - 'a']++;\n        count[t.charAt(i) - 'a']--;\n    }\n    for (int n : count) if (n != 0) return false;\n    return true;\n}",
+    "constraints": "Inputs are non-null lowercase a-z strings. Return a boolean; unequal lengths cannot be anagrams.",
+    "bruteForce": "For each source character, find and consume one matching unused target character.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(n)",
+    "bruteCode": "public boolean isAnagram(String s,String t) {\n if(s.length()!=t.length()) return false;\n boolean[] used=new boolean[t.length()];\n for(char c:s.toCharArray()) {\n  int j=0; while(j<t.length() && (used[j] || t.charAt(j)!=c)) j++;\n  if(j==t.length()) return false; used[j]=true;\n }\n return true;\n}",
+    "walkthrough": "Counting increments for s and decrements for t cancel exactly when all multiplicities match. Equal sets of characters alone are insufficient.",
+    "edgeCases": "aab / abb → false; empty strings → true; different lengths."
   },
   {
     "id": "LC003",
@@ -36,7 +50,14 @@
     "time": "O(n)",
     "space": "O(n)",
     "language": "Java 17+",
-    "code": "public boolean containsDuplicate(int[] nums) {\n    Set<Integer> seen = new HashSet<>();\n    for (int n : nums) if (!seen.add(n)) return true;\n    return false;\n}"
+    "code": "public boolean containsDuplicate(int[] nums) {\n    Set<Integer> seen = new HashSet<>();\n    for (int n : nums) if (!seen.add(n)) return true;\n    return false;\n}",
+    "constraints": "Input is a non-null integer array. Return true if any two different positions contain equal values.",
+    "bruteForce": "Compare every index with every later index.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(1)",
+    "bruteCode": "public boolean containsDuplicate(int[] nums) {\n for(int i=0;i<nums.length;i++) for(int j=i+1;j<nums.length;j++)\n  if(nums[i]==nums[j]) return true;\n return false;\n}",
+    "walkthrough": "A HashSet contains precisely the previously visited values. In [1,2,3,1], the last insertion fails, revealing the duplicate.",
+    "edgeCases": "[] → false; [1] → false; [1,1] → true."
   },
   {
     "id": "LC004",
@@ -49,7 +70,14 @@
     "time": "O(n·k log k)",
     "space": "O(n·k)",
     "language": "Java 17+",
-    "code": "public List<List<String>> groupAnagrams(String[] strs) {\n    Map<String, List<String>> groups = new HashMap<>();\n    for (String s : strs) {\n        char[] chars = s.toCharArray();\n        Arrays.sort(chars);\n        groups.computeIfAbsent(new String(chars), k -> new ArrayList<>()).add(s);\n    }\n    return new ArrayList<>(groups.values());\n}"
+    "code": "public List<List<String>> groupAnagrams(String[] strs) {\n    Map<String, List<String>> groups = new HashMap<>();\n    for (String s : strs) {\n        char[] chars = s.toCharArray();\n        Arrays.sort(chars);\n        groups.computeIfAbsent(new String(chars), k -> new ArrayList<>()).add(s);\n    }\n    return new ArrayList<>(groups.values());\n}",
+    "constraints": "Input is an array of lowercase a-z strings, including possible empty strings and duplicates. Return groups in any order; keep every occurrence.",
+    "bruteForce": "Compare each word against the representative of every existing group using letter counts.",
+    "bruteTime": "O(n²·k), k = maximum word length",
+    "bruteSpace": "O(n·k) including output",
+    "bruteCode": "public List<List<String>> groupAnagrams(String[] strs) {\n List<List<String>> out=new ArrayList<>();\n for(String s:strs) {\n  List<String> found=null;\n  for(List<String> g:out) if(same(s,g.get(0))) {found=g;break;}\n  if(found==null) {found=new ArrayList<>();out.add(found);} found.add(s);\n }\n return out;\n}\nprivate boolean same(String a,String b) {\n if(a.length()!=b.length()) return false;\n int[] count=new int[26];\n for(int i=0;i<a.length();i++){count[a.charAt(i)-'a']++;count[b.charAt(i)-'a']--;}\n for(int x:count) if(x!=0) return false; return true;\n}",
+    "walkthrough": "Sorting eat, tea and ate yields the same key aet. A canonical key avoids checking every existing group.",
+    "edgeCases": "[\"\",\"\"] → one group of two; duplicate words; singleton groups."
   },
   {
     "id": "LC005",
@@ -62,7 +90,14 @@
     "time": "O(n log k)",
     "space": "O(n)",
     "language": "Java 17+",
-    "code": "public int[] topKFrequent(int[] nums, int k) {\n    Map<Integer, Integer> freq = new HashMap<>();\n    for (int n : nums) freq.merge(n, 1, Integer::sum);\n    PriorityQueue<Integer> heap = new PriorityQueue<>(Comparator.comparingInt(freq::get));\n    for (int n : freq.keySet()) {\n        heap.offer(n);\n        if (heap.size() > k) heap.poll();\n    }\n    int[] out = new int[k];\n    for (int i = 0; i < k; i++) out[i] = heap.poll();\n    return out;\n}"
+    "code": "public int[] topKFrequent(int[] nums, int k) {\n    Map<Integer, Integer> freq = new HashMap<>();\n    for (int n : nums) freq.merge(n, 1, Integer::sum);\n    PriorityQueue<Integer> heap = new PriorityQueue<>(Comparator.comparingInt(freq::get));\n    for (int n : freq.keySet()) {\n        heap.offer(n);\n        if (heap.size() > k) heap.poll();\n    }\n    int[] out = new int[k];\n    for (int i = 0; i < k; i++) out[i] = heap.poll();\n    return out;\n}",
+    "constraints": "Nonempty integer array; 1 <= k <= distinct values. Assume the top-k set is unique; output order does not matter.",
+    "bruteForce": "For each distinct value, scan the entire input to count it, then repeatedly pick the largest remaining count.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(n)",
+    "bruteCode": "public int[] topKFrequent(int[] nums,int k) {\n List<Integer> values=new ArrayList<>();\n for(int x:nums) if(!values.contains(x)) values.add(x);\n int[] counts=new int[values.size()];\n for(int i=0;i<values.size();i++) for(int x:nums) if(x==values.get(i)) counts[i]++;\n int[] out=new int[k];\n for(int j=0;j<k;j++) {\n  int best=0;for(int i=1;i<counts.length;i++) if(counts[i]>counts[best]) best=i;\n  out[j]=values.get(best); counts[best]=-1;\n } return out;\n}",
+    "walkthrough": "Counts are {1:3,2:2,3:1}. A heap capped at k removes the least frequent candidate, retaining 1 and 2 for k=2.",
+    "edgeCases": "k=1; all values equal; k equals distinct count. Heap output is not necessarily sorted."
   },
   {
     "id": "LC006",
@@ -75,7 +110,14 @@
     "time": "O(n)",
     "space": "O(1) extra excluding output",
     "language": "Java 17+",
-    "code": "public int[] productExceptSelf(int[] nums) {\n    int[] out = new int[nums.length];\n    int prefix = 1;\n    for (int i = 0; i < nums.length; i++) { out[i] = prefix; prefix *= nums[i]; }\n    int suffix = 1;\n    for (int i = nums.length - 1; i >= 0; i--) { out[i] *= suffix; suffix *= nums[i]; }\n    return out;\n}"
+    "code": "public int[] productExceptSelf(int[] nums) {\n    int[] out = new int[nums.length];\n    int prefix = 1;\n    for (int i = 0; i < nums.length; i++) { out[i] = prefix; prefix *= nums[i]; }\n    int suffix = 1;\n    for (int i = nums.length - 1; i >= 0; i--) { out[i] *= suffix; suffix *= nums[i]; }\n    return out;\n}",
+    "constraints": "At least two integers; products of prefixes/suffixes fit int. Return one product per index, without division; zeros are allowed.",
+    "bruteForce": "For each index multiply all other positions.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(1) extra excluding output",
+    "bruteCode": "public int[] productExceptSelf(int[] nums) {\n int[] out=new int[nums.length];\n for(int i=0;i<nums.length;i++){out[i]=1;for(int j=0;j<nums.length;j++) if(i!=j) out[i]*=nums[j];}\n return out;\n}",
+    "walkthrough": "For [1,2,3,4], prefix values in output are [1,1,2,6]. A reverse suffix pass multiplies them by [24,12,4,1].",
+    "edgeCases": "[0,2,3] → [6,0,0]; two zeros → all zero; negative values."
   },
   {
     "id": "LC007",
@@ -88,7 +130,14 @@
     "time": "O(n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public boolean isPalindrome(String s) {\n    int l = 0, r = s.length() - 1;\n    while (l < r) {\n        while (l < r && !Character.isLetterOrDigit(s.charAt(l))) l++;\n        while (l < r && !Character.isLetterOrDigit(s.charAt(r))) r--;\n        if (Character.toLowerCase(s.charAt(l++)) != Character.toLowerCase(s.charAt(r--))) return false;\n    }\n    return true;\n}"
+    "code": "public boolean isPalindrome(String s) {\n    int l = 0, r = s.length() - 1;\n    while (l < r) {\n        while (l < r && !Character.isLetterOrDigit(s.charAt(l))) l++;\n        while (l < r && !Character.isLetterOrDigit(s.charAt(r))) r--;\n        if (Character.toLowerCase(s.charAt(l++)) != Character.toLowerCase(s.charAt(r--))) return false;\n    }\n    return true;\n}",
+    "constraints": "Input is an ASCII string. Ignore non-alphanumeric characters and case. An empty normalized string is a palindrome.",
+    "bruteForce": "Build a normalized string, reverse a copy, and compare.",
+    "bruteTime": "O(n)",
+    "bruteSpace": "O(n)",
+    "bruteCode": "public boolean isPalindrome(String s) {\n StringBuilder clean=new StringBuilder();\n for(char c:s.toCharArray()) if(Character.isLetterOrDigit(c)) clean.append(Character.toLowerCase(c));\n return clean.toString().equals(new StringBuilder(clean).reverse().toString());\n}",
+    "walkthrough": "Two pointers skip punctuation without allocating the normalized string. Each character is visited at most a constant number of times.",
+    "edgeCases": "\".,\" → true; \"race a car\" → false; a single letter → true."
   },
   {
     "id": "LC008",
@@ -101,7 +150,14 @@
     "time": "O(n²)",
     "space": "O(1) extra excluding output/sort",
     "language": "Java 17+",
-    "code": "public List<List<Integer>> threeSum(int[] nums) {\n    Arrays.sort(nums);\n    List<List<Integer>> out = new ArrayList<>();\n    for (int i = 0; i < nums.length - 2; i++) {\n        if (i > 0 && nums[i] == nums[i-1]) continue;\n        int l = i+1, r = nums.length-1;\n        while (l < r) {\n            int sum = nums[i] + nums[l] + nums[r];\n            if (sum < 0) l++;\n            else if (sum > 0) r--;\n            else {\n                out.add(Arrays.asList(nums[i], nums[l], nums[r]));\n                l++; r--;\n                while (l < r && nums[l] == nums[l-1]) l++;\n                while (l < r && nums[r] == nums[r+1]) r--;\n            }\n        }\n    }\n    return out;\n}"
+    "code": "public List<List<Integer>> threeSum(int[] nums) {\n    Arrays.sort(nums);\n    List<List<Integer>> out = new ArrayList<>();\n    for (int i = 0; i < nums.length - 2; i++) {\n        if (i > 0 && nums[i] == nums[i-1]) continue;\n        int l = i+1, r = nums.length-1;\n        while (l < r) {\n            int sum = nums[i] + nums[l] + nums[r];\n            if (sum < 0) l++;\n            else if (sum > 0) r--;\n            else {\n                out.add(Arrays.asList(nums[i], nums[l], nums[r]));\n                l++; r--;\n                while (l < r && nums[l] == nums[l-1]) l++;\n                while (l < r && nums[r] == nums[r+1]) r--;\n            }\n        }\n    }\n    return out;\n}",
+    "constraints": "Return distinct value triplets with sum zero, using three different indices. Output order does not matter. Assume abs(value) <= 100000.",
+    "bruteForce": "Enumerate every index triple; sort each matching triple and deduplicate with a set.",
+    "bruteTime": "O(n³)",
+    "bruteSpace": "O(t) result storage for t unique triples",
+    "bruteCode": "public List<List<Integer>> threeSum(int[] nums) {\n Set<List<Integer>> out=new HashSet<>();\n for(int i=0;i<nums.length;i++) for(int j=i+1;j<nums.length;j++) for(int k=j+1;k<nums.length;k++)\n  if(nums[i]+nums[j]+nums[k]==0){int[] a={nums[i],nums[j],nums[k]};Arrays.sort(a);out.add(Arrays.asList(a[0],a[1],a[2]));}\n return new ArrayList<>(out);\n}",
+    "walkthrough": "After sorting [-4,-1,-1,0,1,2], fixing -1 allows a two-pointer sweep to find (-1,-1,2) and (-1,0,1). Skip duplicate fixed values and matched endpoints.",
+    "edgeCases": "[0,0,0,0] → [[0,0,0]]; fewer than three values; optimized code sorts input."
   },
   {
     "id": "LC009",
@@ -114,7 +170,14 @@
     "time": "O(n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public int maxProfit(int[] prices) {\n    int min = Integer.MAX_VALUE, best = 0;\n    for (int p : prices) { min = Math.min(min, p); best = Math.max(best, p-min); }\n    return best;\n}"
+    "code": "public int maxProfit(int[] prices) {\n    int min = Integer.MAX_VALUE, best = 0;\n    for (int p : prices) { min = Math.min(min, p); best = Math.max(best, p-min); }\n    return best;\n}",
+    "constraints": "Non-null array of nonnegative daily prices. Choose at most one buy and a strictly later sell; return zero if no profit exists.",
+    "bruteForce": "Try all buy/sell day pairs.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(1)",
+    "bruteCode": "public int maxProfit(int[] prices) {\n int best=0;for(int i=0;i<prices.length;i++) for(int j=i+1;j<prices.length;j++) best=Math.max(best,prices[j]-prices[i]);return best;\n}",
+    "walkthrough": "With [7,1,5,3,6,4], the minimum becomes 1 and selling at 6 yields 5. Keeping only the minimum eliminates repeated earlier-day scans.",
+    "edgeCases": "Descending prices → 0; empty or singleton → 0; equal prices."
   },
   {
     "id": "LC010",
@@ -127,7 +190,14 @@
     "time": "O(n)",
     "space": "O(k) for distinct chars",
     "language": "Java 17+",
-    "code": "public int lengthOfLongestSubstring(String s) {\n    Map<Character, Integer> last = new HashMap<>();\n    int left = 0, best = 0;\n    for (int right = 0; right < s.length(); right++) {\n        char c = s.charAt(right);\n        if (last.containsKey(c)) left = Math.max(left, last.get(c) + 1);\n        last.put(c, right);\n        best = Math.max(best, right - left + 1);\n    }\n    return best;\n}"
+    "code": "public int lengthOfLongestSubstring(String s) {\n    Map<Character, Integer> last = new HashMap<>();\n    int left = 0, best = 0;\n    for (int right = 0; right < s.length(); right++) {\n        char c = s.charAt(right);\n        if (last.containsKey(c)) left = Math.max(left, last.get(c) + 1);\n        last.put(c, right);\n        best = Math.max(best, right - left + 1);\n    }\n    return best;\n}",
+    "constraints": "Input is a non-null ASCII string. Return the length of a contiguous substring, not a subsequence, containing no duplicate characters.",
+    "bruteForce": "Start at every index and grow a set until a character repeats.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(min(n, alphabet size))",
+    "bruteCode": "public int lengthOfLongestSubstring(String s) {\n int best=0;\n for(int i=0;i<s.length();i++) {\n  Set<Character> seen=new HashSet<>();\n  for(int j=i;j<s.length() && seen.add(s.charAt(j));j++) best=Math.max(best,j-i+1);\n }return best;\n}",
+    "walkthrough": "In abcabcbb, the first window reaches abc. Seeing a again moves left past the previous a. Use max(left,last+1) so left never moves backward.",
+    "edgeCases": "\"abba\" → 2; \"\" → 0; repeated spaces count as characters."
   },
   {
     "id": "LC011",
@@ -140,7 +210,14 @@
     "time": "O(n)",
     "space": "O(n)",
     "language": "Java 17+",
-    "code": "public boolean isValid(String s) {\n    Deque<Character> stack = new ArrayDeque<>();\n    for (char c : s.toCharArray()) {\n        if (c == '(') stack.push(')');\n        else if (c == '[') stack.push(']');\n        else if (c == '{') stack.push('}');\n        else if (stack.isEmpty() || stack.pop() != c) return false;\n    }\n    return stack.isEmpty();\n}"
+    "code": "public boolean isValid(String s) {\n    Deque<Character> stack = new ArrayDeque<>();\n    for (char c : s.toCharArray()) {\n        if (c == '(') stack.push(')');\n        else if (c == '[') stack.push(']');\n        else if (c == '{') stack.push('}');\n        else if (stack.isEmpty() || stack.pop() != c) return false;\n    }\n    return stack.isEmpty();\n}",
+    "constraints": "Input contains only (), [] and {}. Every closer must match the most recent unmatched opener; empty input is valid.",
+    "bruteForce": "Repeatedly remove adjacent matching bracket pairs until no change occurs.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(n)",
+    "bruteCode": "public boolean isValid(String s) {\n while(true){String next=s.replace(\"()\", \"\").replace(\"[]\", \"\").replace(\"{}\", \"\");if(next.equals(s)) return s.isEmpty();s=next;}\n}",
+    "walkthrough": "A stack stores expected closing characters. In ([]){}, ] must close [ before ) can close (. A nonempty stack at the end means missing closers.",
+    "edgeCases": "\"([)]\" → false; \"(\" → false; \"\" → true."
   },
   {
     "id": "LC012",
@@ -153,7 +230,14 @@
     "time": "O(log n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public int search(int[] nums, int target) {\n    int l = 0, r = nums.length - 1;\n    while (l <= r) {\n        int m = l + (r-l)/2;\n        if (nums[m] == target) return m;\n        if (nums[m] < target) l = m+1;\n        else r = m-1;\n    }\n    return -1;\n}"
+    "code": "public int search(int[] nums, int target) {\n    int l = 0, r = nums.length - 1;\n    while (l <= r) {\n        int m = l + (r-l)/2;\n        if (nums[m] == target) return m;\n        if (nums[m] < target) l = m+1;\n        else r = m-1;\n    }\n    return -1;\n}",
+    "constraints": "Input is a distinct-value ascending integer array. Return the zero-based target index or -1; empty input is allowed.",
+    "bruteForce": "Scan every index until the target is found.",
+    "bruteTime": "O(n)",
+    "bruteSpace": "O(1)",
+    "bruteCode": "public int search(int[] nums,int target) {\n for(int i=0;i<nums.length;i++) if(nums[i]==target) return i;return -1;\n}",
+    "walkthrough": "On [-1,0,3,5,9,12], midpoint 3 is too small for target 9. Discard indices 0..2, then locate 9 at index 4.",
+    "edgeCases": "Empty array → -1; first/last index; absent target."
   },
   {
     "id": "LC013",
@@ -166,7 +250,14 @@
     "time": "O(log n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public int search(int[] nums, int target) {\n    int l=0, r=nums.length-1;\n    while (l<=r) {\n        int m=l+(r-l)/2;\n        if (nums[m]==target) return m;\n        if (nums[l]<=nums[m]) {\n            if (nums[l]<=target && target<nums[m]) r=m-1;\n            else l=m+1;\n        } else {\n            if (nums[m]<target && target<=nums[r]) l=m+1;\n            else r=m-1;\n        }\n    }\n    return -1;\n}"
+    "code": "public int search(int[] nums, int target) {\n    int l=0, r=nums.length-1;\n    while (l<=r) {\n        int m=l+(r-l)/2;\n        if (nums[m]==target) return m;\n        if (nums[l]<=nums[m]) {\n            if (nums[l]<=target && target<nums[m]) r=m-1;\n            else l=m+1;\n        } else {\n            if (nums[m]<target && target<=nums[r]) l=m+1;\n            else r=m-1;\n        }\n    }\n    return -1;\n}",
+    "constraints": "Input was strictly ascending before rotation; all values are distinct. Return target index or -1 in O(log n) for the improved solution.",
+    "bruteForce": "Ignore the rotation and scan every position.",
+    "bruteTime": "O(n)",
+    "bruteSpace": "O(1)",
+    "bruteCode": "public int search(int[] nums,int target) {\n for(int i=0;i<nums.length;i++) if(nums[i]==target) return i;return -1;\n}",
+    "walkthrough": "For [4,5,6,7,0,1,2] and target 0, the left half through 7 is sorted but cannot contain 0. Search the right half. Distinct values make this choice unambiguous.",
+    "edgeCases": "Unrotated input; singleton; absent target. Duplicates require a different algorithm and may cause linear behavior."
   },
   {
     "id": "LC014",
@@ -179,7 +270,14 @@
     "time": "O(n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public int maxSubArray(int[] nums) {\n    int current = nums[0], best = nums[0];\n    for (int i = 1; i < nums.length; i++) {\n        current = Math.max(nums[i], current + nums[i]);\n        best = Math.max(best, current);\n    }\n    return best;\n}"
+    "code": "public int maxSubArray(int[] nums) {\n    int current = nums[0], best = nums[0];\n    for (int i = 1; i < nums.length; i++) {\n        current = Math.max(nums[i], current + nums[i]);\n        best = Math.max(best, current);\n    }\n    return best;\n}",
+    "constraints": "Input has at least one integer. Return the largest sum of a nonempty contiguous subarray. Assume relevant sums fit int.",
+    "bruteForce": "Enumerate every start/end pair and maintain a running sum for each start.",
+    "bruteTime": "O(n²)",
+    "bruteSpace": "O(1)",
+    "bruteCode": "public int maxSubArray(int[] nums) {\n int best=nums[0];for(int i=0;i<nums.length;i++){int sum=0;for(int j=i;j<nums.length;j++){sum+=nums[j];best=Math.max(best,sum);}}return best;\n}",
+    "walkthrough": "At each index Kadane keeps the best sum ending exactly there: extend the previous segment or start at the current value. [4,-1,2,1] sums to 6.",
+    "edgeCases": "[-3,-1,-2] → -1, not zero; singleton; all zeros."
   },
   {
     "id": "LC015",
@@ -192,7 +290,14 @@
     "time": "O(n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public int climbStairs(int n) {\n    int a=1, b=1;\n    for (int i=2; i<=n; i++) { int next=a+b; a=b; b=next; }\n    return b;\n}"
+    "code": "public int climbStairs(int n) {\n    int a=1, b=1;\n    for (int i=2; i<=n; i++) { int next=a+b; a=b; b=next; }\n    return b;\n}",
+    "constraints": "1 <= n <= 45. Steps have size one or two; different orderings count separately. The answer fits int.",
+    "bruteForce": "Recursively enumerate every possible next step without memoization.",
+    "bruteTime": "O(2^n) upper bound",
+    "bruteSpace": "O(n) recursion stack",
+    "bruteCode": "public int climbStairs(int n) {\n if(n<=1) return 1;return climbStairs(n-1)+climbStairs(n-2);\n}",
+    "walkthrough": "Every path to step n ends with either a one-step move from n-1 or a two-step move from n-2. For n=4 the counts 2+3 give 5. Two variables replace repeated recursion.",
+    "edgeCases": "n=1 → 1; n=2 → 2; n=45 fits int; brute force only for small n."
   },
   {
     "id": "LC016",
@@ -205,7 +310,14 @@
     "time": "O(amount × coins)",
     "space": "O(amount)",
     "language": "Java 17+",
-    "code": "public int coinChange(int[] coins, int amount) {\n    int[] dp = new int[amount+1];\n    Arrays.fill(dp, amount+1);\n    dp[0]=0;\n    for (int a=1; a<=amount; a++)\n        for (int c : coins)\n            if (c<=a) dp[a]=Math.min(dp[a], dp[a-c]+1);\n    return dp[amount]>amount ? -1 : dp[amount];\n}"
+    "code": "public int coinChange(int[] coins, int amount) {\n    int[] dp = new int[amount+1];\n    Arrays.fill(dp, amount+1);\n    dp[0]=0;\n    for (int a=1; a<=amount; a++)\n        for (int c : coins)\n            if (c<=a) dp[a]=Math.min(dp[a], dp[a-c]+1);\n    return dp[amount]>amount ? -1 : dp[amount];\n}",
+    "constraints": "Coins are positive integers with unlimited supply; amount >= 0. Return the minimum count or -1 if impossible. A zero amount needs zero coins.",
+    "bruteForce": "Try every denomination recursively and choose the smallest successful result.",
+    "bruteTime": "O(c^(A/m+1)) upper bound, c=coin count, A=amount, m=min coin",
+    "bruteSpace": "O(A/m+1) recursion stack",
+    "bruteCode": "public int coinChange(int[] coins,int amount) {\n if(amount==0) return 0;int best=Integer.MAX_VALUE;\n for(int c:coins) if(c<=amount){int sub=coinChange(coins,amount-c);if(sub>=0) best=Math.min(best,sub+1);}\n return best==Integer.MAX_VALUE ? -1 : best;\n}",
+    "walkthrough": "dp[a] stores the best count for amount a. For coins [1,2,5], dp[11] can use dp[6]+1=3. Initialize unreachable values above the maximum possible valid count.",
+    "edgeCases": "[2], amount=3 → -1; amount=0 → 0; no zero/negative denominations; brute force only for small amounts."
   },
   {
     "id": "LC017",
@@ -218,7 +330,14 @@
     "time": "O(rows × cols)",
     "space": "O(rows × cols)",
     "language": "Java 17+",
-    "code": "public int numIslands(char[][] grid) {\n    if (grid.length == 0) return 0;\n    int rows=grid.length, cols=grid[0].length, count=0;\n    int[][] dirs={{1,0},{-1,0},{0,1},{0,-1}};\n    for (int r=0;r<rows;r++) for (int c=0;c<cols;c++) {\n        if (grid[r][c]!='1') continue;\n        count++;\n        Deque<int[]> stack=new ArrayDeque<>();\n        stack.push(new int[]{r,c}); grid[r][c]='0';\n        while (!stack.isEmpty()) {\n            int[] p=stack.pop();\n            for (int[] d:dirs) {\n                int nr=p[0]+d[0], nc=p[1]+d[1];\n                if (nr>=0 && nr<rows && nc>=0 && nc<cols && grid[nr][nc]=='1') {\n                    grid[nr][nc]='0'; stack.push(new int[]{nr,nc});\n                }\n            }\n        }\n    }\n    return count;\n}"
+    "code": "public int numIslands(char[][] grid) {\n    if (grid.length == 0) return 0;\n    int rows=grid.length, cols=grid[0].length, count=0;\n    int[][] dirs={{1,0},{-1,0},{0,1},{0,-1}};\n    for (int r=0;r<rows;r++) for (int c=0;c<cols;c++) {\n        if (grid[r][c]!='1') continue;\n        count++;\n        Deque<int[]> stack=new ArrayDeque<>();\n        stack.push(new int[]{r,c}); grid[r][c]='0';\n        while (!stack.isEmpty()) {\n            int[] p=stack.pop();\n            for (int[] d:dirs) {\n                int nr=p[0]+d[0], nc=p[1]+d[1];\n                if (nr>=0 && nr<rows && nc>=0 && nc<cols && grid[nr][nc]=='1') {\n                    grid[nr][nc]='0'; stack.push(new int[]{nr,nc});\n                }\n            }\n        }\n    }\n    return count;\n}",
+    "constraints": "Rectangular grid contains only 0 water and 1 land. Count components joined horizontally or vertically; diagonal contact does not join islands.",
+    "bruteForce": "For every unassigned land cell repeatedly rescan the grid to expand its component until no adjacent land can be added.",
+    "bruteTime": "O((rows·cols)²) upper bound",
+    "bruteSpace": "O(rows·cols)",
+    "bruteCode": "public int numIslands(char[][] grid) {\n if(grid.length==0) return 0;\n int rows=grid.length,cols=grid[0].length,count=0;\n int[][] label=new int[rows][cols];int[][] dirs={{1,0},{-1,0},{0,1},{0,-1}};\n for(int r=0;r<rows;r++) for(int c=0;c<cols;c++) {\n  if(grid[r][c]!='1' || label[r][c]!=0) continue;\n  label[r][c]=++count;boolean changed;\n  do {changed=false;\n   for(int i=0;i<rows;i++) for(int j=0;j<cols;j++) {\n    if(grid[i][j]!='1' || label[i][j]!=0) continue;\n    for(int[] d:dirs){int a=i+d[0],b=j+d[1];\n     if(a>=0 && a<rows && b>=0 && b<cols && label[a][b]==count){label[i][j]=count;changed=true;break;}}\n   }\n  } while(changed);\n }return count;\n}",
+    "walkthrough": "Flood-fill marks land when pushing it, so each cell enters the stack once. The sample has one three-cell component and one isolated cell. The optimized solution mutates land to water; copy the grid if needed.",
+    "edgeCases": "Empty grid → 0; all water → 0; diagonal land → separate islands; a long narrow island."
   },
   {
     "id": "LC018",
@@ -231,7 +350,14 @@
     "time": "O(n log n)",
     "space": "O(n) output",
     "language": "Java 17+",
-    "code": "public int[][] merge(int[][] intervals) {\n    if (intervals.length==0) return new int[0][];\n    Arrays.sort(intervals, Comparator.comparingInt(a -> a[0]));\n    List<int[]> out=new ArrayList<>();\n    int[] cur=intervals[0].clone();\n    for (int i=1;i<intervals.length;i++) {\n        if (intervals[i][0]<=cur[1]) cur[1]=Math.max(cur[1],intervals[i][1]);\n        else { out.add(cur); cur=intervals[i].clone(); }\n    }\n    out.add(cur);\n    return out.toArray(new int[0][]);\n}"
+    "code": "public int[][] merge(int[][] intervals) {\n    if (intervals.length==0) return new int[0][];\n    Arrays.sort(intervals, Comparator.comparingInt(a -> a[0]));\n    List<int[]> out=new ArrayList<>();\n    int[] cur=intervals[0].clone();\n    for (int i=1;i<intervals.length;i++) {\n        if (intervals[i][0]<=cur[1]) cur[1]=Math.max(cur[1],intervals[i][1]);\n        else { out.add(cur); cur=intervals[i].clone(); }\n    }\n    out.add(cur);\n    return out.toArray(new int[0][]);\n}",
+    "constraints": "Each closed interval has start <= end. Touching endpoints overlap. Return disjoint merged intervals; empty input is allowed.",
+    "bruteForce": "Repeatedly scan all interval pairs and merge any overlap until no pair overlaps.",
+    "bruteTime": "O(n³) upper bound",
+    "bruteSpace": "O(n)",
+    "bruteCode": "public int[][] merge(int[][] intervals) {\n List<int[]> a=new ArrayList<>();for(int[] x:intervals) a.add(x.clone());\n boolean changed;\n do {changed=false;\n  outer:for(int i=0;i<a.size();i++) for(int j=i+1;j<a.size();j++) {\n   int[] x=a.get(i),y=a.get(j);\n   if(x[0]<=y[1] && y[0]<=x[1]){x[0]=Math.min(x[0],y[0]);x[1]=Math.max(x[1],y[1]);a.remove(j);changed=true;break outer;}\n  }\n }while(changed);\n return a.toArray(new int[0][]);\n}",
+    "walkthrough": "Sort by start. After [1,3] merges with [2,6], current becomes [1,6]. [8,10] cannot overlap it, so emit current. Sorting guarantees later starts cannot reconnect a finished interval.",
+    "edgeCases": "[[1,4],[4,5]] → [[1,5]]; nested intervals; optimized code sorts the input array."
   },
   {
     "id": "LC019",
@@ -244,7 +370,14 @@
     "time": "O(n log k)",
     "space": "O(k)",
     "language": "Java 17+",
-    "code": "public int findKthLargest(int[] nums, int k) {\n    PriorityQueue<Integer> pq=new PriorityQueue<>();\n    for (int n:nums) { pq.offer(n); if (pq.size()>k) pq.poll(); }\n    return pq.peek();\n}"
+    "code": "public int findKthLargest(int[] nums, int k) {\n    PriorityQueue<Integer> pq=new PriorityQueue<>();\n    for (int n:nums) { pq.offer(n); if (pq.size()>k) pq.poll(); }\n    return pq.peek();\n}",
+    "constraints": "Nonempty array; 1 <= k <= n. Count duplicate values separately when ranking; return a value, not an index.",
+    "bruteForce": "Repeatedly scan for the largest unused position k times.",
+    "bruteTime": "O(n·k)",
+    "bruteSpace": "O(n)",
+    "bruteCode": "public int findKthLargest(int[] nums,int k) {\n boolean[] used=new boolean[nums.length];int best=-1;\n for(int rank=0;rank<k;rank++) {\n  best=-1;for(int i=0;i<nums.length;i++) if(!used[i] && (best<0 || nums[i]>nums[best])) best=i;\n  used[best]=true;\n }return nums[best];\n}",
+    "walkthrough": "A min-heap of size k retains the k largest values seen. Its root is the smallest of those retained values, which is exactly the kth largest overall.",
+    "edgeCases": "[3,3,2], k=2 → 3; k=1; k=n; negative values."
   },
   {
     "id": "LC020",
@@ -257,6 +390,13 @@
     "time": "O(n)",
     "space": "O(1)",
     "language": "Java 17+",
-    "code": "public int rob(int[] nums) {\n    int prev2=0, prev1=0;\n    for (int n:nums) { int next=Math.max(prev1,prev2+n); prev2=prev1; prev1=next; }\n    return prev1;\n}"
+    "code": "public int rob(int[] nums) {\n    int prev2=0, prev1=0;\n    for (int n:nums) { int next=Math.max(prev1,prev2+n); prev2=prev1; prev1=next; }\n    return prev1;\n}",
+    "constraints": "Non-null array of nonnegative house amounts. You may skip all houses; never select adjacent positions. Return maximum money; totals fit int.",
+    "bruteForce": "At each index explore both skipping this house and taking it then skipping its neighbor.",
+    "bruteTime": "O(2^n) upper bound",
+    "bruteSpace": "O(n) recursion stack",
+    "bruteCode": "public int rob(int[] nums) {return choose(nums,0);}\nprivate int choose(int[] nums,int i) {\n if(i>=nums.length) return 0;return Math.max(choose(nums,i+1),nums[i]+choose(nums,i+2));\n}",
+    "walkthrough": "For [2,7,9,3,1], running best values become 2,7,11,11,12. Taking a house uses the best two positions back; skipping uses the previous best.",
+    "edgeCases": "[] → 0; [5] → 5; [2,1,1,2] → 4; all zeros."
   }
 ]

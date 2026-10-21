@@ -115,3 +115,8 @@
 **Answer cue:** Thread dumps, JFR, traces, profiles, lock and database analysis.
 
 **Practice:** Explain an example, a failure mode, and an alternative.
+
+
+## Detailed virtual-thread study
+
+[Virtual threads: scheduling, platform comparison, Java 21/24 pinning, runnable example and production limits](java-virtual-threads.md).

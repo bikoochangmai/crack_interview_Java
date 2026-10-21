@@ -2,8 +2,14 @@
 
 **Live portal:** https://bikoochangmai.github.io/crack_interview_Java/
 
-A free, static GitHub Pages preparation portal for Java Full-Stack / Senior Engineer / Solution Architect interviews. **314 interview questions + 20 Java coding exercises = 334 trackable items**. No backend or login needed.
+A free, static GitHub Pages preparation portal for Java Full-Stack / Senior Engineer / Solution Architect interviews. **366 interview questions + 20 Java coding exercises = 386 trackable items**. No backend or login needed.
 
+
+## Terraform, GitHub Actions, virtual threads and coding expansion
+
+- [Terraform and GitHub Actions](docs/terraform-github-actions-interview-prep.md): all 51 numbered topics from the supplied notes, also searchable in the portal under DevOps & Infrastructure.
+- [Virtual threads](docs/java-virtual-threads.md): thread basics, carrier scheduling, Java 21 versus Java 24 pinning, downstream limits and a runnable Java 21 example; also covered under concurrency.
+- [20 Java coding exercises](docs/leetcode/README.md): problem, input/output contract, constraints, worked example, brute-force Java baseline, improved solution, walkthrough, complexity and edge cases in both portal and Markdown.
 
 ## Foundational answer expansion (V5)
 

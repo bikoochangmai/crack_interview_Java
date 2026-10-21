@@ -93,3 +93,8 @@ Design checklist:
 - [Java 21 virtual threads (JEP 444)](https://openjdk.org/jeps/444)
 - [Java Memory Model (JLS 17)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html)
 - [Java concurrency API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/package-summary.html)
+
+
+## Detailed virtual-thread study
+
+[Virtual threads: scheduling, platform comparison, Java 21/24 pinning, runnable example and production limits](java-virtual-threads.md).

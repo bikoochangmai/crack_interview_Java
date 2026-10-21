@@ -332,3 +332,8 @@ Assess runtime compatibility, preview-feature reliance and library upgrades. Sta
 - How would you measure or test the trade-off in a Java 8 to Java 21 Spring Boot migration?
 
 ---
+
+
+## Detailed virtual-thread study
+
+[Virtual threads: scheduling, platform comparison, Java 21/24 pinning, runnable example and production limits](java-virtual-threads.md).

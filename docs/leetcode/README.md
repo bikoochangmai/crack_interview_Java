@@ -26,3 +26,6 @@
 | [Merge Intervals](lc018-merge-intervals.md) | Medium | Sorting / Intervals |
 | [Kth Largest Element in an Array](lc019-kth-largest-element-in-an-array.md) | Medium | Heap |
 | [House Robber](lc020-house-robber.md) | Medium | Dynamic Programming |
+
+
+Each problem now includes an original problem summary, input/output contract and constraints, a worked example, brute-force baseline with Java code and complexity, an improved Java solution, a step-by-step explanation, and edge cases. LC001–LC020 are local study IDs, not LeetCode problem numbers. Snippets use java.util.*; place either variant in class Solution. Exponential baselines are intended only for small educational inputs.

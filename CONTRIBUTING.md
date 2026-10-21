@@ -55,3 +55,8 @@ If you add or modify questions in `data/questions.json`, update the correspondin
 - Create a corresponding `docs/leetcode/lc###-slug.md` with the Java solution and update `docs/leetcode/README.md`.
 - Write original summaries and original solutions; do not paste proprietary problem statements or confidential interview handbooks.
 - Run `py scripts/validate_questions.py` and `py scripts/validate_leetcode.py` before opening a PR.
+
+
+Coding exercises also require constraints, bruteForce, bruteTime, bruteSpace, bruteCode, walkthrough and edgeCases; keep the Markdown equivalent synchronized. Expanded DevOps entries use contentBlocks (type text or code, plus text) to preserve complete HCL/YAML examples in the portal.
+
+Run `python scripts/validate_java_solutions.py` with JDK 17+ to compile and check both variants of all 20 exercises against samples and boundary cases.

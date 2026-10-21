@@ -706,12 +706,15 @@
     "answer": "Finalized in 21; lightweight threads for high-concurrency blocking workloads, not CPU speedups.",
     "priority": "High",
     "example": "A document-processing API handles thousands of mostly-waiting remote storage requests using a virtual-thread-per-task executor.",
-    "explanation": "Java 21 virtual threads are lightweight Java threads scheduled onto carrier platform threads. They simplify high-concurrency blocking I/O code, but do not make downstream systems faster.",
-    "why": "Use virtual threads for many concurrent request handlers or network I/O operations where thread-per-request platform threads are expensive.",
-    "tradeoffs": "In Java 21, long blocking operations inside synchronized sections can pin carriers; JDBC connection pools and service quotas still bound throughput.",
+    "explanation": "Virtual threads are ordinary java.lang.Thread instances whose scheduling is managed by the JVM. A platform thread generally maps to an operating-system thread; many virtual threads share a smaller set of carrier platform threads. Java 21 finalized virtual threads (JEP 444). A Runnable describes work without a result; Callable describes work returning a result and allowing checked exceptions. Either task abstraction can run on a platform or virtual thread. When supported blocking I/O parks a virtual thread, the JVM can unmount it from its carrier and later resume it on an available carrier. This lets many waiting tasks coexist without one OS thread per task. Concurrency means overlapping task lifetimes; parallelism means simultaneous CPU execution. Virtual threads improve throughput for many waiting tasks; they do not accelerate CPU computation or make a single remote call faster.",
+    "why": "Use for high concurrency with blocking I/O. For CPU-heavy tasks use bounded parallelism near available processor capacity and measure. Compare throughput, p95/p99 latency, heap, carrier usage and downstream saturation under the same load.",
+    "tradeoffs": "The virtual-thread-per-task executor is unbounded: one fresh virtual thread per submitted task. Do not pool virtual threads to control resources. Use a semaphore, connection pool, admission control and timeouts to bound downstream work; also bound incoming requests because waiting tasks still consume memory. Shared mutable state still requires synchronization. ThreadLocal works but large per-thread caches multiply memory use. Virtual threads are daemon threads; keep an owning scope alive and wait for completion. Cancellation is cooperative; configure real HTTP/JDBC timeouts because interruption may not stop every operation. On Java 21, blocking while holding a synchronized monitor can pin a carrier; long native/foreign calls can also occupy carriers. Diagnose with JFR jdk.VirtualThreadPinned events and -Djdk.tracePinnedThreads=full on Java 21. JDK 24 (JEP 491) removes monitor-related pinning; do not repeat the Java 21 synchronized warning as a universal rule or replace every monitor with ReentrantLock. Lock contention and native-code limits still matter. Virtual threads need no preview flag in Java 21; other concurrency APIs have their own release status.",
     "followups": [
-      "What production problem would this solve?",
-      "What are its main failure modes and trade-offs?"
+      "Why does a virtual thread not remove the JDBC pool limit?",
+      "How do you bound incoming work as well as active downstream calls?",
+      "What is the difference between pinning on Java 21 and Java 24?",
+      "What happens when a Future times out but the remote call ignores interruption?",
+      "Why use a fixed platform pool for CPU-heavy computation?"
     ],
     "detailStatus": "Expanded",
     "code": "try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    var result = executor.submit(() -> client.fetchDocument(id));\n    System.out.println(result.get());\n}"
@@ -807,15 +810,17 @@
     "answer": "Virtual threads are JVM-managed and scale blocking concurrency; platform threads map more directly to OS threads.",
     "priority": "Medium",
     "example": "A high-concurrency REST endpoint uses virtual threads for blocking HTTP calls but still caps JDBC connections at the pool size.",
-    "explanation": "Virtual threads are JVM-managed and scale blocking concurrency; platform threads map more directly to OS threads. The important distinction is the contract it provides and the guarantees it does not provide. Interview distinction: the accompanying Java 21 lab isolates one testable behavior. For production readiness, also discuss integration boundaries, operational failure modes, and what the demo deliberately does not implement.",
-    "why": "Use this concept when designing a Java 8 to Java 21 migration of a Spring Boot document platform. In an interview, identify the requirements first, compare a plausible alternative, and explain the consequences for correctness, latency, maintainability and operations. Before coding, state the invariant the implementation must preserve, then identify which component owns it and how it is tested.",
-    "tradeoffs": "Unverified library compatibility and module encapsulation can break production after an upgrade. Validate the decision with tests, metrics and a rollback or recovery plan where applicable. This focused executable lab is a learning aid, not evidence that a complete framework, distributed system, or cloud service is running.",
+    "explanation": "Virtual threads are ordinary java.lang.Thread instances whose scheduling is managed by the JVM. A platform thread generally maps to an operating-system thread; many virtual threads share a smaller set of carrier platform threads. Java 21 finalized virtual threads (JEP 444). A Runnable describes work without a result; Callable describes work returning a result and allowing checked exceptions. Either task abstraction can run on a platform or virtual thread. When supported blocking I/O parks a virtual thread, the JVM can unmount it from its carrier and later resume it on an available carrier. This lets many waiting tasks coexist without one OS thread per task. Concurrency means overlapping task lifetimes; parallelism means simultaneous CPU execution. Virtual threads improve throughput for many waiting tasks; they do not accelerate CPU computation or make a single remote call faster.",
+    "why": "Use for high concurrency with blocking I/O. For CPU-heavy tasks use bounded parallelism near available processor capacity and measure. Compare throughput, p95/p99 latency, heap, carrier usage and downstream saturation under the same load.",
+    "tradeoffs": "The virtual-thread-per-task executor is unbounded: one fresh virtual thread per submitted task. Do not pool virtual threads to control resources. Use a semaphore, connection pool, admission control and timeouts to bound downstream work; also bound incoming requests because waiting tasks still consume memory. Shared mutable state still requires synchronization. ThreadLocal works but large per-thread caches multiply memory use. Virtual threads are daemon threads; keep an owning scope alive and wait for completion. Cancellation is cooperative; configure real HTTP/JDBC timeouts because interruption may not stop every operation. On Java 21, blocking while holding a synchronized monitor can pin a carrier; long native/foreign calls can also occupy carriers. Diagnose with JFR jdk.VirtualThreadPinned events and -Djdk.tracePinnedThreads=full on Java 21. JDK 24 (JEP 491) removes monitor-related pinning; do not repeat the Java 21 synchronized warning as a universal rule or replace every monitor with ReentrantLock. Lock contention and native-code limits still matter. Virtual threads need no preview flag in Java 21; other concurrency APIs have their own release status.",
     "followups": [
-      "What changes if Platform vs virtual threads is used at 10× load?",
-      "Which alternative would you choose, and under what constraints?",
-      "How would you test the main failure mode in production-like conditions?"
+      "Why does a virtual thread not remove the JDBC pool limit?",
+      "How do you bound incoming work as well as active downstream calls?",
+      "What is the difference between pinning on Java 21 and Java 24?",
+      "What happens when a Future times out but the remote call ignores interruption?",
+      "Why use a fixed platform pool for CPU-heavy computation?"
     ],
-    "detailStatus": "Expanded — executable focused lab",
+    "detailStatus": "Expanded",
     "diagram": "Baseline tests → Dependency upgrade → Java 21 build → Canary → Rollback",
     "labPath": "examples/v6/java21/Lab043.java",
     "runCommand": "javac Lab043.java && java Lab043",
@@ -5669,5 +5674,2241 @@
     "followups": [
       "What metrics would you collect during a proof of concept?"
     ]
+  },
+  {
+    "id": 315,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Terraform Variable Types?",
+    "answer": "Terraform variables define input values for a module.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Terraform variables define input values for a module."
+      },
+      {
+        "type": "text",
+        "text": "Common types:"
+      },
+      {
+        "type": "code",
+        "text": "string\nnumber\nbool\nlist(string)\nset(string)\nmap(string)\nobject({\n  name = string\n})\nlist(object({\n  name  = string\n  value = string\n}))\nmap(object({\n  instance_type = string\n  disk_size     = number\n}))"
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "variable \"instances\" {\n  type = map(object({\n    instance_type = string\n    disk_size     = number\n    public        = bool\n  }))\n\n  default = {\n    app = {\n      instance_type = \"t3.micro\"\n      disk_size     = 20\n      public        = true\n    }\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "Terraform types define the shape of input values. Primitive types include string, number, and bool. Collection and structural types like list, set, map, object, list(object), and map(object) are used for more complex reusable modules."
+      }
+    ]
+  },
+  {
+    "id": 316,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "for_each?",
+    "answer": "`for_each` creates one resource instance per item in a map or set.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`for_each` creates one resource instance per item in a map or set."
+      },
+      {
+        "type": "code",
+        "text": "resource \"aws_instance\" \"this\" {\n  for_each = var.instances\n\n  ami           = \"ami-1234567890abcdef0\"\n  instance_type = each.value.instance_type\n\n  tags = {\n    Name = each.key\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "If:"
+      },
+      {
+        "type": "code",
+        "text": "instances = {\n  app = {\n    instance_type = \"t3.micro\"\n  }\n\n  worker = {\n    instance_type = \"t3.small\"\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Terraform creates:"
+      },
+      {
+        "type": "code",
+        "text": "aws_instance.this[\"app\"]\naws_instance.this[\"worker\"]"
+      },
+      {
+        "type": "text",
+        "text": "Key idea:"
+      },
+      {
+        "type": "code",
+        "text": "each.key   = map key\neach.value = map value/object"
+      },
+      {
+        "type": "text",
+        "text": "Use `for_each` when each instance has a meaningful stable key."
+      }
+    ]
+  },
+  {
+    "id": 317,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "count?",
+    "answer": "`count` creates N copies of a resource.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`count` creates N copies of a resource."
+      },
+      {
+        "type": "code",
+        "text": "resource \"aws_instance\" \"web\" {\n  count = 2\n\n  ami           = \"ami-1234567890abcdef0\"\n  instance_type = \"t3.micro\"\n\n  tags = {\n    Name = \"web-${count.index}\"\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Terraform creates:"
+      },
+      {
+        "type": "code",
+        "text": "aws_instance.web[0]\naws_instance.web[1]"
+      },
+      {
+        "type": "text",
+        "text": "`count.index` starts at `0`."
+      },
+      {
+        "type": "text",
+        "text": "Use `count` for simple identical resources or 0/1 conditional resources:"
+      },
+      {
+        "type": "code",
+        "text": "count = var.create_instance ? 1 : 0"
+      },
+      {
+        "type": "text",
+        "text": "Prefer `for_each` for named resources because `count` indexes can shift if list order changes."
+      }
+    ]
+  },
+  {
+    "id": 318,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "locals?",
+    "answer": "`locals` define reusable calculated values inside a module.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`locals` define reusable calculated values inside a module."
+      },
+      {
+        "type": "code",
+        "text": "locals {\n  environment = \"dev\"\n  app_name    = \"billing\"\n  name_prefix = \"${local.environment}-${local.app_name}\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Use with:"
+      },
+      {
+        "type": "code",
+        "text": "local.name_prefix"
+      },
+      {
+        "type": "text",
+        "text": "Difference:"
+      },
+      {
+        "type": "code",
+        "text": "variable = input from outside\nlocal    = calculated/reusable value inside Terraform\noutput   = value exposed after apply"
+      },
+      {
+        "type": "text",
+        "text": "Common uses:"
+      },
+      {
+        "type": "code",
+        "text": "locals {\n  common_tags = {\n    Environment = var.environment\n    ManagedBy   = \"terraform\"\n  }\n}"
+      }
+    ]
+  },
+  {
+    "id": 319,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "merge?",
+    "answer": "`merge` combines maps/objects.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`merge` combines maps/objects."
+      },
+      {
+        "type": "code",
+        "text": "locals {\n  common_tags = {\n    Environment = \"dev\"\n    Project     = \"billing\"\n  }\n}\n\ntags = merge(local.common_tags, {\n  Name = \"dev-billing-app\"\n})"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "{\n  Environment = \"dev\"\n  Project     = \"billing\"\n  Name        = \"dev-billing-app\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "If duplicate keys exist, the later map wins:"
+      },
+      {
+        "type": "code",
+        "text": "merge({ Environment = \"dev\" }, { Environment = \"prod\" })"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "{ Environment = \"prod\" }"
+      }
+    ]
+  },
+  {
+    "id": 320,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "concat?",
+    "answer": "`concat` joins lists.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`concat` joins lists."
+      },
+      {
+        "type": "code",
+        "text": "locals {\n  public_subnets  = [\"subnet-111\", \"subnet-222\"]\n  private_subnets = [\"subnet-333\"]\n\n  all_subnets = concat(local.public_subnets, local.private_subnets)\n}"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "[\"subnet-111\", \"subnet-222\", \"subnet-333\"]"
+      },
+      {
+        "type": "text",
+        "text": "Comparison:"
+      },
+      {
+        "type": "code",
+        "text": "merge  = combine maps\nconcat = combine lists"
+      },
+      {
+        "type": "text",
+        "text": "`concat` does not remove duplicates. Use `distinct(concat(...))` if uniqueness is needed."
+      }
+    ]
+  },
+  {
+    "id": 321,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "set, list, and Ordering?",
+    "answer": "`list`:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`list`:"
+      },
+      {
+        "type": "code",
+        "text": "ordered\nduplicates allowed\nindex access works"
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "[\"dev\", \"qa\", \"prod\"]"
+      },
+      {
+        "type": "text",
+        "text": "Indexes:"
+      },
+      {
+        "type": "code",
+        "text": "0 = dev\n1 = qa\n2 = prod"
+      },
+      {
+        "type": "text",
+        "text": "`set`:"
+      },
+      {
+        "type": "code",
+        "text": "unordered\nduplicates removed\nno stable index"
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "toset([\"dev\", \"qa\", \"dev\"])"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "[\"dev\", \"qa\"]"
+      },
+      {
+        "type": "text",
+        "text": "Mental model:"
+      },
+      {
+        "type": "code",
+        "text": "list = ordered queue\nset  = unique basket\nmap  = named values"
+      }
+    ]
+  },
+  {
+    "id": 322,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "tomap?",
+    "answer": "`tomap` converts a value into a map.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`tomap` converts a value into a map."
+      },
+      {
+        "type": "code",
+        "text": "locals {\n  instances = tomap({\n    app = {\n      instance_type = \"t3.micro\"\n    }\n  })\n}"
+      },
+      {
+        "type": "text",
+        "text": "Useful when Terraform needs help with type inference, especially conditionals:"
+      },
+      {
+        "type": "code",
+        "text": "instances = var.create_instances ? tomap({\n  app = {\n    instance_type = \"t3.micro\"\n  }\n}) : tomap({})"
+      }
+    ]
+  },
+  {
+    "id": 323,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Dynamic Blocks?",
+    "answer": "`dynamic` generates repeated nested blocks inside a resource.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`dynamic` generates repeated nested blocks inside a resource."
+      },
+      {
+        "type": "text",
+        "text": "Resource-level `for_each` creates multiple resources."
+      },
+      {
+        "type": "text",
+        "text": "`dynamic` creates multiple nested blocks inside one resource."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "variable \"security_rules\" {\n  type = list(object({\n    name     = string\n    priority = number\n    port     = string\n  }))\n}\n\nresource \"azurerm_network_security_group\" \"this\" {\n  name                = \"demo-nsg\"\n  location            = \"westus2\"\n  resource_group_name = azurerm_resource_group.rg.name\n\n  dynamic \"security_rule\" {\n    for_each = var.security_rules\n\n    content {\n      name                       = security_rule.value.name\n      priority                   = security_rule.value.priority\n      direction                  = \"Inbound\"\n      access                     = \"Allow\"\n      protocol                   = \"Tcp\"\n      source_port_range          = \"*\"\n      destination_port_range     = security_rule.value.port\n      source_address_prefix      = \"*\"\n      destination_address_prefix = \"*\"\n    }\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "A dynamic block generates repeated nested blocks from a collection. It is used when the provider schema expects repeatable blocks like security_rule, ingress, egress, network_acls, statement, condition, or origin."
+      }
+    ]
+  },
+  {
+    "id": 324,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Modules?",
+    "answer": "A module is a reusable group of Terraform files.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "A module is a reusable group of Terraform files."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "module \"app_server\" {\n  source = \"./modules/ec2\"\n\n  ami           = \"ami-1234567890abcdef0\"\n  instance_type = \"t3.micro\"\n  name          = \"app-server\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Flow:"
+      },
+      {
+        "type": "code",
+        "text": "root module calls child module\ninputs go into module variables\nmodule creates resources\nmodule outputs can be read by root"
+      },
+      {
+        "type": "text",
+        "text": "Every Terraform folder is a module. The folder where Terraform runs is the root module."
+      }
+    ]
+  },
+  {
+    "id": 325,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Module Outputs and Dependencies?",
+    "answer": "Child module output:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Child module output:"
+      },
+      {
+        "type": "code",
+        "text": "output \"subnet_id\" {\n  value = azurerm_subnet.app.id\n}"
+      },
+      {
+        "type": "text",
+        "text": "Root module consuming output:"
+      },
+      {
+        "type": "code",
+        "text": "module \"app_service\" {\n  source = \"./modules/app-service\"\n\n  subnet_id = module.network.subnet_id\n}"
+      },
+      {
+        "type": "text",
+        "text": "This reference creates an implicit dependency:"
+      },
+      {
+        "type": "code",
+        "text": "module.app_service depends on module.network"
+      },
+      {
+        "type": "text",
+        "text": "Prefer implicit dependencies through references."
+      },
+      {
+        "type": "text",
+        "text": "Use `depends_on` only for hidden dependencies Terraform cannot infer."
+      }
+    ]
+  },
+  {
+    "id": 326,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "depends_on?",
+    "answer": "Terraform normally builds dependencies from references.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Terraform normally builds dependencies from references."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "resource_group_name = azurerm_resource_group.rg.name"
+      },
+      {
+        "type": "text",
+        "text": "This already creates a dependency on:"
+      },
+      {
+        "type": "code",
+        "text": "azurerm_resource_group.rg"
+      },
+      {
+        "type": "text",
+        "text": "Example from prep:"
+      },
+      {
+        "type": "code",
+        "text": "module \"azure-key-vault\" {\n  resource_group_name = azurerm_resource_group.rg.name\n\n  azurerm_role_assignments = {\n    (azurerm_user_assigned_identity.this.principal_id) = {\n      role_definition_name = \"Key Vault Secrets Officer\"\n    }\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "The module already depends on the resource group and user-assigned identity because it references them. Extra `depends_on` is usually redundant."
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "Terraform builds its dependency graph from references. I use explicit depends_on only when there is a hidden dependency that Terraform cannot infer."
+      }
+    ]
+  },
+  {
+    "id": 327,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Provider Configuration and provider.tf?",
+    "answer": "A typical Azure `provider.tf` contains:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "A typical Azure `provider.tf` contains:"
+      },
+      {
+        "type": "code",
+        "text": "terraform {\n  required_providers {\n    azurerm = {\n      source  = \"hashicorp/azurerm\"\n      version = \"~> 4.62.0\"\n    }\n  }\n\n  backend \"azurerm\" {\n    resource_group_name  = \"tfstate-rg\"\n    storage_account_name = \"tfstatedevsa\"\n    container_name       = \"tfstate\"\n    key                  = \"dev.tfstate\"\n  }\n}\n\nprovider \"azurerm\" {\n  features {}\n  subscription_id = \"11111111-1111-1111-1111-111111111111\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "required_providers = which providers/plugins Terraform needs\nbackend            = where Terraform state is stored\nprovider           = how Terraform talks to Azure and where resources are created"
+      },
+      {
+        "type": "text",
+        "text": "Important:"
+      },
+      {
+        "type": "code",
+        "text": "backend \"azurerm\" controls state storage\nprovider \"azurerm\" controls resource creation"
+      },
+      {
+        "type": "text",
+        "text": "They can use the same Azure subscription, but they are separate concepts."
+      }
+    ]
+  },
+  {
+    "id": 328,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "features {}?",
+    "answer": "AzureRM provider requires:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "AzureRM provider requires:"
+      },
+      {
+        "type": "code",
+        "text": "provider \"azurerm\" {\n  features {}\n}"
+      },
+      {
+        "type": "text",
+        "text": "It means:"
+      },
+      {
+        "type": "code",
+        "text": "Use AzureRM provider with default feature settings."
+      },
+      {
+        "type": "text",
+        "text": "You can customize provider behavior:"
+      },
+      {
+        "type": "code",
+        "text": "provider \"azurerm\" {\n  features {\n    key_vault {\n      purge_soft_deleted_secrets_on_destroy = true\n    }\n\n    resource_group {\n      prevent_deletion_if_contains_resources = true\n    }\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "It does not create Azure resources. It configures provider behavior."
+      }
+    ]
+  },
+  {
+    "id": 329,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Provider Aliases?",
+    "answer": "Provider aliases allow multiple configurations of the same provider.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Provider aliases allow multiple configurations of the same provider."
+      },
+      {
+        "type": "text",
+        "text": "Example: two Azure subscriptions."
+      },
+      {
+        "type": "code",
+        "text": "provider \"azurerm\" {\n  features {}\n  subscription_id = \"dev-subscription-id\"\n}\n\nprovider \"azurerm\" {\n  alias = \"shared\"\n\n  features {}\n  subscription_id = \"shared-subscription-id\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Default provider:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_resource_group\" \"app\" {\n  name     = \"app-rg\"\n  location = \"westus2\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Aliased provider:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_resource_group\" \"shared\" {\n  provider = azurerm.shared\n\n  name     = \"shared-rg\"\n  location = \"westus2\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Passing alias into a module:"
+      },
+      {
+        "type": "code",
+        "text": "module \"shared_key_vault\" {\n  source = \"./modules/key-vault\"\n\n  providers = {\n    azurerm = azurerm.shared\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "Provider aliases let me manage resources across multiple subscriptions, accounts, or regions in the same configuration. Resources use the default provider unless `provider = azurerm.shared` is specified. Aliased providers must be passed explicitly to modules."
+      }
+    ]
+  },
+  {
+    "id": 330,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Terraform State and Resource Addresses?",
+    "answer": "State maps Terraform addresses to real infrastructure.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "State maps Terraform addresses to real infrastructure."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "azurerm_resource_group.rg\n  -> /subscriptions/.../resourceGroups/demo-rg"
+      },
+      {
+        "type": "text",
+        "text": "Resource addresses:"
+      },
+      {
+        "type": "code",
+        "text": "azurerm_resource_group.rg\nazurerm_resource_group.rg[0]\nazurerm_resource_group.rg[\"dev\"]\nmodule.network.azurerm_subnet.app"
+      },
+      {
+        "type": "text",
+        "text": "Important:"
+      },
+      {
+        "type": "code",
+        "text": "Terraform identity is based on the resource address, not only the cloud resource name."
+      },
+      {
+        "type": "text",
+        "text": "If you rename:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_resource_group\" \"rg\" {}"
+      },
+      {
+        "type": "text",
+        "text": "to:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_resource_group\" \"main\" {}"
+      },
+      {
+        "type": "text",
+        "text": "Terraform sees old address removed and new address added unless you use a moved block."
+      },
+      {
+        "type": "text",
+        "text": "Useful commands:"
+      },
+      {
+        "type": "code",
+        "text": "terraform state list\nterraform state show <address>\nterraform state mv <from> <to>\nterraform state rm <address>\nterraform import <address> <id>\nterraform state pull\nterraform force-unlock <lock-id>"
+      }
+    ]
+  },
+  {
+    "id": 331,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Import?",
+    "answer": "Use import when a real resource exists but Terraform does not manage it yet.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Use import when a real resource exists but Terraform does not manage it yet."
+      },
+      {
+        "type": "text",
+        "text": "CLI:"
+      },
+      {
+        "type": "code",
+        "text": "terraform import azurerm_resource_group.rg /subscriptions/<sub-id>/resourceGroups/existing-rg"
+      },
+      {
+        "type": "text",
+        "text": "Config-driven import:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_resource_group\" \"rg\" {\n  name     = \"existing-rg\"\n  location = \"westus2\"\n}\n\nimport {\n  to = azurerm_resource_group.rg\n  id = \"/subscriptions/<sub-id>/resourceGroups/existing-rg\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "Attach this existing Azure resource to this Terraform address."
+      }
+    ]
+  },
+  {
+    "id": 332,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Moved Blocks?",
+    "answer": "Use `moved` when Terraform already manages a resource but its address changed.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Use `moved` when Terraform already manages a resource but its address changed."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "moved {\n  from = azurerm_resource_group.old\n  to   = azurerm_resource_group.new\n}"
+      },
+      {
+        "type": "text",
+        "text": "Moving into a module:"
+      },
+      {
+        "type": "code",
+        "text": "moved {\n  from = azurerm_resource_group.rg\n  to   = module.resource_group.azurerm_resource_group.this\n}"
+      },
+      {
+        "type": "text",
+        "text": "Difference:"
+      },
+      {
+        "type": "code",
+        "text": "import = real resource exists, state does not know it yet\nmoved  = state knows it, but Terraform address changed"
+      }
+    ]
+  },
+  {
+    "id": 333,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "terraform init Commands?",
+    "answer": "Common init commands:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Common init commands:"
+      },
+      {
+        "type": "code",
+        "text": "terraform init\nterraform init -upgrade\nterraform init -migrate-state\nterraform init -reconfigure\nterraform init -backend-config=dev.backend.hcl\nterraform init -input=false\nterraform init -backend=false"
+      },
+      {
+        "type": "text",
+        "text": "Meanings:"
+      },
+      {
+        "type": "code",
+        "text": "init                  = initialize working directory\ninit -upgrade         = upgrade allowed provider/module versions\ninit -migrate-state   = move existing state to changed backend\ninit -reconfigure     = accept new backend config without migration\ninit -backend-config  = pass backend config externally\ninit -input=false     = disable prompts for CI/CD\ninit -backend=false   = skip backend initialization"
+      }
+    ]
+  },
+  {
+    "id": 334,
+    "category": "Terraform — Infrastructure as Code",
+    "question": ".terraform.lock.hcl?",
+    "answer": "`.terraform.lock.hcl` is Terraform's provider dependency lock file.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`.terraform.lock.hcl` is Terraform's provider dependency lock file."
+      },
+      {
+        "type": "text",
+        "text": "It records:"
+      },
+      {
+        "type": "code",
+        "text": "exact provider versions\nversion constraints\nprovider checksums"
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "provider \"registry.terraform.io/hashicorp/azurerm\" {\n  version     = \"4.62.0\"\n  constraints = \"~> 4.62.0\"\n  hashes = [\n    \"h1:...\"\n  ]\n}"
+      },
+      {
+        "type": "text",
+        "text": "Why it matters:"
+      },
+      {
+        "type": "code",
+        "text": "reproducible provider versions\nconsistent local and CI behavior\nprevents surprise upgrades\nverifies downloaded provider integrity"
+      },
+      {
+        "type": "text",
+        "text": "Usually commit it to Git."
+      },
+      {
+        "type": "text",
+        "text": "Upgrade intentionally with:"
+      },
+      {
+        "type": "code",
+        "text": "terraform init -upgrade"
+      }
+    ]
+  },
+  {
+    "id": 335,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Lifecycle Blocks?",
+    "answer": "prevent_destroy is a planning guard while the lifecycle rule remains in configuration; deleting the whole resource block also removes that guard. Keep cloud-side deletion protections for critical data.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "prevent_destroy is a planning guard while the lifecycle rule remains in configuration; deleting the whole resource block also removes that guard. Keep cloud-side deletion protections for critical data."
+      },
+      {
+        "type": "text",
+        "text": "`lifecycle` changes how Terraform handles create, update, replace, and destroy."
+      },
+      {
+        "type": "text",
+        "text": "Common options:"
+      },
+      {
+        "type": "code",
+        "text": "lifecycle {\n  prevent_destroy = true\n}"
+      },
+      {
+        "type": "text",
+        "text": "Protects critical resources."
+      },
+      {
+        "type": "code",
+        "text": "lifecycle {\n  ignore_changes = [\n    tags[\"CostCenter\"]\n  ]\n}"
+      },
+      {
+        "type": "text",
+        "text": "Ignores expected external changes."
+      },
+      {
+        "type": "code",
+        "text": "lifecycle {\n  create_before_destroy = true\n}"
+      },
+      {
+        "type": "text",
+        "text": "Tries to create replacement before destroying old resource."
+      },
+      {
+        "type": "code",
+        "text": "lifecycle {\n  replace_triggered_by = [\n    azurerm_service_plan.this.id\n  ]\n}"
+      },
+      {
+        "type": "text",
+        "text": "Forces replacement when another object changes."
+      },
+      {
+        "type": "text",
+        "text": "Interview warning:"
+      },
+      {
+        "type": "text",
+        "text": "Do not overuse `ignore_changes`; it can hide drift."
+      }
+    ]
+  },
+  {
+    "id": 336,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Plan and Apply Behavior?",
+    "answer": "`terraform plan` previews changes.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`terraform plan` previews changes."
+      },
+      {
+        "type": "code",
+        "text": "terraform plan -input=false -no-color -out=infra.tfplan"
+      },
+      {
+        "type": "text",
+        "text": "`terraform apply` executes changes."
+      },
+      {
+        "type": "code",
+        "text": "terraform apply -input=false infra.tfplan"
+      },
+      {
+        "type": "text",
+        "text": "Saved plan pattern:"
+      },
+      {
+        "type": "code",
+        "text": "plan creates exact artifact\nreview/approval happens\napply uses that exact artifact"
+      },
+      {
+        "type": "text",
+        "text": "This avoids applying a different plan from the one reviewed."
+      },
+      {
+        "type": "text",
+        "text": "Useful flag:"
+      },
+      {
+        "type": "code",
+        "text": "terraform plan -detailed-exitcode"
+      },
+      {
+        "type": "text",
+        "text": "Exit codes:"
+      },
+      {
+        "type": "code",
+        "text": "0 = no changes\n1 = error\n2 = changes present"
+      }
+    ]
+  },
+  {
+    "id": 337,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "State Locking and CI/CD Concurrency?",
+    "answer": "Remote backends lock state to prevent concurrent writes.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Remote backends lock state to prevent concurrent writes."
+      },
+      {
+        "type": "text",
+        "text": "If two pipelines use the same backend key:"
+      },
+      {
+        "type": "code",
+        "text": "run A gets lock\nrun B fails or waits"
+      },
+      {
+        "type": "text",
+        "text": "GitHub Actions fix:"
+      },
+      {
+        "type": "code",
+        "text": "concurrency:\n  group: terraform-dev-state\n  cancel-in-progress: false"
+      },
+      {
+        "type": "text",
+        "text": "Terraform backup:"
+      },
+      {
+        "type": "code",
+        "text": "terraform plan -lock-timeout=20m\nterraform apply -lock-timeout=20m"
+      },
+      {
+        "type": "text",
+        "text": "Avoid:"
+      },
+      {
+        "type": "code",
+        "text": "-lock=false"
+      },
+      {
+        "type": "text",
+        "text": "unless you really understand the risk."
+      }
+    ]
+  },
+  {
+    "id": 338,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Separating State Per Environment/Component?",
+    "answer": "Avoid one giant state file.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Avoid one giant state file."
+      },
+      {
+        "type": "text",
+        "text": "Good:"
+      },
+      {
+        "type": "code",
+        "text": "dvve/dev.tfstate\ndvve/uat.tfstate\ndvve/prod.tfstate"
+      },
+      {
+        "type": "text",
+        "text": "For larger systems:"
+      },
+      {
+        "type": "code",
+        "text": "dvve/dev/network.tfstate\ndvve/dev/app.tfstate\ndvve/dev/database.tfstate"
+      },
+      {
+        "type": "text",
+        "text": "Benefits:"
+      },
+      {
+        "type": "code",
+        "text": "smaller blast radius\nless lock contention\nfaster plans\nclearer ownership\nbetter access control"
+      },
+      {
+        "type": "text",
+        "text": "Split state by what changes together and what should fail together."
+      }
+    ]
+  },
+  {
+    "id": 339,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "terraform_remote_state?",
+    "answer": "Reads outputs from another Terraform state file.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Reads outputs from another Terraform state file."
+      },
+      {
+        "type": "text",
+        "text": "Network stack:"
+      },
+      {
+        "type": "code",
+        "text": "output \"app_subnet_id\" {\n  value = azurerm_subnet.app.id\n}"
+      },
+      {
+        "type": "text",
+        "text": "App stack:"
+      },
+      {
+        "type": "code",
+        "text": "data \"terraform_remote_state\" \"network\" {\n  backend = \"azurerm\"\n\n  config = {\n    resource_group_name  = \"tfstate-rg\"\n    storage_account_name = \"companytfstate\"\n    container_name       = \"tfstate\"\n    key                  = \"dvve/dev/network.tfstate\"\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Use:"
+      },
+      {
+        "type": "code",
+        "text": "subnet_id = data.terraform_remote_state.network.outputs.app_subnet_id"
+      },
+      {
+        "type": "text",
+        "text": "Important:"
+      },
+      {
+        "type": "code",
+        "text": "remote_state exposes root outputs; its credentials may allow access to the entire state snapshot\nstate access should be protected\nstate may contain sensitive values"
+      }
+    ]
+  },
+  {
+    "id": 340,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "State Troubleshooting?",
+    "answer": "Checklist:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Checklist:"
+      },
+      {
+        "type": "code",
+        "text": "1. terraform state list\n2. terraform state show <address>\n3. Compare config, state, and Azure reality\n4. Check provider subscription/alias\n5. Check whether resource address changed\n6. Use import if resource exists but is missing from state\n7. Use moved/state mv if address changed\n8. Use state rm only to stop managing without deleting\n9. Avoid manual state edits"
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "I troubleshoot state by checking whether the resource exists in state, whether the Terraform address is correct, whether the provider points to the expected subscription, and whether the real Azure resource still exists. Depending on the cause, I use import, moved blocks, state mv, or state rm."
+      }
+    ]
+  },
+  {
+    "id": 341,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Drift Detection?",
+    "answer": "Drift means real infrastructure differs from Terraform config/state.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Drift means real infrastructure differs from Terraform config/state."
+      },
+      {
+        "type": "text",
+        "text": "Detect:"
+      },
+      {
+        "type": "code",
+        "text": "terraform plan"
+      },
+      {
+        "type": "text",
+        "text": "CI-friendly:"
+      },
+      {
+        "type": "code",
+        "text": "terraform plan -detailed-exitcode -input=false -no-color"
+      },
+      {
+        "type": "text",
+        "text": "Refresh-only:"
+      },
+      {
+        "type": "code",
+        "text": "terraform plan -refresh-only\nterraform apply -refresh-only"
+      },
+      {
+        "type": "text",
+        "text": "Normal plan:"
+      },
+      {
+        "type": "code",
+        "text": "make infrastructure match config"
+      },
+      {
+        "type": "text",
+        "text": "Refresh-only:"
+      },
+      {
+        "type": "code",
+        "text": "make state match real infrastructure"
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "Drift detection identifies changes made outside Terraform. I use `terraform plan` to detect drift and decide whether to revert it, update code, use ignore_changes for expected external changes, or accept reality with refresh-only state updates."
+      }
+    ]
+  },
+  {
+    "id": 342,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Replace Behavior?",
+    "answer": "Terraform replaces resources when a change cannot be updated in place.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Terraform replaces resources when a change cannot be updated in place."
+      },
+      {
+        "type": "text",
+        "text": "Plan clues:"
+      },
+      {
+        "type": "code",
+        "text": "-/ resource will be replaced\n# forces replacement"
+      },
+      {
+        "type": "text",
+        "text": "Force replacement:"
+      },
+      {
+        "type": "code",
+        "text": "terraform apply -replace=\"azurerm_linux_virtual_machine.vm\""
+      },
+      {
+        "type": "text",
+        "text": "Modern preference:"
+      },
+      {
+        "type": "code",
+        "text": "use -replace instead of old taint workflow"
+      },
+      {
+        "type": "text",
+        "text": "Be careful with critical resources:"
+      },
+      {
+        "type": "code",
+        "text": "databases\nstorage accounts\nkey vaults\nresource groups\nnetworking"
+      },
+      {
+        "type": "text",
+        "text": "Use:"
+      },
+      {
+        "type": "code",
+        "text": "lifecycle {\n  prevent_destroy = true\n}"
+      },
+      {
+        "type": "text",
+        "text": "for protection."
+      }
+    ]
+  },
+  {
+    "id": 343,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Targeting?",
+    "answer": "`-target` limits Terraform to a specific resource/module.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`-target` limits Terraform to a specific resource/module."
+      },
+      {
+        "type": "code",
+        "text": "terraform apply -target=module.network"
+      },
+      {
+        "type": "text",
+        "text": "Risk:"
+      },
+      {
+        "type": "code",
+        "text": "partial apply\nskipped changes\nincomplete dependency reconciliation\nconfusing future plans"
+      },
+      {
+        "type": "text",
+        "text": "Use only for exceptional recovery/migration scenarios."
+      },
+      {
+        "type": "text",
+        "text": "After targeted apply, always run:"
+      },
+      {
+        "type": "code",
+        "text": "terraform plan"
+      },
+      {
+        "type": "text",
+        "text": "without `-target`."
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "`-target` is a recovery tool, not a normal deployment strategy. It can leave infrastructure partially reconciled, so I use it only for exceptional cases and then run a full plan afterward."
+      }
+    ]
+  },
+  {
+    "id": 344,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Sensitive Data in State?",
+    "answer": "Terraform state may contain secrets.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Terraform state may contain secrets."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_key_vault_secret\" \"api_key\" {\n  name         = \"api-key\"\n  value        = var.api_key\n  key_vault_id = azurerm_key_vault.this.id\n}"
+      },
+      {
+        "type": "text",
+        "text": "Even if:"
+      },
+      {
+        "type": "code",
+        "text": "variable \"api_key\" {\n  type      = string\n  sensitive = true\n}"
+      },
+      {
+        "type": "text",
+        "text": "the secret value may still be in state."
+      },
+      {
+        "type": "text",
+        "text": "Important:"
+      },
+      {
+        "type": "code",
+        "text": "sensitive = true hides display\nit does not guarantee absence from state"
+      },
+      {
+        "type": "text",
+        "text": "Best practice:"
+      },
+      {
+        "type": "code",
+        "text": "Terraform creates Key Vault and permissions\nseparate secret pipeline writes actual secret values\napps use managed identity and Key Vault references"
+      },
+      {
+        "type": "text",
+        "text": "Never hardcode secrets in `variables.tf` defaults."
+      }
+    ]
+  },
+  {
+    "id": 345,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Variable Validation and Preconditions/Postconditions?",
+    "answer": "Variable validation:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Variable validation:"
+      },
+      {
+        "type": "code",
+        "text": "variable \"environment\" {\n  type = string\n\n  validation {\n    condition     = contains([\"dev\", \"uat\", \"prod\"], var.environment)\n    error_message = \"Environment must be dev, uat, or prod.\"\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Precondition:"
+      },
+      {
+        "type": "code",
+        "text": "resource \"azurerm_key_vault\" \"this\" {\n  # ...\n\n  lifecycle {\n    precondition {\n      condition     = var.environment != \"prod\" || var.purge_protection_enabled\n      error_message = \"Production Key Vaults must have purge protection enabled.\"\n    }\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Postcondition:"
+      },
+      {
+        "type": "code",
+        "text": "lifecycle {\n  postcondition {\n    condition     = self.primary_location == azurerm_resource_group.rg.location\n    error_message = \"Storage account primary location must match RG location.\"\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Mental model:"
+      },
+      {
+        "type": "code",
+        "text": "validation    = input guard\nprecondition  = before action guard\npostcondition = after result guard"
+      }
+    ]
+  },
+  {
+    "id": 346,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Provisioners?",
+    "answer": "Provisioners run scripts or copy files during create/destroy.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Provisioners run scripts or copy files during create/destroy."
+      },
+      {
+        "type": "text",
+        "text": "Common types:"
+      },
+      {
+        "type": "code",
+        "text": "local-exec\nremote-exec\nfile"
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "provisioner \"local-exec\" {\n  command = \"echo Resource ${self.name} created\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "Provisioners are a last resort because:"
+      },
+      {
+        "type": "code",
+        "text": "not always idempotent\nside effects are not fully tracked\ncan fail halfway\ndepend on runtime connectivity\nblur infra and configuration management"
+      },
+      {
+        "type": "text",
+        "text": "Prefer:"
+      },
+      {
+        "type": "code",
+        "text": "cloud-init/custom_data\nAzure VM extensions\nPacker images\nAnsible/Chef/Puppet\nprovider-native resources\nCI/CD deployment tools"
+      }
+    ]
+  },
+  {
+    "id": 347,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Complex Expressions?",
+    "answer": "`flatten`",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`flatten`"
+      },
+      {
+        "type": "text",
+        "text": "Turns nested lists into one list."
+      },
+      {
+        "type": "code",
+        "text": "flatten([[80, 443], [8080]])"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "[80, 443, 8080]"
+      },
+      {
+        "type": "text",
+        "text": "`setproduct`"
+      },
+      {
+        "type": "text",
+        "text": "Creates all combinations."
+      },
+      {
+        "type": "code",
+        "text": "setproduct([\"dev\", \"uat\"], [\"westus2\", \"eastus\"])"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "[\n  [\"dev\", \"westus2\"],\n  [\"dev\", \"eastus\"],\n  [\"uat\", \"westus2\"],\n  [\"uat\", \"eastus\"]\n]"
+      },
+      {
+        "type": "text",
+        "text": "`lookup`"
+      },
+      {
+        "type": "text",
+        "text": "Map lookup with default."
+      },
+      {
+        "type": "code",
+        "text": "lookup(local.sizes, var.environment, \"Standard_B1s\")"
+      },
+      {
+        "type": "text",
+        "text": "`try`"
+      },
+      {
+        "type": "text",
+        "text": "Returns first expression that does not error."
+      },
+      {
+        "type": "code",
+        "text": "port = app.port"
+      },
+      {
+        "type": "text",
+        "text": "`can`"
+      },
+      {
+        "type": "text",
+        "text": "Tests whether an expression succeeds."
+      },
+      {
+        "type": "code",
+        "text": "can(regex(\"^[a-z0-9]+$\", var.name))"
+      },
+      {
+        "type": "text",
+        "text": "`coalesce`"
+      },
+      {
+        "type": "text",
+        "text": "Returns first non-null/non-empty value."
+      },
+      {
+        "type": "code",
+        "text": "name = coalesce(var.custom_name, \"default-name\")"
+      }
+    ]
+  },
+  {
+    "id": 348,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Complex Expression Example?",
+    "answer": "Non-null optional defaults require Terraform 1.3+. try catches evaluation errors, not null values; defaults in the type definition handle omitted and explicit null attributes here.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Non-null optional defaults require Terraform 1.3+. try catches evaluation errors, not null values; defaults in the type definition handle omitted and explicit null attributes here."
+      },
+      {
+        "type": "text",
+        "text": "Input:"
+      },
+      {
+        "type": "code",
+        "text": "variable \"apps\" {\n  type = map(object({\n    regions = list(string)\n    port    = optional(number, 80)\n    tags    = optional(map(string), {})\n  }))\n\n  default = {\n    api = {\n      regions = [\"westus2\", \"eastus\"]\n      port    = 8080\n    }\n\n    worker = {\n      regions = [\"westus2\"]\n    }\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Transform:"
+      },
+      {
+        "type": "code",
+        "text": "locals {\n  app_region_pairs = flatten([\n    for app_name, app in var.apps : [\n      for region in app.regions : {\n        name   = app_name\n        region = region\n        port   = app.port\n        tags   = app.tags\n      }\n    ]\n  ])\n\n  deployments = {\n    for item in local.app_region_pairs :\n    \"${item.name}-${item.region}\" => item\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Result:"
+      },
+      {
+        "type": "code",
+        "text": "{\n  \"api-westus2\" = {\n    name   = \"api\"\n    region = \"westus2\"\n    port   = 8080\n    tags   = {}\n  }\n\n  \"api-eastus\" = {\n    name   = \"api\"\n    region = \"eastus\"\n    port   = 8080\n    tags   = {}\n  }\n\n  \"worker-westus2\" = {\n    name   = \"worker\"\n    region = \"westus2\"\n    port   = 80\n    tags   = {}\n  }\n}"
+      },
+      {
+        "type": "text",
+        "text": "Purpose:"
+      },
+      {
+        "type": "code",
+        "text": "Input: apps with multiple regions\nOutput: one deployment per app per region"
+      }
+    ]
+  },
+  {
+    "id": 349,
+    "category": "Terraform — Infrastructure as Code",
+    "question": "Policy and Security Scanning?",
+    "answer": "Common tools:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Common tools:"
+      },
+      {
+        "type": "code",
+        "text": "terraform fmt\nterraform validate\nTFLint\nCheckov\nTrivy config\ntfsec\nOPA/Conftest\nSentinel\nAzure Policy"
+      },
+      {
+        "type": "text",
+        "text": "Pipeline flow:"
+      },
+      {
+        "type": "code",
+        "text": "terraform fmt -check\nterraform init\nterraform validate\ntflint\ntrivy config/checkov\nterraform plan -out=tfplan\nterraform show -json tfplan > tfplan.json\nconftest/checkov plan scan\napproval\nterraform apply tfplan"
+      },
+      {
+        "type": "text",
+        "text": "Policy-as-code examples:"
+      },
+      {
+        "type": "code",
+        "text": "deny Key Vault without purge protection\ndeny NSG public SSH\nrequire tags\nrequire private endpoints\nblock public storage access"
+      },
+      {
+        "type": "text",
+        "text": "OPA/Conftest checks plan JSON using Rego."
+      },
+      {
+        "type": "text",
+        "text": "Sentinel is HashiCorp's policy framework for Terraform Cloud/Enterprise."
+      }
+    ]
+  },
+  {
+    "id": 350,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Workflow Permissions?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "permissions:\n  contents: write\n  security-events: write\n  packages: write\n  actions: read\n  attestations: write\n  id-token: write"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "contents: write         = update repo contents/tags/releases\nsecurity-events: write  = upload code scanning/SARIF results\npackages: write         = publish packages/images to GHCR\nactions: read           = read workflow/action metadata\nattestations: write     = create artifact provenance/attestations\nid-token: write         = request OIDC token"
+      },
+      {
+        "type": "text",
+        "text": "Interview answer:"
+      },
+      {
+        "type": "text",
+        "text": "Permissions define what the job's GITHUB_TOKEN can do. I grant least privilege per job instead of broad default permissions."
+      }
+    ]
+  },
+  {
+    "id": 351,
+    "category": "GitHub Actions — CI/CD",
+    "question": "GITHUB_TOKEN vs PAT?",
+    "answer": "`secrets.GITHUB_TOKEN` is automatically generated by GitHub Actions for each workflow run.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "`secrets.GITHUB_TOKEN` is automatically generated by GitHub Actions for each workflow run."
+      },
+      {
+        "type": "text",
+        "text": "It is:"
+      },
+      {
+        "type": "code",
+        "text": "temporary\nrepo-scoped\ncontrolled by workflow permissions\nnot your personal token"
+      },
+      {
+        "type": "text",
+        "text": "PAT:"
+      },
+      {
+        "type": "code",
+        "text": "personal or service account token\nlonger-lived\nstored in secrets\npermissions depend on token scopes"
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "password: ${{ secrets.GITHUB_TOKEN }}"
+      },
+      {
+        "type": "text",
+        "text": "This uses the automatic workflow token, not your own token."
+      }
+    ]
+  },
+  {
+    "id": 352,
+    "category": "GitHub Actions — CI/CD",
+    "question": "github.actor?",
+    "answer": "Means:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "code",
+        "text": "username: ${{ github.actor }}"
+      },
+      {
+        "type": "text",
+        "text": "Means:"
+      },
+      {
+        "type": "code",
+        "text": "Use the account that triggered the workflow."
+      },
+      {
+        "type": "text",
+        "text": "Could be:"
+      },
+      {
+        "type": "code",
+        "text": "human user\ndependabot[bot]\ngithub-actions[bot]\nservice account"
+      },
+      {
+        "type": "text",
+        "text": "Prefer github.actor with GITHUB_TOKEN for same-repository GHCR publishing. Use a narrowly scoped GitHub App token or PAT only when cross-repository access requires it. An alternative credential pair is:"
+      },
+      {
+        "type": "code",
+        "text": "username: ${{ vars.DEVOPS_USER }}\npassword: ${{ secrets.DEVOPS_TOKEN }}"
+      }
+    ]
+  },
+  {
+    "id": 353,
+    "category": "GitHub Actions — CI/CD",
+    "question": "GitHub Actions Variables and Secrets?",
+    "answer": "Variables:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Variables:"
+      },
+      {
+        "type": "code",
+        "text": "GH_ACTOR: ${{ vars.DEVOPS_USER }}"
+      },
+      {
+        "type": "text",
+        "text": "Use for non-secret config."
+      },
+      {
+        "type": "text",
+        "text": "Secrets:"
+      },
+      {
+        "type": "code",
+        "text": "GH_TOKEN: ${{ secrets.DEVOPS_TOKEN }}"
+      },
+      {
+        "type": "text",
+        "text": "Use for sensitive values."
+      },
+      {
+        "type": "text",
+        "text": "`GH_TOKEN` is recognized by GitHub CLI:"
+      },
+      {
+        "type": "code",
+        "text": "gh api ...\ngh release create ..."
+      }
+    ]
+  },
+  {
+    "id": 354,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Reusable Workflows: workflow_call?",
+    "answer": "Reusable workflow:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Reusable workflow:"
+      },
+      {
+        "type": "code",
+        "text": "on:\n  workflow_call:\n    inputs:\n      java-version:\n        required: true\n        type: string\n    secrets:\n      DEVOPS_TOKEN:\n        required: true"
+      },
+      {
+        "type": "text",
+        "text": "Called at job level:"
+      },
+      {
+        "type": "code",
+        "text": "jobs:\n  CI-CD:\n    uses: org/repo/.github/workflows/App-CI-CD.yml@main\n    with:\n      java-version: \"25\"\n    secrets:\n      DEVOPS_TOKEN: ${{ secrets.DEVOPS_TOKEN }}"
+      },
+      {
+        "type": "text",
+        "text": "`workflow_call` means:"
+      },
+      {
+        "type": "code",
+        "text": "This workflow can be called by another workflow."
+      }
+    ]
+  },
+  {
+    "id": 355,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Composite Actions?",
+    "answer": "Composite action:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Composite action:"
+      },
+      {
+        "type": "code",
+        "text": "runs:\n  using: \"composite\"\n  steps:\n    - shell: bash\n      run: echo \"Build Docker image\""
+      },
+      {
+        "type": "text",
+        "text": "Called at step level:"
+      },
+      {
+        "type": "code",
+        "text": "steps:\n  - uses: org/action-repo@v1"
+      },
+      {
+        "type": "text",
+        "text": "Difference:"
+      },
+      {
+        "type": "code",
+        "text": "Reusable workflow:\n  file: .github/workflows/*.yml\n  has: on: workflow_call\n  called at job level\n\nComposite action:\n  file: action.yml\n  has: runs: using: composite\n  called at step level"
+      }
+    ]
+  },
+  {
+    "id": 356,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Pinning by SHA?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "uses: org/repo/.github/workflows/App-CI-CD.yml@6d6245a3eeb5c7aa7d118a1a74be9c047d009047"
+      },
+      {
+        "type": "text",
+        "text": "The value after `@` is a commit SHA."
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "Use the workflow exactly as it existed at that commit."
+      },
+      {
+        "type": "text",
+        "text": "Benefits:"
+      },
+      {
+        "type": "code",
+        "text": "reproducibility\nsupply-chain security\nno surprise changes from moving branch/tag"
+      }
+    ]
+  },
+  {
+    "id": 357,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Docker Login Action?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "- name: Log in to the Container registry\n  uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1\n  with:\n    registry: ${{ inputs.registry }}\n    username: ${{ github.actor }}\n    password: ${{ inputs.token }}"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "registry = container registry like ghcr.io\nusername = account that triggered workflow\npassword = token passed into action"
+      },
+      {
+        "type": "text",
+        "text": "If:"
+      },
+      {
+        "type": "code",
+        "text": "token: ${{ secrets.GITHUB_TOKEN }}"
+      },
+      {
+        "type": "text",
+        "text": "then the password is GitHub's temporary workflow token, not your personal token."
+      }
+    ]
+  },
+  {
+    "id": 358,
+    "category": "GitHub Actions — CI/CD",
+    "question": "CodeQL Init?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "- name: Initialize CodeQL\n  uses: github/codeql-action/init@<sha>\n  with:\n    languages: ${{ inputs.code-QL-language }}\n    build-mode: ${{ inputs.code-QL-language == 'java' && 'autobuild' || 'none' }}\n    config: |\n      paths-ignore:\n        - lib\n        - tests\n      queries:\n        - uses: security-extended\n        - uses: security-and-quality"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "initialize CodeQL analysis\nchoose language from input\nuse autobuild for Java\npath exclusions depend on language and build mode; for Java autobuild, exclude files from the build itself\nrun extended security and quality queries"
+      },
+      {
+        "type": "text",
+        "text": "Flow:"
+      },
+      {
+        "type": "code",
+        "text": "CodeQL init\nbuild/autobuild\nCodeQL analyze\nupload security findings"
+      }
+    ]
+  },
+  {
+    "id": 359,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Trivy Threshold Script?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "CRITICAL_COUNT=$(jq '[.Results[].Vulnerabilities[]?.Severity | select(. == \"CRITICAL\")] | length' \"$FILE\")\nHIGH_COUNT=$(jq '[.Results[].Vulnerabilities[]?.Severity | select(. == \"HIGH\")] | length' \"$FILE\")"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "read Trivy JSON\ncount vulnerabilities by severity"
+      },
+      {
+        "type": "text",
+        "text": "Threshold check:"
+      },
+      {
+        "type": "code",
+        "text": "if [ \"$CRITICAL_COUNT\" -gt \"$CRITICAL_THRESHOLD\" ]; then\n  FAIL_REASON=\"${FAIL_REASON:+$FAIL_REASON; }CRITICAL ($CRITICAL_COUNT) > $CRITICAL_THRESHOLD\"\nfi"
+      },
+      {
+        "type": "text",
+        "text": "Final failure:"
+      },
+      {
+        "type": "code",
+        "text": "if [ -n \"$FAIL_REASON\" ]; then\n  echo \"Vulnerability threshold(s) exceeded: $FAIL_REASON\"\n  exit 1\nfi"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "If any severity count exceeds threshold, fail the workflow."
+      }
+    ]
+  },
+  {
+    "id": 360,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Artifact Directory Flattening?",
+    "answer": "Prefer setting the download action destination explicitly. The legacy snippet below misses dotfiles, fails for empty directories, and can overwrite files; do not use it as a general-purpose extraction script.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Prefer setting the download action destination explicitly. The legacy snippet below misses dotfiles, fails for empty directories, and can overwrite files; do not use it as a general-purpose extraction script."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "if [ -d \"./$ARTIFACT_NAME\" ]; then\n  mv ./$ARTIFACT_NAME/* ./\n  rm -r ./$ARTIFACT_NAME\nelse\n  echo \"Artifact directory not found or artifact structure is different.\"\nfi"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "If artifact directory exists:\n  move files from artifact folder into current directory\n  delete empty artifact folder\nelse:\n  print warning"
+      },
+      {
+        "type": "text",
+        "text": "Used after downloading artifacts when later steps expect files in the current directory."
+      }
+    ]
+  },
+  {
+    "id": 361,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Git Config URL Rewrite for Private Terraform Modules?",
+    "answer": "This explains an existing pattern, not a recommended default. URL rewrites can persist credentials in Git configuration. Prefer a short-lived GitHub App token or a read-only SSH deploy key, an isolated runner, and cleanup. Never interpolate untrusted inputs into shell commands.",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "This explains an existing pattern, not a recommended default. URL rewrites can persist credentials in Git configuration. Prefer a short-lived GitHub App token or a read-only SSH deploy key, an isolated runner, and cleanup. Never interpolate untrusted inputs into shell commands."
+      },
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "- name: Terraform init\n  run: |\n    git config --global url.\"https://${{ secrets.DEVOPS_TOKEN }}:@github.com/\".insteadOf \"https://github.com/\"\n    terraform init"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "When Git tries https://github.com/...\nrewrite it to include DEVOPS_TOKEN"
+      },
+      {
+        "type": "text",
+        "text": "Used so `terraform init` can download private GitHub modules."
+      }
+    ]
+  },
+  {
+    "id": 362,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Terraform Variables from GitHub Actions?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "env:\n  TF_VAR_github_username: ${{ secrets.GHCR_USERNAME }}\n  TF_VAR_github_pat: ${{ secrets.DEVOPS_TOKEN }}"
+      },
+      {
+        "type": "text",
+        "text": "Terraform automatically maps:"
+      },
+      {
+        "type": "code",
+        "text": "TF_VAR_github_username -> var.github_username\nTF_VAR_github_pat      -> var.github_pat"
+      },
+      {
+        "type": "text",
+        "text": "`var.github_pat` is a placeholder in Terraform."
+      },
+      {
+        "type": "text",
+        "text": "`TF_VAR_github_pat` provides the runtime value."
+      }
+    ]
+  },
+  {
+    "id": 363,
+    "category": "GitHub Actions — CI/CD",
+    "question": "GitHub Actions Concurrency?",
+    "answer": "Example:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Example:"
+      },
+      {
+        "type": "code",
+        "text": "concurrency:\n  group: terraform-dev-state\n  cancel-in-progress: false"
+      },
+      {
+        "type": "text",
+        "text": "Meaning:"
+      },
+      {
+        "type": "code",
+        "text": "Only one job/run in this repository group runs at a time.\nBy default one pending run is retained; newer arrivals replace that pending run.\nBackend state locking is still needed across local runs and other repositories."
+      },
+      {
+        "type": "text",
+        "text": "Use for Terraform state:"
+      },
+      {
+        "type": "code",
+        "text": "dev-plan:\n  concurrency:\n    group: terraform-dev-state\n    cancel-in-progress: false"
+      },
+      {
+        "type": "text",
+        "text": "Best practice:"
+      },
+      {
+        "type": "code",
+        "text": "same state file = same concurrency group\ndifferent state files = different concurrency groups"
+      },
+      {
+        "type": "text",
+        "text": "For Terraform, prefer:"
+      },
+      {
+        "type": "code",
+        "text": "cancel-in-progress: false"
+      },
+      {
+        "type": "text",
+        "text": "to avoid canceling an apply mid-run."
+      }
+    ]
+  },
+  {
+    "id": 364,
+    "category": "GitHub Actions — CI/CD",
+    "question": "Azure Login with OIDC?",
+    "answer": "Typical pattern:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Typical pattern:"
+      },
+      {
+        "type": "code",
+        "text": "permissions:\n  id-token: write\n  contents: read\n\nsteps:\n  - name: Azure Login\n    uses: azure/login@<reviewed-full-commit-sha>\n    with:\n      client-id: ${{ secrets.AZURE_CLIENT_ID }}\n      tenant-id: ${{ secrets.AZURE_TENANT_ID }}\n      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+      },
+      {
+        "type": "text",
+        "text": "`id-token: write` allows GitHub Actions to request an OIDC token."
+      },
+      {
+        "type": "text",
+        "text": "This supports passwordless/federated auth to Azure instead of storing a client secret."
+      }
+    ]
+  },
+  {
+    "id": 365,
+    "category": "GitHub Actions — CI/CD",
+    "question": "GitHub Actions Interview Answer?",
+    "answer": "Strong answer:",
+    "priority": "High",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "text",
+        "text": "Strong answer:"
+      },
+      {
+        "type": "text",
+        "text": "In GitHub Actions, I pay close attention to triggers, permissions, tokens, environment protections, concurrency, and artifact flow. I use least-privilege `permissions`, prefer OIDC to cloud secrets, pin reusable workflows/actions by SHA, distinguish reusable workflows from composite actions, use concurrency for Terraform state safety, and treat artifacts/plan files as sensitive when they may contain secrets."
+      }
+    ]
+  },
+  {
+    "id": 366,
+    "category": "Concurrency, JVM & Performance",
+    "question": "How do virtual threads work, and when should you use them?",
+    "answer": "Virtual threads are ordinary java.lang.Thread instances whose scheduling is managed by the JVM. A platform thread generally maps to an operating-system thread; many virtual threads share a smaller set of carrier platform threads. Java 21 finalized virtual threads (JEP 444). A Runnable describes work without a result; Callable describes work returning a result and allowing checked exceptions. Either task abstraction can run on a platform or virtual thread.",
+    "explanation": "Virtual threads are ordinary java.lang.Thread instances whose scheduling is managed by the JVM. A platform thread generally maps to an operating-system thread; many virtual threads share a smaller set of carrier platform threads. Java 21 finalized virtual threads (JEP 444). A Runnable describes work without a result; Callable describes work returning a result and allowing checked exceptions. Either task abstraction can run on a platform or virtual thread. When supported blocking I/O parks a virtual thread, the JVM can unmount it from its carrier and later resume it on an available carrier. This lets many waiting tasks coexist without one OS thread per task. Concurrency means overlapping task lifetimes; parallelism means simultaneous CPU execution. Virtual threads improve throughput for many waiting tasks; they do not accelerate CPU computation or make a single remote call faster.",
+    "why": "Use for high concurrency with blocking I/O. For CPU-heavy tasks use bounded parallelism near available processor capacity and measure. Compare throughput, p95/p99 latency, heap, carrier usage and downstream saturation under the same load.",
+    "example": "For a service waiting on independent remote calls, a platform pool of 100 threads can become occupied by 100 waiting requests. Virtual threads allow more requests to wait cheaply, while a semaphore can still limit a remote service to four calls. The runnable demo submits 12 tasks, limits the simulated I/O section to four, releases permits in finally, checks isVirtual(), propagates failures and cancels outstanding tasks on error. It demonstrates scheduling/resource boundaries, not a performance benchmark.",
+    "tradeoffs": "The virtual-thread-per-task executor is unbounded: one fresh virtual thread per submitted task. Do not pool virtual threads to control resources. Use a semaphore, connection pool, admission control and timeouts to bound downstream work; also bound incoming requests because waiting tasks still consume memory. Shared mutable state still requires synchronization. ThreadLocal works but large per-thread caches multiply memory use. Virtual threads are daemon threads; keep an owning scope alive and wait for completion. Cancellation is cooperative; configure real HTTP/JDBC timeouts because interruption may not stop every operation. On Java 21, blocking while holding a synchronized monitor can pin a carrier; long native/foreign calls can also occupy carriers. Diagnose with JFR jdk.VirtualThreadPinned events and -Djdk.tracePinnedThreads=full on Java 21. JDK 24 (JEP 491) removes monitor-related pinning; do not repeat the Java 21 synchronized warning as a universal rule or replace every monitor with ReentrantLock. Lock contention and native-code limits still matter. Virtual threads need no preview flag in Java 21; other concurrency APIs have their own release status.",
+    "followups": [
+      "Why does a virtual thread not remove the JDBC pool limit?",
+      "How do you bound incoming work as well as active downstream calls?",
+      "What is the difference between pinning on Java 21 and Java 24?",
+      "What happens when a Future times out but the remote call ignores interruption?",
+      "Why use a fixed platform pool for CPU-heavy computation?"
+    ],
+    "detailStatus": "Expanded",
+    "code": "import java.util.ArrayList;\nimport java.util.concurrent.*;\n\npublic class VirtualThreadDemo {\n public static void main(String[] args) throws Exception {\n  var permits = new Semaphore(4); // simulated downstream capacity\n  var results = new ArrayList<Future<String>>();\n  try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n   for (int i = 0; i < 12; i++) {\n    final int id = i;\n    results.add(executor.submit(() -> {\n     if (!permits.tryAcquire(1, TimeUnit.SECONDS))\n      throw new TimeoutException(\"Downstream busy\");\n     try {\n      Thread.sleep(20); // simulate waiting for I/O; no network needed\n      return id + \": virtual=\" + Thread.currentThread().isVirtual();\n     } finally { permits.release(); }\n    }));\n   }\n   try {\n    for (var result : results) System.out.println(result.get(2, TimeUnit.SECONDS));\n   } catch (InterruptedException e) {\n    results.forEach(f -> f.cancel(true));\n    Thread.currentThread().interrupt();\n    throw e;\n   } catch (ExecutionException | TimeoutException e) {\n    results.forEach(f -> f.cancel(true));\n    throw e;\n   }\n  } // close waits for tasks to finish\n }\n}\n",
+    "labPath": "examples/java21/VirtualThreadDemo.java",
+    "runCommand": "javac examples/java21/VirtualThreadDemo.java; java -cp examples/java21 VirtualThreadDemo",
+    "priority": "High"
   }
 ]

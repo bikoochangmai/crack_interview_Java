@@ -7,7 +7,7 @@ except (OSError,ValueError) as e:sys.exit(str(e))
 if not isinstance(data,list) or not data:sys.exit('leetcode.json must be a nonempty array')
 ids=set()
 for i,x in enumerate(data,1):
-    for field in ('id','title','difficulty','topic','problem','example','approach','time','space','language','code'):
+    for field in ('id','title','difficulty','topic','problem','example','approach','time','space','language','code','constraints','bruteForce','bruteTime','bruteSpace','bruteCode','walkthrough','edgeCases'):
         if not isinstance(x.get(field),str) or not x[field].strip():sys.exit(f'Entry {i}: invalid {field}')
     if x['id'] in ids:sys.exit(f'Duplicate ID: {x["id"]}')
     ids.add(x['id'])
