@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc"><title id="title">E-commerce checkout architecture</title><desc id="desc">Buyer to Checkout API: stable purchase key; Checkout API to Orders + stock DB: reserve + outbox TX; Checkout API to Payment work queue: via outbox relay; Payment work queue to Payment worker: process request; Payment worker to Payment provider: stable provider key</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="1200" height="650" rx="18" fill="#0f172a"/>
+<text x="40" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="27" font-weight="bold">E-commerce checkout — component view</text>
+<text x="40" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="17">Illustrative design • arrows label requests/data; return responses are omitted</text>
+<path d="M310,187 L440,187" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="375.0" y="156" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">stable purchase</text><text x="375.0" y="174" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">key</text>
+<path d="M710,187 L840,187" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="775.0" y="156" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">reserve + outbox</text><text x="775.0" y="174" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">TX</text>
+<path d="M575,250 L175,425" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="375.0" y="327.5" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">via outbox relay</text>
+<path d="M310,487 L440,487" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="375.0" y="474" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">process request</text>
+<path d="M710,487 L840,487" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="775.0" y="456" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">stable provider</text><text x="775.0" y="474" text-anchor="middle" fill="#f8fafc" stroke="#0f172a" stroke-width="6" paint-order="stroke" font-family="Arial,sans-serif" font-size="14">key</text>
+<rect x="40" y="125" width="270" height="125" rx="12" fill="#1e293b" stroke="#7dd3fc"/>
+<text x="175" y="180" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="21">Buyer</text>
+<rect x="440" y="125" width="270" height="125" rx="12" fill="#1e293b" stroke="#7dd3fc"/>
+<text x="575" y="180" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="21">Checkout API</text>
+<rect x="840" y="125" width="270" height="125" rx="12" fill="#1e293b" stroke="#7dd3fc"/>
+<text x="975" y="180" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="21">Orders + stock DB</text>
+<rect x="40" y="425" width="270" height="125" rx="12" fill="#1e293b" stroke="#7dd3fc"/>
+<text x="175" y="480" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="21">Payment work queue</text>
+<rect x="440" y="425" width="270" height="125" rx="12" fill="#1e293b" stroke="#7dd3fc"/>
+<text x="575" y="480" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="21">Payment worker</text>
+<rect x="840" y="425" width="270" height="125" rx="12" fill="#1e293b" stroke="#7dd3fc"/>
+<text x="975" y="480" text-anchor="middle" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="21">Payment provider</text>
+<text x="40" y="610" fill="#fbbf24" font-family="Arial,sans-serif" font-size="17">Read the walkthrough for transaction boundaries, alternatives and failure recovery.</text>
+</svg>

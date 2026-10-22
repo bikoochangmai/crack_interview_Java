@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" aria-labelledby="title desc"><title id="title">Observer, Pub/Sub and Mediator: different decoupling</title><desc id="desc">Observe locally → Expect duplicate delivery → Deduplicate each effect → Coordinate explicitly. This is an illustrative pattern walkthrough.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="960" rx="18" fill="#0f172a"/>
+<text x="40" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25" font-weight="bold">270. Observer, Pub/Sub and Mediator: different decoupling</text>
+<text x="40" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="16">Follow the numbered roles • these are learning steps, not separate network services</text>
+<rect x="40" y="110" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="140" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">1. Observe locally</text>
+<text x="60" y="170" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Register email and analytics listeners; publishing invokes local callbacks in this demo.</text>
+<path d="M480,254 L480,275" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="278" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="308" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">2. Expect duplicate delivery</text>
+<text x="60" y="338" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Publishing the same event again reaches both listeners again; this is deliberately visible.</text>
+<path d="M480,422 L480,443" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="446" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="476" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">3. Deduplicate each effect</text>
+<text x="60" y="506" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">The demo email consumer remembers event IDs; analytics deliberately records both deliveries.</text>
+<path d="M480,590 L480,611" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="614" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="644" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">4. Coordinate explicitly</text>
+<text x="60" y="674" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">The separate mediator demo executes reserve, record order and request payment in a defined</text>
+<text x="60" y="696" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">local order.</text>
+<text x="40" y="818" fill="#fbbf24" font-family="Arial,sans-serif" font-size="19" font-weight="bold">Boundary / failure to explain</text>
+<text x="40" y="848" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">A local event bus is not Kafka, and this lab does not run a broker. The in-memory set is not restart-</text>
+<text x="40" y="869" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">safe or concurrency-safe. Use a broker only when durability, independent lifecycles or distribution</text>
+<text x="40" y="890" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">justify its cost.</text>
+</svg>

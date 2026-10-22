@@ -1,50 +1,41 @@
-# System Design: Notification Platform
+# Notification platform: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 10M notifications/day; email/SMS/push. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** A confirmed order triggers an email, an app notification and optionally SMS.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Durable intent, preferences, deduplication, retries, scheduling and provider delivery-status tracking.
 
-Given **10M notifications/day; email/SMS/push**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /notifications with stable event key. Intent(tenant, recipient, template, channel), Preference, DeliveryAttempt(provider ID/status), DedupKey.
 
-`POST /notifications; GET /notifications/{id}`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Notification platform architecture](diagrams/notification-platform.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Notification, Template, Preference, DeliveryAttempt`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Persist the intent before acknowledging acceptance. Fan out by allowed channel using current preferences and templates. Workers rate-limit providers and record attempts. Delivery callbacks update status; accepted by a provider is not proof that a person read it.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-API → queue → channel workers → provider → callback → status DB
-```
+A stable event/recipient/channel key prevents duplicate local scheduling. External send needs provider idempotency where available or a documented duplicate-risk policy.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Template versioning, user preferences, retry with jitter, dedupe and DLQ.
+Retry transient failures with backoff and jitter; isolate permanent failures for review. Cancellation, unsubscribe and sensitive-message redaction need explicit policies.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Provider outages, spam, duplicate deliveries, opt-outs. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+One million notifications/hour is about 278/second before channel fan-out; a promotion can create a much larger short burst.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Delivery success, p95 time, retries, unsubscribe violations. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+If the provider accepted an SMS but the acknowledgement was lost, what duplicate risk remains?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

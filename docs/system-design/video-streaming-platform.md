@@ -1,50 +1,41 @@
-# System Design: Video Streaming Platform
+# Video streaming platform: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 1M daily viewers, 100K concurrent streams. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** A teacher uploads a lecture; students watch it on mobile connections.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Durable upload, asynchronous transcoding, access-controlled playback and adaptive bitrate quality.
 
-Given **1M daily viewers, 100K concurrent streams**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /uploads issues scoped upload authorization; GET /videos/{id}/playback authorizes a manifest. Video(owner, status), Rendition(codec, bitrate, segments), Job.
 
-`POST /uploads; GET /videos/{id}; GET /manifest/{id}`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Video streaming platform architecture](diagrams/video-streaming-platform.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Video, Asset, Rendition, PlaybackSession`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Store the source first and mark processing. Queue a job to produce multiple bitrates and segment manifests. Publish a playable version only when required outputs exist. The player requests segments through the CDN and adapts quality to observed bandwidth.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Uploader → object store → transcode queue → workers → manifests/segments → CDN → player
-```
+Object storage holds large immutable media; metadata DB tracks ownership/status. Encode asynchronously because it is CPU-heavy and slow relative to an upload acknowledgement.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Adaptive bitrate HLS/DASH, CDN caching, async encoding, signed access.
+Retries must not publish partial manifests or overwrite a newer version. CDN cache policy and signed/scoped playback access must protect private lectures.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Transcode backlog, storage cost, DRM, regional availability. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+At 2 Mbit/second × 10,000 simultaneous viewers, delivery is about 20 Gbit/second before overhead. CDN bandwidth dominates, not metadata QPS.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Startup delay, buffering ratio, CDN hit rate. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+Why should an upload succeed before every video rendition is ready?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

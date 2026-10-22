@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" aria-labelledby="title desc"><title id="title">Make assignment a guarded transition</title><desc id="desc">Read expected state → Claim atomically → Publish after commit → Reject late actions. Illustrative sequence; conditions are explained in the steps.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="960" rx="18" fill="#0f172a"/>
+<text x="40" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25" font-weight="bold">257. Make assignment a guarded transition</text>
+<text x="40" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="16">Illustrative flow • follow steps 1–4 and check the conditions on each step</text>
+<rect x="40" y="110" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="140" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">1. Read expected state</text>
+<text x="60" y="170" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Identify pending trip T81 and driver D7; this snapshot does not guarantee later</text>
+<text x="60" y="192" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">availability.</text>
+<path d="M480,254 L480,275" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="278" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="308" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">2. Claim atomically</text>
+<text x="60" y="338" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">In one local transaction when possible, claim the available driver and accept the pending</text>
+<text x="60" y="360" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">trip; rollback if either condition fails.</text>
+<path d="M480,422 L480,443" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="446" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="476" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">3. Publish after commit</text>
+<text x="60" y="506" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Commit an outbox event before telling clients the assignment is confirmed.</text>
+<path d="M480,590 L480,611" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="614" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="644" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">4. Reject late actions</text>
+<text x="60" y="674" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Check expected state/version for acceptance or cancellation; return current state for stale</text>
+<text x="60" y="696" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">requests.</text>
+<text x="40" y="818" fill="#fbbf24" font-family="Arial,sans-serif" font-size="19" font-weight="bold">Failure / trade-off to explain</text>
+<text x="40" y="848" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">Separate shards cannot share a normal local transaction. Use an assignment owner or recoverable</text>
+<text x="40" y="869" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">reservation protocol with fencing rather than assuming global atomicity.</text>
+</svg>

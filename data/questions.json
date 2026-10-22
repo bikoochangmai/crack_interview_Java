@@ -4533,13 +4533,36 @@
     "question": "How do you approach a system design interview?",
     "answer": "Translate vague requirements into measurable functional and non-functional requirements.",
     "priority": "Medium",
-    "explanation": "Translate vague requirements into measurable functional and non-functional requirements.",
-    "why": "Clarify users, reads/writes, latency, availability, retention and consistency. Estimate QPS and storage, draw APIs and data model, then evolve the architecture from bottlenecks.",
-    "example": "For a shopping app, distinguish catalog browsing (read-heavy) from checkout (stronger correctness requirements).",
-    "tradeoffs": "Avoid premature microservices; start simple, justify each component.",
+    "explanation": "Functional requirements describe actions. Non-functional requirements describe acceptable latency, availability and data loss. Begin with one API and database; add components only to solve a demonstrated constraint.",
+    "why": "Design a college canteen app. Students browse menus and place orders; staff prepare them.",
+    "example": "Assume 10,000 students placing two orders/day over ten hours: 20,000/36,000 = 0.56 orders/second on average. If 20% arrive in a ten-minute rush, peak is 4,000/600 = 6.7/second. Reads may be much higher.",
+    "tradeoffs": "Premature microservices add network failures and deployment work. A design is justified by requirements, not box count.",
     "followups": [
       "How do you estimate peak QPS from daily active users?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Plan before drawing boxes",
+    "walkthroughSteps": [
+      {
+        "title": "Clarify requirements",
+        "explanation": "Ask whether cancellation, payment and offline recovery are required."
+      },
+      {
+        "title": "Estimate demand",
+        "explanation": "Calculate average and peak separately; state assumptions instead of guessing."
+      },
+      {
+        "title": "Define API and data",
+        "explanation": "POST /orders takes item IDs, quantity and an idempotency key. The server computes prices."
+      },
+      {
+        "title": "Start and measure",
+        "explanation": "Use a stateless application and transactional database. Measure bottlenecks before adding caches or queues."
+      }
+    ],
+    "knowledgeCheck": "If traffic grows 100 times, which measurement would guide your first change?",
+    "diagramImage": "docs/system-design/diagrams/topic-233.svg",
+    "diagram": "Clarify requirements → Estimate demand → Define API and data → Start and measure"
   },
   {
     "id": 234,
@@ -4547,13 +4570,36 @@
     "question": "Explain client-server architecture and HTTP request lifecycle.",
     "answer": "The client handles interaction while the server authenticates, applies business rules and manages persistent state.",
     "priority": "Medium",
-    "explanation": "The client handles interaction while the server authenticates, applies business rules and manages persistent state.",
-    "why": "DNS resolves hostname; TCP/TLS establishes transport; HTTP request reaches CDN/WAF/load balancer, application and database; response returns to client.",
-    "example": "Angular SPA calls Spring Boot REST APIs through Azure Front Door and API Management.",
-    "tradeoffs": "Stateless servers scale horizontally but need shared session/token design.",
+    "explanation": "The browser is the client. The server verifies identity and access, applies rules and uses durable storage. The browser should never connect directly to your application database.",
+    "why": "A student opens GET /orders/42 to see their lunch order.",
+    "example": "Knowing an order ID is not permission to see it. The API must verify that order 42 belongs to the authenticated student.",
+    "tradeoffs": "UI-only authorization can be bypassed. Correlation IDs help identify where a request spent time.",
     "followups": [
       "Where should authorization be enforced?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Follow a browser request",
+    "walkthroughSteps": [
+      {
+        "title": "Resolve hostname",
+        "explanation": "DNS finds the network address; a cached result can skip a fresh lookup."
+      },
+      {
+        "title": "Connect securely",
+        "explanation": "Establish secure transport. TCP plus TLS is common; HTTP/3 uses QUIC."
+      },
+      {
+        "title": "Authorize and query",
+        "explanation": "Check credentials and order ownership, then query with parameters."
+      },
+      {
+        "title": "Return response",
+        "explanation": "Send JSON and HTTP status; the browser renders it. A timeout leaves the outcome unknown."
+      }
+    ],
+    "knowledgeCheck": "If a response times out but the order exists, should the client create a fresh order?",
+    "diagramImage": "docs/system-design/diagrams/topic-234.svg",
+    "diagram": "Resolve hostname → Connect securely → Authorize and query → Return response"
   },
   {
     "id": 235,
@@ -4561,13 +4607,36 @@
     "question": "How do load balancers, reverse proxies, API gateways and CDNs differ?",
     "answer": "They solve different routing, security and performance problems.",
     "priority": "Medium",
-    "explanation": "They solve different routing, security and performance problems.",
-    "why": "Load balancer spreads requests; reverse proxy fronts servers; API gateway handles API policy/routing; CDN caches edge content.",
-    "example": "Azure Front Door serves cached assets; API Management validates API policies; backend ingress distributes requests.",
-    "tradeoffs": "Do not use API gateway as a business-logic monolith.",
+    "explanation": "A CDN caches eligible content near users. A reverse proxy fronts upstream servers. A load balancer selects healthy servers. An API gateway adds API policies such as authentication and quotas. One product may perform several roles.",
+    "why": "A shopping page loads a public logo and a private order history.",
+    "example": "A cached logo can return from the CDN without reaching the application. Private history needs authorization and an appropriate private cache policy.",
+    "tradeoffs": "Caching private responses publicly leaks data. WebSockets also need long-lived connection routing and a way to locate connected users.",
     "followups": [
       "What changes for WebSockets?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Understand the front-door components",
+    "walkthroughSteps": [
+      {
+        "title": "Check edge cache",
+        "explanation": "On an eligible cache hit, return immediately; the remaining steps are for forwarded API requests."
+      },
+      {
+        "title": "Apply gateway policy",
+        "explanation": "Validate token and quota. Keep business rules in the application."
+      },
+      {
+        "title": "Balance the request",
+        "explanation": "Choose a healthy backend instance; configure connection and idle timeouts."
+      },
+      {
+        "title": "Enforce object access",
+        "explanation": "The application checks whose order is requested, loads it and returns the response."
+      }
+    ],
+    "knowledgeCheck": "Why does gateway token validation not replace order-ownership checks?",
+    "diagramImage": "docs/system-design/diagrams/topic-235.svg",
+    "diagram": "Check edge cache → Apply gateway policy → Balance the request → Enforce object access"
   },
   {
     "id": 236,
@@ -4575,13 +4644,36 @@
     "question": "How do you choose between SQL, NoSQL and search engines?",
     "answer": "Pick storage based on invariants, query patterns, data shape and scale rather than fashion.",
     "priority": "Medium",
-    "explanation": "Pick storage based on invariants, query patterns, data shape and scale rather than fashion.",
-    "why": "Relational DB for transactional constraints/joins; document or key-value for flexible/access-pattern data; Elasticsearch for search; vector index for semantic retrieval.",
-    "example": "Orders in PostgreSQL, product search in Elasticsearch, semantic document chunks in pgvector.",
-    "tradeoffs": "Polyglot persistence adds synchronization and operational burden.",
+    "explanation": "SQL supports relations and transactional invariants. Key-value stores suit known-key lookups. Documents suit aggregate retrieval. Search engines rank text and support filters. NoSQL products do not all share the same guarantees.",
+    "why": "Orders require a ledger; product discovery requires a searchable index.",
+    "example": "Store orders and lines transactionally in PostgreSQL; derive a product search index for queries such as waterproof hiking shoe.",
+    "tradeoffs": "A second store adds synchronization, rebuilds and monitoring. Search can lag behind the source.",
     "followups": [
       "How do you keep search index consistent with the database?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Choose storage by access pattern",
+    "walkthroughSteps": [
+      {
+        "title": "Write authoritative data",
+        "explanation": "Commit related order records together; use constraints for uniqueness and valid relationships."
+      },
+      {
+        "title": "Record a change event",
+        "explanation": "For catalog changes, commit an outbox event alongside the product update."
+      },
+      {
+        "title": "Build search view",
+        "explanation": "An idempotent indexer applies versioned changes; replay can rebuild the index."
+      },
+      {
+        "title": "Read the right source",
+        "explanation": "Search the derived index; checkout rechecks authoritative price and stock."
+      }
+    ],
+    "knowledgeCheck": "What happens if search shows a product that just sold out?",
+    "diagramImage": "docs/system-design/diagrams/topic-236.svg",
+    "diagram": "Write authoritative data → Record a change event → Build search view → Read the right source"
   },
   {
     "id": 237,
@@ -4589,13 +4681,36 @@
     "question": "Explain caching strategies and cache invalidation.",
     "answer": "Caching reduces read latency and backend load but creates stale-data risk.",
     "priority": "Medium",
-    "explanation": "Caching reduces read latency and backend load but creates stale-data risk.",
-    "why": "Use cache-aside for common reads, TTL with jitter, explicit invalidation on writes and request coalescing for hot keys.",
-    "example": "Product detail cache in Redis; price and inventory checked against authoritative source at checkout.",
-    "tradeoffs": "Never assume cache consistency equals database consistency.",
+    "explanation": "A cache avoids repeated expensive reads. In cache-aside, the application checks cache first, loads the database on a miss and stores a copy with expiry. TTL limits lifetime; it does not promise freshness.",
+    "why": "A waiter remembers the menu but checks the kitchen before promising the last meal.",
+    "example": "Product 42 gets 1,000 reads/minute and two changes/day. Cache its description; final stock and price checks still use authoritative state.",
+    "tradeoffs": "Cache failure can overwhelm the database through fallback. Bound fallback load; consider safe stale reads and version checks.",
     "followups": [
       "How do you prevent cache stampede and hot-key overload?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Cache a replaceable copy",
+    "walkthroughSteps": [
+      {
+        "title": "Look up product:42",
+        "explanation": "On a permitted fresh-enough hit, return the copy and skip database access."
+      },
+      {
+        "title": "Load only on miss",
+        "explanation": "Query the database. Coalesce simultaneous refreshes for the same key."
+      },
+      {
+        "title": "Store with expiry",
+        "explanation": "Use a TTL and random expiry jitter to spread refresh load."
+      },
+      {
+        "title": "Handle writes",
+        "explanation": "Commit the change then invalidate/update the copy; account for a concurrent stale reader refilling it."
+      }
+    ],
+    "knowledgeCheck": "Why can invalidation race with a cache refill?",
+    "diagramImage": "docs/system-design/diagrams/topic-237.svg",
+    "diagram": "Look up product:42 → Load only on miss → Store with expiry → Handle writes"
   },
   {
     "id": 238,
@@ -4603,13 +4718,36 @@
     "question": "How do you design for high availability and disaster recovery?",
     "answer": "Availability requires redundancy and operational recovery plans.",
     "priority": "Medium",
-    "explanation": "Availability requires redundancy and operational recovery plans.",
-    "why": "Define SLO, RTO and RPO; distribute across availability zones; use backups, restore drills, failover and graceful degradation.",
-    "example": "Checkout runs across Azure zones; replicated database plus tested backups and region recovery playbook.",
-    "tradeoffs": "Multi-region active-active is costly and creates data conflict challenges.",
+    "explanation": "High availability keeps serving during component failures. Disaster recovery restores service after major loss. Replicas provide live copies; backups provide historical recovery. Neither replaces a tested procedure.",
+    "why": "A spare counter handles a broken counter; an off-site backup handles a destroyed building.",
+    "example": "Assume a recovery-time objective (RTO) of 30 minutes and recovery-point objective (RPO) of five minutes. The first limits downtime; the second limits lost committed data.",
+    "tradeoffs": "Async replication may lose recent writes. Replicas also copy accidental deletes, so backups and restore drills remain essential.",
     "followups": [
       "Difference between RTO and RPO?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Separate availability and recovery",
+    "walkthroughSteps": [
+      {
+        "title": "Detect failure",
+        "explanation": "Health checks remove unhealthy API instances from routing."
+      },
+      {
+        "title": "Protect data",
+        "explanation": "Use suitable database replication plus encrypted recoverable backups and transaction logs."
+      },
+      {
+        "title": "Recover safely",
+        "explanation": "Promote the recovery database and fence the previous writer before switching traffic."
+      },
+      {
+        "title": "Verify recovery",
+        "explanation": "Test real user journeys and measure actual downtime and data loss against objectives."
+      }
+    ],
+    "knowledgeCheck": "How would you recover from an accidental delete while every server remains healthy?",
+    "diagramImage": "docs/system-design/diagrams/topic-238.svg",
+    "diagram": "Detect failure → Protect data → Recover safely → Verify recovery"
   },
   {
     "id": 239,
@@ -4617,13 +4755,36 @@
     "question": "Explain CAP theorem, consistency and quorum.",
     "answer": "During a network partition, a distributed data system must choose between serving every request and preserving a defined consistency guarantee.",
     "priority": "Medium",
-    "explanation": "During a network partition, a distributed data system must choose between serving every request and preserving a defined consistency guarantee.",
-    "why": "Describe consistency model explicitly; choose read/write quorums where supported and define behavior under partition.",
-    "example": "Shopping cart may favor availability; payment ledger favors correctness and may reject writes during partition.",
-    "tradeoffs": "CAP is about partitions, not a generic ranking of databases.",
+    "explanation": "During a network partition, a distributed shared-data service cannot always offer both linearizable consistency and a successful response to every request. CAP consistency refers to a single up-to-date logical history, not SQL constraint validity.",
+    "why": "Two disconnected ticket counters cannot both safely sell the last seat.",
+    "example": "For three replicas A, B and C, suppose A can reach B but C is isolated. A write requiring two acknowledgements cannot succeed on C alone.",
+    "tradeoffs": "Quorum overlap alone does not prove linearizability. Version selection, concurrent writers and leader rules matter; sloppy quorums may use different replica sets.",
     "followups": [
       "How do you handle stale reads after a write?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Handle disagreement during a partition",
+    "walkthroughSteps": [
+      {
+        "title": "Network splits",
+        "explanation": "A and B communicate; C cannot reach them. Define the guarantee required by stock reservations."
+      },
+      {
+        "title": "Require write quorum",
+        "explanation": "With N=3 and W=2, two participating replicas must acknowledge."
+      },
+      {
+        "title": "Read with overlap",
+        "explanation": "R=2 and W=2 overlap for the same replica set because R+W>N; reconcile versions."
+      },
+      {
+        "title": "Handle the minority",
+        "explanation": "Reject or time out operations that cannot meet their contract, then reconcile after connectivity returns."
+      }
+    ],
+    "knowledgeCheck": "Why can a social feed tolerate stale data more easily than last-seat booking?",
+    "diagramImage": "docs/system-design/diagrams/topic-239.svg",
+    "diagram": "Network splits → Require write quorum → Read with overlap → Handle the minority"
   },
   {
     "id": 240,
@@ -4631,13 +4792,36 @@
     "question": "Explain rate limiting, throttling and backpressure.",
     "answer": "Protect dependencies and fairness when demand exceeds capacity.",
     "priority": "Medium",
-    "explanation": "Protect dependencies and fairness when demand exceeds capacity.",
-    "why": "Token bucket or sliding window at edge; bounded queues and concurrency limits in services; return 429 with Retry-After when appropriate.",
-    "example": "Short URL API limits anonymous creation requests while redirect traffic remains highly optimized.",
-    "tradeoffs": "Aggressive limits harm legitimate bursty traffic.",
+    "explanation": "Rate limiting caps arrivals over time. Throttling reduces or delays work. Backpressure propagates lack of capacity toward producers. Queues absorb short bursts but cannot fix sustained overload.",
+    "why": "A gate limits arrivals, a bounded queue holds a few people, and backpressure asks upstream to slow down.",
+    "example": "A token bucket with capacity 20 and refill 10 tokens/second allows an idle customer a short burst, then limits the sustained rate.",
+    "tradeoffs": "Five independent per-node quotas can multiply the effective limit. Define fail-open/fail-closed behavior during limiter failure.",
     "followups": [
       "Where do distributed rate-limit counters live?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Control overload",
+    "walkthroughSteps": [
+      {
+        "title": "Identify caller",
+        "explanation": "Authenticate and derive the correct tenant/user key; do not trust an arbitrary tenant header."
+      },
+      {
+        "title": "Consume atomically",
+        "explanation": "Refill and consume in one atomic operation; separate reads and writes race."
+      },
+      {
+        "title": "Admit or reject",
+        "explanation": "A token admits work; no token returns HTTP 429 with retry guidance."
+      },
+      {
+        "title": "Bound downstream work",
+        "explanation": "Cap in-flight requests and queue length; signal pressure when consumers cannot keep up."
+      }
+    ],
+    "knowledgeCheck": "If five servers each allow 10 requests/second locally, what aggregate rate is possible?",
+    "diagramImage": "docs/system-design/diagrams/topic-240.svg",
+    "diagram": "Identify caller → Consume atomically → Admit or reject → Bound downstream work"
   },
   {
     "id": 241,
@@ -4645,13 +4829,36 @@
     "question": "How do you design idempotent APIs?",
     "answer": "Retries happen due to timeouts, so duplicate requests must not duplicate side effects.",
     "priority": "Medium",
-    "explanation": "Retries happen due to timeouts, so duplicate requests must not duplicate side effects.",
-    "why": "Client sends idempotency key; persist request fingerprint and final result atomically with operation or coordinate via unique constraints.",
-    "example": "Payment POST with key returns same transaction result when client retries.",
-    "tradeoffs": "Key expiry and mismatched payloads require explicit policy.",
+    "explanation": "Idempotency means retries of one logical request cause one intended business effect. A durable, concurrency-safe key identifies the operation. An in-memory map on one application instance is not sufficient.",
+    "why": "A purchase receipt number tells reception that a repeated call refers to the same order.",
+    "example": "Order-request-81 commits, but its response is lost. A retry with the same key should return the original order rather than create another.",
+    "tradeoffs": "Reject reuse with a different payload. Define key retention. A local transaction cannot atomically commit a remote card charge.",
     "followups": [
       "How do you handle concurrent requests with same key?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Make one operation safe to retry",
+    "walkthroughSteps": [
+      {
+        "title": "Send stable key",
+        "explanation": "Generate one key per logical purchase and reuse it only for retries."
+      },
+      {
+        "title": "Claim uniquely",
+        "explanation": "Persist a tenant-scoped key and payload fingerprint under a unique constraint."
+      },
+      {
+        "title": "Commit local effect",
+        "explanation": "Create order and idempotent result in one local transaction; handle concurrent in-progress requests explicitly."
+      },
+      {
+        "title": "Replay or reconcile",
+        "explanation": "Return the stored result. Remote payment requires its own stable provider key and outcome reconciliation."
+      }
+    ],
+    "knowledgeCheck": "What if identical keys arrive simultaneously at two API instances?",
+    "diagramImage": "docs/system-design/diagrams/topic-241.svg",
+    "diagram": "Send stable key → Claim uniquely → Commit local effect → Replay or reconcile"
   },
   {
     "id": 242,
@@ -4659,13 +4866,36 @@
     "question": "What are horizontal scaling, partitioning and sharding?",
     "answer": "Horizontal scaling adds nodes; sharding distributes data ownership to scale storage/write throughput.",
     "priority": "Medium",
-    "explanation": "Horizontal scaling adds nodes; sharding distributes data ownership to scale storage/write throughput.",
-    "why": "Select shard key with even distribution; route requests and plan rebalancing; use read replicas separately.",
-    "example": "Messaging platform partitions chat events by conversation ID for ordering.",
-    "tradeoffs": "Hot shards and cross-shard transactions complicate design.",
+    "explanation": "Horizontal scaling adds service instances. Partitioning splits a dataset. Sharding puts partitions on independently operated database nodes. Replication copies the same data. More API instances do not automatically increase database write capacity.",
+    "why": "More cashiers can share one order book; sharding gives different cashiers different books.",
+    "example": "Partition chat messages by conversation ID so one conversation can be read without querying every shard.",
+    "tradeoffs": "A celebrity group can overload a shard. Cross-shard transactions, global ordering and migrations add complexity.",
     "followups": [
       "How do you handle celebrity hot keys?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Scale workers versus divide data",
+    "walkthroughSteps": [
+      {
+        "title": "Scale stateless APIs",
+        "explanation": "A load balancer sends requests to multiple instances; persistent state remains external."
+      },
+      {
+        "title": "Choose partition key",
+        "explanation": "Conversation ID keeps typical message queries within one partition."
+      },
+      {
+        "title": "Route ownership",
+        "explanation": "A routing map or hash identifies the shard owning that conversation."
+      },
+      {
+        "title": "Rebalance carefully",
+        "explanation": "Move partitions with explicit ownership/version rules; monitor hot conversations."
+      }
+    ],
+    "knowledgeCheck": "Why can sharding by country leave one database overloaded?",
+    "diagramImage": "docs/system-design/diagrams/topic-242.svg",
+    "diagram": "Scale stateless APIs → Choose partition key → Route ownership → Rebalance carefully"
   },
   {
     "id": 243,
@@ -4673,13 +4903,36 @@
     "question": "Design a TinyURL/ShortURL service end to end.",
     "answer": "Users create short links and expect low-latency, highly available redirects.",
     "priority": "High",
-    "explanation": "Users create short links and expect low-latency, highly available redirects.",
-    "why": "POST /links validates URL and allocates unique Base62 code; GET /{code} looks up cache then DB and returns 302; use abuse checks, TTL and analytics events.",
-    "example": "Campaign marketing sends millions of redirect requests while link creation is comparatively rare.",
-    "tradeoffs": "301 may be cached aggressively; 302 offers more control over mutable destinations.",
+    "explanation": "A shortener stores code-to-URL mappings. Creation writes the mapping; opening a code reads it and returns an HTTP redirect. The browser then follows the Location header.",
+    "why": "A code is a coat-check ticket pointing to something stored elsewhere.",
+    "example": "POST /links stores aB72 mapped to https://example.test/products/42. GET /aB72 returns 302 and that target if the link is active.",
+    "tradeoffs": "Permanent redirects may remain cached after target changes. Choose status and cache policy deliberately. Block dangerous schemes and provide takedowns.",
     "followups": [
       "How do you avoid code collisions and malicious destinations?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Build a short-link service",
+    "walkthroughSteps": [
+      {
+        "title": "Create mapping",
+        "explanation": "Validate URL scheme and permissions, generate a code and insert it under a unique constraint."
+      },
+      {
+        "title": "Receive redirect",
+        "explanation": "Check a cache for the code; only on a miss read the mapping database."
+      },
+      {
+        "title": "Check link policy",
+        "explanation": "Apply expiration, disabled status and abuse policy. Missing links return 404; expiration can use a documented 410 policy."
+      },
+      {
+        "title": "Return Location",
+        "explanation": "Send the redirect; record analytics asynchronously so analytics failure does not block navigation."
+      }
+    ],
+    "knowledgeCheck": "Which is more important to preserve: one click metric or the code-to-URL mapping?",
+    "diagramImage": "docs/system-design/diagrams/topic-243.svg",
+    "diagram": "Create mapping → Receive redirect → Check link policy → Return Location"
   },
   {
     "id": 244,
@@ -4687,13 +4940,36 @@
     "question": "How would you generate globally unique short codes?",
     "answer": "Short codes need uniqueness, compactness and predictable capacity.",
     "priority": "Medium",
-    "explanation": "Short codes need uniqueness, compactness and predictable capacity.",
-    "why": "Use database-generated IDs encoded Base62, a distributed ID service, or random tokens with unique constraint and retry.",
-    "example": "Encode a 64-bit unique ID as Base62 to get compact tokens without collisions in the ID space.",
-    "tradeoffs": "Sequential codes are guessable; obfuscation is not authorization.",
+    "explanation": "Base62 encodes numbers with 62 symbols; it does not generate uniqueness. Encode an allocated unique ID, or generate random codes and enforce uniqueness on insertion.",
+    "why": "Sequential tickets need a unique allocator; random tickets need a collision check.",
+    "example": "Seven Base62 characters offer 62^7 = 3,521,614,606,208 possibilities. Birthday collisions are still possible when drawing many random codes.",
+    "tradeoffs": "Sequential codes expose ordering. Random codes are not authorization. Distributed timestamp IDs need worker IDs and clock-regression handling.",
     "followups": [
       "How do you support custom aliases?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Generate unique codes",
+    "walkthroughSteps": [
+      {
+        "title": "Choose strategy",
+        "explanation": "A database sequence is simple; random codes can reduce easy enumeration."
+      },
+      {
+        "title": "Build candidate",
+        "explanation": "Encode the allocated ID or draw random characters; define case sensitivity."
+      },
+      {
+        "title": "Insert uniquely",
+        "explanation": "Use the unique index as the arbiter. Checking existence before insertion alone races."
+      },
+      {
+        "title": "Retry collisions",
+        "explanation": "Generate another random candidate with bounded retries; never overwrite an existing mapping."
+      }
+    ],
+    "knowledgeCheck": "Why is Base62(123) unique only when 123 was allocated uniquely?",
+    "diagramImage": "docs/system-design/diagrams/topic-244.svg",
+    "diagram": "Choose strategy → Build candidate → Insert uniquely → Retry collisions"
   },
   {
     "id": 245,
@@ -4701,13 +4977,36 @@
     "question": "How do you scale ShortURL redirects to millions of requests?",
     "answer": "Read-heavy traffic benefits from cache, CDN and partition-aware storage.",
     "priority": "Medium",
-    "explanation": "Read-heavy traffic benefits from cache, CDN and partition-aware storage.",
-    "why": "Cache hot code→URL mappings with TTL, replicate reads, rate-limit abuse, publish asynchronous click analytics.",
-    "example": "A viral link is served from edge/Redis rather than hitting PostgreSQL for every redirect.",
-    "tradeoffs": "Cache invalidation matters for deleted or malicious URLs.",
+    "explanation": "Redirects usually outnumber creations. Cache active mappings and add stateless redirect instances. A viral code is a hot key even if all other keys are evenly distributed.",
+    "why": "Repeatedly reading a popular ticket should not repeatedly open the archive.",
+    "example": "An illustrative 100M redirects/day averages 1,157/second. A tenfold peak is 11,574/second. Even 99% cache hits leave about 116 database reads/second at peak.",
+    "tradeoffs": "Cache outage exposes full traffic to the database. Bound fallback load and takedown propagation time; test the failure path.",
     "followups": [
       "What is the strategy for a cache miss during DB outage?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Handle a viral link",
+    "walkthroughSteps": [
+      {
+        "title": "Receive hot request",
+        "explanation": "Edge or redirect API receives /sale42 under a cache policy compatible with mutability."
+      },
+      {
+        "title": "Read cached mapping",
+        "explanation": "Return a permitted cache hit; bounded local caches can reduce shared hot-key traffic."
+      },
+      {
+        "title": "Coalesce miss",
+        "explanation": "Only a miss triggers database reload; one refresher serves many waiting readers."
+      },
+      {
+        "title": "Separate analytics",
+        "explanation": "Emit bounded asynchronous metrics; decide explicitly whether to buffer or drop during failure."
+      }
+    ],
+    "knowledgeCheck": "How quickly must a disabled phishing link stop working across caches?",
+    "diagramImage": "docs/system-design/diagrams/topic-245.svg",
+    "diagram": "Receive hot request → Read cached mapping → Coalesce miss → Separate analytics"
   },
   {
     "id": 246,
@@ -4715,13 +5014,36 @@
     "question": "Design a WhatsApp-like one-to-one chat system.",
     "answer": "Messaging needs real-time delivery, offline persistence, retries and ordering within conversations.",
     "priority": "High",
-    "explanation": "Messaging needs real-time delivery, offline persistence, retries and ordering within conversations.",
-    "why": "Use authenticated WebSockets to gateway; assign message IDs; persist messages; route through conversation-partitioned queue; ack delivered/read states; push notify offline devices.",
-    "example": "Phone A sends a message while phone B is offline; server stores it and delivers on reconnect.",
-    "tradeoffs": "Exactly-once end-to-end delivery is hard; idempotent processing avoids duplicates.",
+    "explanation": "Chat combines live connections with durable history. A server acknowledgement means accepted under a defined durability contract. Delivery and read receipts are separate states.",
+    "why": "A postal office accepting a letter and delivering it are separate events.",
+    "example": "Alice sends m81 while Bob is offline. Alice sees accepted after commit. Bob later reconnects with his last-seen cursor and fetches missing messages.",
+    "tradeoffs": "A WebSocket is not durable storage. Push notifications are wake-up hints. Lost acknowledgements cause retries and duplicate delivery attempts.",
     "followups": [
       "What happens if sender reconnects after timeout?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Store a message before acknowledging it",
+    "walkthroughSteps": [
+      {
+        "title": "Send stable message ID",
+        "explanation": "Send conversation ID, client message ID and content over an authenticated connection."
+      },
+      {
+        "title": "Persist before ack",
+        "explanation": "Authorize membership, deduplicate the ID and commit message plus delivery event."
+      },
+      {
+        "title": "Attempt live delivery",
+        "explanation": "Find Bob’s active connection and push if present; offline messages stay in durable history."
+      },
+      {
+        "title": "Recover on reconnect",
+        "explanation": "Bob fetches after his cursor, acknowledges delivery and may separately send a read receipt."
+      }
+    ],
+    "knowledgeCheck": "What should accepted mean if Bob has no active connection?",
+    "diagramImage": "docs/system-design/diagrams/topic-246.svg",
+    "diagram": "Send stable message ID → Persist before ack → Attempt live delivery → Recover on reconnect"
   },
   {
     "id": 247,
@@ -4729,13 +5051,36 @@
     "question": "How do you handle ordering and duplicates in chat?",
     "answer": "Network delays and retries can reorder or duplicate messages.",
     "priority": "Medium",
-    "explanation": "Network delays and retries can reorder or duplicate messages.",
-    "why": "Assign per-conversation monotonic sequence on authoritative write path; clients deduplicate by message ID and reconcile gaps.",
-    "example": "Two phones in the same group reconnect after losing connectivity and merge by server sequence.",
-    "tradeoffs": "Global ordering is expensive and unnecessary; partition by conversation.",
+    "explanation": "Retries and reconnects can duplicate or reorder delivery. Use a stable client message ID for deduplication and an authoritative per-conversation sequence for accepted order.",
+    "why": "Numbered pages stay readable when the printer hands you the same page twice.",
+    "example": "m81 gets sequence 41 but Alice loses the response. Retrying must return 41. Bob receiving 42 before 41 can detect a gap and fetch missing history.",
+    "tradeoffs": "Conversation order is not global order. Huge groups can overload one ordering owner. Tombstones distinguish intentional deletion from a delivery gap.",
     "followups": [
       "What about edits and deletes?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Order messages and remove duplicates",
+    "walkthroughSteps": [
+      {
+        "title": "Accept stable ID",
+        "explanation": "Use an appropriate conversation/sender/client-ID unique key bound to the original payload."
+      },
+      {
+        "title": "Assign sequence",
+        "explanation": "A partition owner or transactional sequencer assigns conversation order at commit."
+      },
+      {
+        "title": "Deliver with retries",
+        "explanation": "Bob deduplicates already-applied IDs and buffers or fetches missing ranges."
+      },
+      {
+        "title": "Resume from cursor",
+        "explanation": "Reconnect requests messages after a durable cursor, independent of the old socket."
+      }
+    ],
+    "knowledgeCheck": "Why is a phone timestamp unreliable as the only ordering key?",
+    "diagramImage": "docs/system-design/diagrams/topic-247.svg",
+    "diagram": "Accept stable ID → Assign sequence → Deliver with retries → Resume from cursor"
   },
   {
     "id": 248,
@@ -4743,13 +5088,36 @@
     "question": "How would you design WhatsApp group messaging and presence?",
     "answer": "Fan-out cost grows with group size, and presence updates are ephemeral.",
     "priority": "Medium",
-    "explanation": "Fan-out cost grows with group size, and presence updates are ephemeral.",
-    "why": "Store membership, authorize sends, fan-out via queues; use Redis TTL for online presence; use push for offline clients.",
-    "example": "Small groups use fan-out-on-write; massive broadcast channels may favor fan-out-on-read.",
-    "tradeoffs": "Presence is best-effort, not a financial consistency guarantee.",
+    "explanation": "Fan-out-on-write prepares individual deliveries; fan-out-on-read fetches shared history. Presence is usually approximate, based on heartbeats and expiry rather than a guaranteed disconnect notification.",
+    "why": "A group announcement has many recipients; an attendance light is only a recent hint.",
+    "example": "A 50-member study group can use per-member delivery tasks. A 100,000-member announcement channel may prefer shared history and cursor reads.",
+    "tradeoffs": "Joining/leaving affects history access and in-flight delivery. Each device needs a cursor. Broadcasting every presence change to a huge group can dominate load.",
     "followups": [
       "How would you support 100,000-member channels?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Deliver to a group and track presence",
+    "walkthroughSteps": [
+      {
+        "title": "Check membership",
+        "explanation": "Authorize the sender and define membership/version rules for recipients."
+      },
+      {
+        "title": "Commit once",
+        "explanation": "Persist group message and delivery event in one local transaction."
+      },
+      {
+        "title": "Fan out asynchronously",
+        "explanation": "Workers push to eligible devices; very large groups may fetch shared history instead."
+      },
+      {
+        "title": "Expire presence",
+        "explanation": "Heartbeats refresh TTLs; stale sessions disappear without blocking durable message delivery."
+      }
+    ],
+    "knowledgeCheck": "May a departed member read a message sent after leaving?",
+    "diagramImage": "docs/system-design/diagrams/topic-248.svg",
+    "diagram": "Check membership → Commit once → Fan out asynchronously → Expire presence"
   },
   {
     "id": 249,
@@ -4757,13 +5125,36 @@
     "question": "How does end-to-end encryption change messaging architecture?",
     "answer": "The server transports ciphertext but should not possess plaintext decryption keys.",
     "priority": "Medium",
-    "explanation": "The server transports ciphertext but should not possess plaintext decryption keys.",
-    "why": "Use established audited cryptographic protocols and device key management; encrypt on sender and decrypt on recipients.",
-    "example": "Attachments encrypted client-side; server stores encrypted blobs and metadata.",
-    "tradeoffs": "Server-side search, moderation and multi-device recovery become harder.",
+    "explanation": "End-to-end encryption keeps content encryption/decryption on endpoint devices. TLS protects a connection to the server but can still expose plaintext at that server. Use established audited protocols.",
+    "why": "The server carries a locked parcel; only authorized devices can open it.",
+    "example": "Alice encrypts for Bob’s authorized devices before upload. The server queues ciphertext for offline delivery and cannot directly run plaintext search over it.",
+    "tradeoffs": "Server-side moderation and search change. Reports can deliberately disclose selected messages. Weak backups and compromised endpoints can defeat confidentiality.",
     "followups": [
       "How do you handle key rotation and new devices?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Encrypt at the endpoints",
+    "walkthroughSteps": [
+      {
+        "title": "Authenticate device keys",
+        "explanation": "The protocol verifies recipient device keys; enrollment and key-change verification matter."
+      },
+      {
+        "title": "Encrypt on sender",
+        "explanation": "Alice’s device produces encrypted envelopes before sending to the service."
+      },
+      {
+        "title": "Store and route ciphertext",
+        "explanation": "The service forwards envelopes; routing metadata such as recipients and timing can remain visible."
+      },
+      {
+        "title": "Decrypt on recipient",
+        "explanation": "Bob’s devices decrypt locally; backups and lost-device recovery need explicit key management."
+      }
+    ],
+    "knowledgeCheck": "Why does HTTPS alone not provide Alice-to-Bob end-to-end encryption?",
+    "diagramImage": "docs/system-design/diagrams/topic-249.svg",
+    "diagram": "Authenticate device keys → Encrypt on sender → Store and route ciphertext → Decrypt on recipient"
   },
   {
     "id": 250,
@@ -4771,13 +5162,36 @@
     "question": "Design an e-commerce platform from catalog to checkout.",
     "answer": "Catalog, search, cart, inventory, orders and payments have different scaling and consistency needs.",
     "priority": "High",
-    "explanation": "Catalog, search, cart, inventory, orders and payments have different scaling and consistency needs.",
-    "why": "Separate clear bounded contexts; product search index; cart cache/DB; reserve stock atomically; create order state machine; payment through PSP; emit events via outbox.",
-    "example": "Flash sale creates 10,000 concurrent checkout attempts for 100 units.",
-    "tradeoffs": "Avoid distributed 2PC across all services; model compensation and business invariants.",
+    "explanation": "Catalog, cart, checkout, payment and fulfillment have different correctness needs. A cart records intent, not a permanent promise of price or availability.",
+    "why": "Browsing uses a catalog copy; buying the last item needs the real stock ledger.",
+    "example": "A buyer adds two mugs. One sells out and the price changes before checkout. The server must recompute current terms rather than trust browser totals.",
+    "tradeoffs": "Long synchronous chains increase timeout exposure. A modular monolith is a useful starting point; separate services when ownership or scaling justifies them.",
     "followups": [
       "How do you prevent overselling?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Separate browsing and checkout",
+    "walkthroughSteps": [
+      {
+        "title": "Browse",
+        "explanation": "Caches and search serve descriptions and estimated availability."
+      },
+      {
+        "title": "Build cart",
+        "explanation": "Store item IDs and quantities under the authenticated customer; validate limits and ownership."
+      },
+      {
+        "title": "Validate checkout",
+        "explanation": "Recompute authoritative price, reserve inventory and create an idempotent pending order."
+      },
+      {
+        "title": "Complete workflow",
+        "explanation": "Verify payment results, transition durable order state and schedule fulfillment."
+      }
+    ],
+    "knowledgeCheck": "Why must the server reject a client-supplied discounted total?",
+    "diagramImage": "docs/system-design/diagrams/topic-250.svg",
+    "diagram": "Browse → Build cart → Validate checkout → Complete workflow"
   },
   {
     "id": 251,
@@ -4785,13 +5199,36 @@
     "question": "How do you prevent overselling during a flash sale?",
     "answer": "Inventory must never become negative even under concurrency.",
     "priority": "Medium",
-    "explanation": "Inventory must never become negative even under concurrency.",
-    "why": "Use atomic conditional update WHERE available >= quantity, reservation TTL, and unique order idempotency keys; release stock on failure.",
-    "example": "Two checkout requests race for the final item; exactly one reservation succeeds.",
-    "tradeoffs": "Redis counters alone are not durable source of truth without reconciliation.",
+    "explanation": "A separate read of available=1 followed by a write lets competing buyers both decide to sell. Reserve with an atomic condition or equivalent serialization at the authoritative data boundary.",
+    "why": "Two cashiers must not both promise the same last mug.",
+    "example": "Buyers A and B request the final unit. A guarded database update lets only one committed transaction decrement available from 1 to 0.",
+    "tradeoffs": "Hot rows serialize and create waiting. Keep transactions short and cap admission. Never hold the stock row lock while calling a payment provider.",
     "followups": [
       "How do you expire abandoned reservations?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Reserve the last unit atomically",
+    "walkthroughSteps": [
+      {
+        "title": "Begin reservation",
+        "explanation": "Identify the idempotent reservation and pending order."
+      },
+      {
+        "title": "Update conditionally",
+        "explanation": "UPDATE inventory SET available=available-1 WHERE sku=:sku AND available>=1 RETURNING available; inspect whether a row was returned."
+      },
+      {
+        "title": "Commit together",
+        "explanation": "Record reservation and stock change in one transaction; rollback the entire attempt if a required condition fails."
+      },
+      {
+        "title": "Expire with guards",
+        "explanation": "Release abandoned reservations through a guarded state transition so expiry cannot release stock twice."
+      }
+    ],
+    "knowledgeCheck": "What response should buyer B receive after buyer A commits?",
+    "diagramImage": "docs/system-design/diagrams/topic-251.svg",
+    "diagram": "Begin reservation → Update conditionally → Commit together → Expire with guards"
   },
   {
     "id": 252,
@@ -4799,13 +5236,36 @@
     "question": "How do you design a reliable checkout and payment workflow?",
     "answer": "Payments are externally managed and cannot participate in one database transaction.",
     "priority": "Medium",
-    "explanation": "Payments are externally managed and cannot participate in one database transaction.",
-    "why": "Create pending order, reserve inventory, initiate payment with idempotency key, verify signed webhook, transition state, and compensate on failure.",
-    "example": "Payment succeeds but response times out; webhook later finalizes the order without double charge.",
-    "tradeoffs": "Out-of-order webhooks and retries require state-machine guards.",
+    "explanation": "A saga records workflow progress across local transactions and external effects. A compensation is a new action such as refunding a charge; it does not erase history.",
+    "why": "Stock reservation and card payment are separate promises; a timeout undoes neither.",
+    "example": "A provider charges the card but its response times out. Keep the result unknown/pending and reconcile using the original provider key; a fresh key can double-charge.",
+    "tradeoffs": "Callbacks may be delayed, duplicated or out of order. A success after stock expiry requires a policy such as reacquisition or refund.",
     "followups": [
       "How do you reconcile PSP and local ledger?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Recover checkout after partial failure",
+    "walkthroughSteps": [
+      {
+        "title": "Record intent",
+        "explanation": "Commit pending order, reservation and payment-request outbox event together when they share a database."
+      },
+      {
+        "title": "Request payment",
+        "explanation": "A worker calls the provider with a stable idempotency key outside the database transaction."
+      },
+      {
+        "title": "Verify outcome",
+        "explanation": "Authenticate callbacks, deduplicate provider event IDs and query the provider for unknown outcomes."
+      },
+      {
+        "title": "Transition once",
+        "explanation": "Guard order-state changes; confirm and fulfill, or release/refund according to recorded outcome and policy."
+      }
+    ],
+    "knowledgeCheck": "Why is unknown more accurate than failed after a payment timeout?",
+    "diagramImage": "docs/system-design/diagrams/topic-252.svg",
+    "diagram": "Record intent → Request payment → Verify outcome → Transition once"
   },
   {
     "id": 253,
@@ -4813,13 +5273,36 @@
     "question": "What is the transactional outbox pattern?",
     "answer": "Writing DB state and publishing an event separately can lose events.",
     "priority": "Medium",
-    "explanation": "Writing DB state and publishing an event separately can lose events.",
-    "why": "Within one DB transaction write business row and outbox event; relay publishes with retry; consumers deduplicate.",
-    "example": "Order insert and OrderCreated event stored atomically, then Kafka receives it.",
-    "tradeoffs": "At-least-once relay means consumers still need idempotency.",
+    "explanation": "Transactional outbox stores the business update and an event in one database transaction. A relay publishes committed rows later, closing the crash window between database commit and event publish.",
+    "why": "Write the order and the instruction to announce it on the same durable page.",
+    "example": "Order 81 becomes confirmed alongside outbox event e81. An API crash after commit cannot erase the event the relay must publish.",
+    "tradeoffs": "Delivery is normally at least once, not automatic exactly once. Monitor oldest outbox age and preserve per-aggregate ordering when needed.",
     "followups": [
       "Compare outbox polling with CDC."
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Commit a business change and event together",
+    "walkthroughSteps": [
+      {
+        "title": "Commit both",
+        "explanation": "Update the order and insert e81 with event ID and aggregate version in one transaction."
+      },
+      {
+        "title": "Relay committed rows",
+        "explanation": "A poller or change-data-capture reader publishes to the broker."
+      },
+      {
+        "title": "Record publication progress",
+        "explanation": "Mark progress after broker acknowledgement; a crash before marking can republish."
+      },
+      {
+        "title": "Deduplicate consumer",
+        "explanation": "Commit consumer effect and processed event ID atomically, or use an idempotent state transition."
+      }
+    ],
+    "knowledgeCheck": "Which crash window causes duplicate publication?",
+    "diagramImage": "docs/system-design/diagrams/topic-253.svg",
+    "diagram": "Commit both → Relay committed rows → Record publication progress → Deduplicate consumer"
   },
   {
     "id": 254,
@@ -4827,13 +5310,36 @@
     "question": "Design product search, filtering and recommendations.",
     "answer": "Search requires full-text relevance and faceting beyond transactional joins.",
     "priority": "High",
-    "explanation": "Search requires full-text relevance and faceting beyond transactional joins.",
-    "why": "Index product projection in Elasticsearch; update via outbox/CDC; add filters/facets; optionally embed descriptions for semantic similarity.",
-    "example": "Search “lightweight running shoes” with size, price and brand facets.",
-    "tradeoffs": "Search results may be eventually consistent; checkout revalidates price and stock.",
+    "explanation": "Text search ranks matching documents; filters restrict exact attributes; recommendations rank candidates using context. Search indexes are derived and may lag behind authoritative catalog changes.",
+    "why": "The shop directory finds a shelf; the cashier verifies the purchase terms.",
+    "example": "Search running shoes with size 9 and relevance sorting. Recommendations suggest socks; checkout independently revalidates stock, price and eligibility.",
+    "tradeoffs": "Provide a default ranking for new users and a fallback if recommendations fail. Monitor index lag; stable cursor pagination may suit changing results.",
     "followups": [
       "How do you handle zero-result queries?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Design discovery as a derived view",
+    "walkthroughSteps": [
+      {
+        "title": "Change catalog",
+        "explanation": "Commit product attributes and a versioned source event."
+      },
+      {
+        "title": "Update index",
+        "explanation": "Apply newer versions and tombstones idempotently; support rebuilding from history or snapshots."
+      },
+      {
+        "title": "Search and rank",
+        "explanation": "Apply text query, filters, pagination and visibility rules before returning eligible candidates."
+      },
+      {
+        "title": "Recheck purchase",
+        "explanation": "Use authoritative state for checkout instead of trusting the search copy."
+      }
+    ],
+    "knowledgeCheck": "What should users still be able to do when recommendations are down?",
+    "diagramImage": "docs/system-design/diagrams/topic-254.svg",
+    "diagram": "Change catalog → Update index → Search and rank → Recheck purchase"
   },
   {
     "id": 255,
@@ -4841,13 +5347,36 @@
     "question": "Design an Uber-like ride-hailing system.",
     "answer": "Match riders with nearby drivers in real time while tracking trip state and location updates.",
     "priority": "High",
-    "explanation": "Match riders with nearby drivers in real time while tracking trip state and location updates.",
-    "why": "Driver app sends periodic coordinates; geo-index nearby drivers; matching service offers trip with expiry; atomic acceptance; trip events stream; payment after completion.",
-    "example": "Rider requests pickup at Bengaluru airport; nearby available drivers receive time-limited offers.",
-    "tradeoffs": "GPS is noisy; stale location and simultaneous acceptances require safeguards.",
+    "explanation": "Driver location is fast-changing and approximate. A confirmed assignment and trip lifecycle need stronger durable correctness. Separate these two kinds of state.",
+    "why": "Dispatch finds candidates, offers a trip and allows exactly one valid assignment.",
+    "example": "A rider requests pickup near a station. Nearby available drivers are shortlisted, ranked by pickup time and offered the ride with an acceptance deadline.",
+    "tradeoffs": "Location can be stale or spoofed. Recheck availability when claiming, not just when searching. Reconnects recover durable trip state.",
     "followups": [
       "How do you ensure only one driver accepts a ride?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Match a rider and run a trip",
+    "walkthroughSteps": [
+      {
+        "title": "Request ride",
+        "explanation": "Authenticate and create one pending trip under an idempotency key."
+      },
+      {
+        "title": "Find candidates",
+        "explanation": "Read fresh nearby positions and estimate pickup times."
+      },
+      {
+        "title": "Offer and claim",
+        "explanation": "Use bounded offers; acceptance must atomically prevent rider/driver double-assignment."
+      },
+      {
+        "title": "Run lifecycle",
+        "explanation": "Persist accepted, arrived, started and completed states; publish updates and coordinate payment."
+      }
+    ],
+    "knowledgeCheck": "If a geographic index says free but the trip database says busy, which wins?",
+    "diagramImage": "docs/system-design/diagrams/topic-255.svg",
+    "diagram": "Request ride → Find candidates → Offer and claim → Run lifecycle"
   },
   {
     "id": 256,
@@ -4855,13 +5384,36 @@
     "question": "How do you find nearby drivers efficiently?",
     "answer": "Full scans of all driver coordinates are too slow.",
     "priority": "Medium",
-    "explanation": "Full scans of all driver coordinates are too slow.",
-    "why": "Use H3/S2/geohash spatial cells or geospatial index; search nearby cells, filter availability, then rank by ETA from routing service.",
-    "example": "A rider query scans a handful of nearby spatial cells rather than every driver in a city.",
-    "tradeoffs": "Nearest straight-line driver may have longer road ETA.",
+    "explanation": "Spatial indexes narrow coordinate searches without scanning the whole fleet. Cells, geohashes and spatial database indexes are options. Straight-line distance is only a candidate filter.",
+    "why": "Search nearby map cells first, then compare actual road travel.",
+    "example": "The closest driver is across a river. A slightly farther driver on the same side may reach the rider sooner.",
+    "tradeoffs": "Small cells create many neighbor queries; large cells scan many drivers. GPS jitter and high update rates need thresholds and expiry.",
     "followups": [
       "How do you update driver location without write overload?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Find drivers near a pickup",
+    "walkthroughSteps": [
+      {
+        "title": "Update position",
+        "explanation": "Store driver ID, coordinates, timestamp and availability hint; expire stale observations."
+      },
+      {
+        "title": "Search neighboring cells",
+        "explanation": "Include boundary neighbors and expand the radius if there are too few candidates."
+      },
+      {
+        "title": "Filter shortlist",
+        "explanation": "Reject stale, incompatible or unavailable drivers before expensive route calculations."
+      },
+      {
+        "title": "Rank by travel ETA",
+        "explanation": "Compute route-based estimates for a bounded shortlist; matching still claims atomically."
+      }
+    ],
+    "knowledgeCheck": "Why does searching only the rider’s own cell miss some nearby drivers?",
+    "diagramImage": "docs/system-design/diagrams/topic-256.svg",
+    "diagram": "Update position → Search neighboring cells → Filter shortlist → Rank by travel ETA"
   },
   {
     "id": 257,
@@ -4869,13 +5421,36 @@
     "question": "How do you design trip state and matching concurrency?",
     "answer": "Trip lifecycle must prevent contradictory transitions.",
     "priority": "Medium",
-    "explanation": "Trip lifecycle must prevent contradictory transitions.",
-    "why": "Explicit states REQUESTED→OFFERED→ACCEPTED→IN_PROGRESS→COMPLETED/CANCELLED; compare-and-set version or unique assignment constraint.",
-    "example": "Two drivers tap Accept at once; DB conditional update assigns only one.",
-    "tradeoffs": "Distributed locks without durable constraints can fail under lease expiry.",
+    "explanation": "A state machine lists allowed transitions. Compare-and-set or a transaction checks the expected state/version before writing. Lock expiry alone cannot prevent an old holder writing stale state.",
+    "why": "Two dispatchers may propose the same driver, but only one claim should win.",
+    "example": "Two riders compete for driver D7. In one database, a conditional transition from available to reserved can succeed for only one transaction.",
+    "tradeoffs": "Separate shards cannot share a normal local transaction. Use an assignment owner or recoverable reservation protocol with fencing rather than assuming global atomicity.",
     "followups": [
       "What happens when driver disconnects after acceptance?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Make assignment a guarded transition",
+    "walkthroughSteps": [
+      {
+        "title": "Read expected state",
+        "explanation": "Identify pending trip T81 and driver D7; this snapshot does not guarantee later availability."
+      },
+      {
+        "title": "Claim atomically",
+        "explanation": "In one local transaction when possible, claim the available driver and accept the pending trip; rollback if either condition fails."
+      },
+      {
+        "title": "Publish after commit",
+        "explanation": "Commit an outbox event before telling clients the assignment is confirmed."
+      },
+      {
+        "title": "Reject late actions",
+        "explanation": "Check expected state/version for acceptance or cancellation; return current state for stale requests."
+      }
+    ],
+    "knowledgeCheck": "How should an acceptance arriving after offer expiry be handled?",
+    "diagramImage": "docs/system-design/diagrams/topic-257.svg",
+    "diagram": "Read expected state → Claim atomically → Publish after commit → Reject late actions"
   },
   {
     "id": 258,
@@ -4883,13 +5458,36 @@
     "question": "How do surge pricing and ETA estimation work?",
     "answer": "Demand/supply imbalance influences dispatch and pricing, but models need guardrails.",
     "priority": "Medium",
-    "explanation": "Demand/supply imbalance influences dispatch and pricing, but models need guardrails.",
-    "why": "Aggregate available drivers and requests by geo cell; estimate ETA with map data; cap/smooth surge factors; audit pricing decisions.",
-    "example": "Rain causes demand spike in one area; app shows updated fare estimate before confirmation.",
-    "tradeoffs": "Avoid unfair or opaque dynamic pricing and stale supply snapshots.",
+    "explanation": "ETA estimates travel from routes, traffic and pickup conditions. Surge responds to recent demand/supply under a defined pricing policy. Inputs need freshness, smoothing and fallback behavior.",
+    "why": "An arrival time is a forecast; a quote has agreed terms and an expiry.",
+    "example": "An illustrative area sees 100 requests and 20 available drivers in a recent window. That signal may inform pricing, but does not by itself define a trustworthy multiplier.",
+    "tradeoffs": "Rapid feedback can cause oscillating prices. Define pricing and ETA fallback when data is unavailable and monitor prediction error.",
     "followups": [
       "How do you test surge rules?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Distinguish an ETA from a price promise",
+    "walkthroughSteps": [
+      {
+        "title": "Collect signals",
+        "explanation": "Aggregate demand, supply and travel observations by area/window; detect stale inputs."
+      },
+      {
+        "title": "Estimate pickup",
+        "explanation": "Route a shortlist and communicate uncertainty instead of a guaranteed arrival second."
+      },
+      {
+        "title": "Store quote",
+        "explanation": "Apply a bounded, versioned policy and store quote ID, currency, terms and expiry."
+      },
+      {
+        "title": "Bind accepted terms",
+        "explanation": "Accept an unexpired quote against its recorded terms; define any final-fare adjustment separately."
+      }
+    ],
+    "knowledgeCheck": "What should happen if the quote expires while the rider decides?",
+    "diagramImage": "docs/system-design/diagrams/topic-258.svg",
+    "diagram": "Collect signals → Estimate pickup → Store quote → Bind accepted terms"
   },
   {
     "id": 259,
@@ -4995,13 +5593,71 @@
     "question": "Explain SOLID principles with Spring Boot examples.",
     "answer": "SOLID helps change one concern without forcing unrelated changes.",
     "priority": "Medium",
-    "explanation": "SOLID helps change one concern without forcing unrelated changes.",
-    "why": "SRP: separate pricing from persistence; OCP: new PaymentGateway; LSP: honor contracts; ISP: narrow interfaces; DIP: inject interfaces.",
-    "example": "Add UPI payment provider without changing checkout workflow.",
-    "tradeoffs": "Too many abstractions can obscure a simple design.",
+    "explanation": "SOLID is a set of design principles, not a library and not a promise to eliminate every conditional. The goal is to localize changes while preserving clear contracts. A class can use several principles at once.",
+    "why": "A restaurant separates cooking, billing and record keeping. Changing the payment terminal should not require rewriting the kitchen.",
+    "example": "A checkout initially calculates price, constructs a card SDK, charges and saves receipts in one large method. Adding UPI forces edits throughout it. Separate the workflow from charging and persistence; pass those capabilities into the workflow.",
+    "tradeoffs": "Too many interfaces make a small stable design harder to follow. Extract real variation points. An interface and constructor injection alone do not solve remote payment atomicity or retry safety.",
     "followups": [
       "When is inheritance an LSP violation?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "SOLID: five ways to contain change",
+    "lessonSections": [
+      {
+        "title": "Single Responsibility — SRP",
+        "explanation": "Give a module one coherent reason to change. Pricing changes with pricing policy; receipt persistence changes with storage policy. SRP does not mean one method per class or one class for every line."
+      },
+      {
+        "title": "Open/Closed — OCP",
+        "explanation": "Keep the stable checkout workflow closed to repeated edits by accepting a Charger interface. Add a conforming UPI implementation at the variation point. Registration/configuration may still change; no useful design is closed to every possible change."
+      },
+      {
+        "title": "Liskov Substitution — LSP",
+        "explanation": "Every Charger must honor the documented contract: accepted inputs, result meaning and failure semantics. A subclass that suddenly rejects valid card-independent amounts or silently does nothing breaks substitutability. Inheritance alone does not prove a valid subtype."
+      },
+      {
+        "title": "Interface Segregation — ISP",
+        "explanation": "A payment-only client should depend on Charger rather than a giant interface that also requires settlement reports and refunds. Do not force an implementation to provide unsupported methods by throwing UnsupportedOperationException."
+      },
+      {
+        "title": "Dependency Inversion — DIP",
+        "explanation": "The workflow depends on payment and receipt abstractions. Constructor injection supplies implementations; it does not create a global service locator. Dependency injection is a construction technique; DIP is the direction of dependency."
+      },
+      {
+        "title": "Spring Boot connection",
+        "explanation": "Make the coordinator a @Service with constructor parameters for the capabilities. Register implementations as beans; if multiple match, choose explicitly using @Qualifier or a registry. The runnable lab uses plain constructor injection so it needs no Spring dependencies."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab checks two interchangeable charging implementations, receipt persistence and a rejected zero amount. Charges are simulated; this is not a production payment transaction."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Define contracts",
+        "explanation": "Document positive amount and receipt/error meaning for every Charger implementation."
+      },
+      {
+        "title": "Inject dependencies",
+        "explanation": "Checkout receives Charger and ReceiptStore; it does not construct provider SDKs."
+      },
+      {
+        "title": "Run one workflow",
+        "explanation": "Validate the amount, delegate charging, then persist the receipt."
+      },
+      {
+        "title": "Substitute implementation",
+        "explanation": "Run the same checks with Card and UPI; a new provider should preserve the contract."
+      }
+    ],
+    "knowledgeCheck": "If a new Charger rejects an input that the interface says is valid, which SOLID principle has it violated?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-266.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern266.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern266.java; java -cp .pattern-classes Pattern266",
+    "code": "import java.util.*;\n\n// SRP: checkout coordinates; gateway charges; receipt store persists.\npublic class Pattern266 {\n interface Charger { String charge(long paise); } // ISP: narrow capability\n interface ReceiptStore { void save(String receipt); }\n record Checkout(Charger charger, ReceiptStore receipts) { // DIP: depend on contracts\n  String pay(long paise) {\n   if(paise<=0) throw new IllegalArgumentException(\"positive amount required\");\n   String result=charger.charge(paise); receipts.save(result); return result;\n  }\n }\n // OCP: another conforming gateway leaves Checkout unchanged.\n static class Card implements Charger { public String charge(long amount){return \"card:\"+amount;} }\n static class Upi implements Charger { public String charge(long amount){return \"upi:\"+amount;} }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args){\n  List<String> saved=new ArrayList<>();\n  for(Charger gateway:List.of(new Card(),new Upi())) {\n   // LSP: either implementation honors the positive-amount charge contract.\n   String receipt=new Checkout(gateway,saved::add).pay(5000);\n   check(receipt.endsWith(\":5000\"));\n  }\n  check(saved.size()==2);\n  try{new Checkout(new Card(),saved::add).pay(0);throw new AssertionError();}\n  catch(IllegalArgumentException expected){check(saved.size()==2);}\n  System.out.println(\"PASS: gateway substitution, receipt persistence and input guard\");\n }\n}\n",
+    "diagram": "Define contracts → Inject dependencies → Run one workflow → Substitute implementation"
   },
   {
     "id": 267,
@@ -5009,13 +5665,67 @@
     "question": "Factory Method vs Abstract Factory vs Builder?",
     "answer": "Creation patterns hide construction complexity or families of compatible objects.",
     "priority": "Medium",
-    "explanation": "Creation patterns hide construction complexity or families of compatible objects.",
-    "why": "Factory Method delegates creation; Abstract Factory creates related families; Builder assembles optional/complex fields.",
-    "example": "Payment provider factory selects gateway; builder constructs immutable audit report.",
-    "tradeoffs": "Do not use factories for every trivial constructor.",
+    "explanation": "All three concern object creation, but they address different problems. Distinguish an actual Factory Method overridden by subclasses from a helper with a switch that is usually called a simple factory.",
+    "why": "Factory Method chooses who makes a product; Abstract Factory chooses a compatible kit; Builder assembles one configured product.",
+    "example": "A UI needs web-specific buttons, a matching dark-themed button and checkbox, and an audit report with optional charts. These are three separate creation decisions, not three names for the same factory.",
+    "tradeoffs": "A builder should not leak a partially built object or retain mutable references without defensive copies. Abstract factories add types; use them when a family relationship matters, not for every new expression.",
     "followups": [
       "How does Spring DI replace some factory use cases?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Choose a creation pattern by its purpose",
+    "lessonSections": [
+      {
+        "title": "Factory Method",
+        "explanation": "A Dialog base class owns render(), but calls an overridable createButton(). WebDialog chooses the concrete Button. The stable algorithm delegates one creation decision to a subclass. A static create(type) switch can be useful without being this specific pattern."
+      },
+      {
+        "title": "Abstract Factory",
+        "explanation": "UiFactory exposes button() and checkbox(). DarkUi returns a coherent family; another factory can return a light family. Clients work through product interfaces rather than mixing incompatible concrete families."
+      },
+      {
+        "title": "Builder",
+        "explanation": "Report.Builder collects title and optional chart settings, then build() validates and creates the finished immutable value. A builder is useful for many options or multi-stage construction; a record with two obvious fields may be simpler with a constructor."
+      },
+      {
+        "title": "How they differ",
+        "explanation": "Factory Method varies creation through subclassing. Abstract Factory provides several related creation operations through a factory object. Builder assembles a product through explicit steps. They can coexist; an abstract factory implementation might internally use builders."
+      },
+      {
+        "title": "Spring Boot connection",
+        "explanation": "Spring @Bean methods and configuration can perform application assembly without a custom factory hierarchy. Use a builder for request/report values when useful; use container-managed lifecycle for services that require injection or destruction callbacks."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab separately exercises a subclass creation hook, a compatible product family, and builder validation."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Factory Method demo",
+        "explanation": "WebDialog overrides createButton(); inherited render() uses the supplied product."
+      },
+      {
+        "title": "Abstract Factory demo",
+        "explanation": "One DarkUi object creates both related dark-themed controls."
+      },
+      {
+        "title": "Builder demo",
+        "explanation": "Set title and includeChart, then call build() to obtain the finished report."
+      },
+      {
+        "title": "Validate construction",
+        "explanation": "Verify created behavior and reject a report whose required title is missing."
+      }
+    ],
+    "knowledgeCheck": "Would a report with many optional sections need an Abstract Factory, a Builder, or just a constructor—and why?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-267.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern267.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern267.java; java -cp .pattern-classes Pattern267",
+    "code": "public class Pattern267 {\n interface Button { String render(); }\n interface Checkbox { String render(); }\n // Factory Method: subclass supplies one product to a stable workflow.\n static abstract class Dialog {\n  abstract Button createButton();\n  String render(){return createButton().render();}\n }\n static class WebDialog extends Dialog {Button createButton(){return ()->\"web button\";}}\n // Abstract Factory: one family produces compatible related products.\n interface UiFactory {Button button();Checkbox checkbox();}\n static class DarkUi implements UiFactory {\n  public Button button(){return ()->\"dark button\";}\n  public Checkbox checkbox(){return ()->\"dark checkbox\";}\n }\n // Builder: assemble one complex value and validate at the boundary.\n record Report(String title,boolean includeChart) {\n  static class Builder {\n   private String title;private boolean chart;\n   Builder title(String value){title=value;return this;}\n   Builder includeChart(){chart=true;return this;}\n   Report build(){if(title==null||title.isBlank())throw new IllegalStateException(\"title required\");return new Report(title,chart);}\n  }\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args){\n  check(new WebDialog().render().equals(\"web button\"));\n  UiFactory factory=new DarkUi();\n  check(factory.button().render().startsWith(\"dark\")&&factory.checkbox().render().startsWith(\"dark\"));\n  Report report=new Report.Builder().title(\"Audit\").includeChart().build();check(report.includeChart());\n  try{new Report.Builder().build();throw new AssertionError();}catch(IllegalStateException expected){}\n  System.out.println(\"PASS: factory workflow, related family and builder validation\");\n }\n}\n",
+    "diagram": "Factory Method demo → Abstract Factory demo → Builder demo → Validate construction"
   },
   {
     "id": 268,
@@ -5023,13 +5733,71 @@
     "question": "Strategy pattern with a Java payment example.",
     "answer": "Strategy swaps an algorithm behind a stable interface at runtime.",
     "priority": "Medium",
-    "explanation": "Strategy swaps an algorithm behind a stable interface at runtime.",
-    "why": "Define PricingStrategy or PaymentGateway interface; inject implementation; choose via registry or policy.",
-    "example": "Checkout uses different discount strategy for retail and wholesale customers.",
-    "tradeoffs": "Keep strategy selection separate from business operation.",
+    "explanation": "Strategy encapsulates interchangeable behavior behind a stable interface. The context delegates to a selected strategy. Selection policy and the algorithm itself are separate responsibilities.",
+    "why": "A navigation app can choose a walking or driving route while the caller still asks for a route.",
+    "example": "Checkout receives payment method upi and amount 5,000 paise. A validated registry selects the UPI strategy and invokes it with the original purchase key. Selecting card changes behavior without duplicating checkout validation.",
+    "tradeoffs": "Too many one-off strategies add indirection. Keep common validation in the context and provider-specific behavior in the implementation. Do not hide provider differences under a misleading universal contract.",
     "followups": [
       "Strategy vs State pattern?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Strategy: swap behavior behind a contract",
+    "lessonSections": [
+      {
+        "title": "Roles",
+        "explanation": "PaymentStrategy is the contract; Card and Upi implement behavior; Checkout is the context; the method-to-strategy map performs selection. Name the roles before discussing frameworks."
+      },
+      {
+        "title": "Why it improves a switch",
+        "explanation": "An expanding switch often mixes selection, validation and provider implementation. A registry keeps selection small while each provider can be tested separately. A short stable switch is still reasonable when no meaningful variation exists."
+      },
+      {
+        "title": "Strategy versus State",
+        "explanation": "Strategy is selected to perform an interchangeable operation. State represents the context’s lifecycle, such as Pending to Paid, and governs allowed transitions. Both may use interfaces, but their intent and ownership differ."
+      },
+      {
+        "title": "Factory versus Strategy",
+        "explanation": "A factory supplies an object. A strategy performs behavior. A factory can create/select a strategy, but creation and execution remain different concerns."
+      },
+      {
+        "title": "Spring Boot connection",
+        "explanation": "Inject provider beans and build an immutable registry with explicit keys. Reject duplicate or unknown keys at an appropriate boundary. Keep provider credentials server-side; do not let an arbitrary client choose an unauthorized implementation."
+      },
+      {
+        "title": "Distributed-systems limit",
+        "explanation": "An interface does not make providers share the same guarantees. Define supported currencies, timeout interpretation, idempotency and result semantics. A timeout can be an unknown charge outcome rather than a clean failure."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab uses simulated card/UPI responses, checks strategy selection and rejects an unsupported method. It does not send payments or implement durable deduplication."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Validate request",
+        "explanation": "Check positive paise and a nonblank purchase key before provider delegation."
+      },
+      {
+        "title": "Select policy",
+        "explanation": "Find exactly the permitted strategy for the requested method; reject unknown methods."
+      },
+      {
+        "title": "Execute strategy",
+        "explanation": "Call selected.pay(amount,key); use the same stable request key for retries."
+      },
+      {
+        "title": "Check outcome",
+        "explanation": "Handle a documented success or failure/unknown outcome; reconcile real provider timeouts."
+      }
+    ],
+    "knowledgeCheck": "Which object should decide the selected method, and which object should implement the payment algorithm?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-268.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern268.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern268.java; java -cp .pattern-classes Pattern268",
+    "code": "import java.util.*;\npublic class Pattern268 {\n interface PaymentStrategy {String pay(long paise,String requestKey);}\n record Card() implements PaymentStrategy {public String pay(long a,String k){return \"card:\"+k+\":\"+a;}}\n record Upi() implements PaymentStrategy {public String pay(long a,String k){return \"upi:\"+k+\":\"+a;}}\n record Checkout(Map<String,PaymentStrategy> strategies) {\n  Checkout {strategies=Map.copyOf(strategies);}\n  String pay(String method,long paise,String requestKey){\n   if(paise<=0||requestKey==null||requestKey.isBlank())throw new IllegalArgumentException(\"amount/key required\");\n   PaymentStrategy selected=strategies.get(method);\n   if(selected==null)throw new IllegalArgumentException(\"unsupported method\");\n   return selected.pay(paise,requestKey);\n  }\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args){\n  var checkout=new Checkout(Map.of(\"card\",new Card(),\"upi\",new Upi()));\n  check(checkout.pay(\"upi\",5000,\"order-81\").equals(\"upi:order-81:5000\"));\n  check(checkout.pay(\"card\",5000,\"order-82\").startsWith(\"card:\"));\n  try{checkout.pay(\"cash\",5000,\"order-83\");throw new AssertionError();}catch(IllegalArgumentException expected){}\n  System.out.println(\"PASS: policy selection and interchangeable payment behavior\");\n }\n}\n",
+    "diagram": "Validate request → Select policy → Execute strategy → Check outcome"
   },
   {
     "id": 269,
@@ -5037,13 +5805,67 @@
     "question": "Decorator, Adapter and Facade patterns in integrations.",
     "answer": "They solve different integration problems: extend behavior, translate interfaces, simplify subsystem APIs.",
     "priority": "Medium",
-    "explanation": "They solve different integration problems: extend behavior, translate interfaces, simplify subsystem APIs.",
-    "why": "Decorator wraps PaymentGateway for metrics; Adapter maps legacy SOAP to interface; Facade exposes unified document workflow.",
-    "example": "Migrate Documentum to Alfresco behind a content repository adapter.",
-    "tradeoffs": "Over-wrapping can complicate debugging and error semantics.",
+    "explanation": "Adapter changes an incompatible interface into the interface your code expects. Decorator keeps the same contract while adding behavior. Facade offers a simpler use-case interface over a subsystem. Similar wrapper syntax does not imply the same intent.",
+    "why": "A translator changes language, a jacket adds a layer, and a receptionist offers one simple entry point to several departments.",
+    "example": "A legacy document SDK takes an integer ID. The application accepts a string ID, counts attempts and exposes a preview operation. PreviewFacade calls MeteredDocuments, which calls LegacyAdapter, which calls the legacy SDK.",
+    "tradeoffs": "Blind retries around non-idempotent writes can duplicate effects. Too many wrappers obscure stack traces. Document wrapper order and avoid changing authorization/error semantics accidentally.",
     "followups": [
       "Where does Spring AOP fit?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Wrap, translate or simplify?",
+    "lessonSections": [
+      {
+        "title": "Adapter",
+        "explanation": "Documents.read(String) translates to LegacySdk.fetchNumeric(int). A real adapter also maps identifiers, authorization context, return values and error semantics. Invalid IDs must not silently map to another document."
+      },
+      {
+        "title": "Decorator",
+        "explanation": "MeteredDocuments implements Documents too, so it can wrap any Documents instance. It adds attempt counting and delegates. Choose whether metrics count attempts, success or both. Decorator order matters: retries outside a metrics wrapper count differently from retries inside it."
+      },
+      {
+        "title": "Facade",
+        "explanation": "PreviewFacade exposes preview(id), hiding retrieval and formatting details. It does not need to implement Documents because it offers a different, more convenient use-case boundary. A facade is not automatically a new network service."
+      },
+      {
+        "title": "Spring AOP connection",
+        "explanation": "Proxy-based AOP can apply cross-cutting behavior such as metrics around eligible method calls. That is not identical to every decorator; proxy boundaries and self-invocation affect whether advice runs. Keep access checks and transaction semantics explicit."
+      },
+      {
+        "title": "Migration connection",
+        "explanation": "A stable Documents contract lets a new repository adapter replace the old SDK incrementally. Test missing documents, forbidden access, version selection and timeouts as carefully as successful reads."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab checks preview composition and verifies that the attempt metric includes an invalid-ID failure. It models SDK calls locally."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Call the facade",
+        "explanation": "preview(42) expresses the user’s requested use case rather than SDK details."
+      },
+      {
+        "title": "Apply decorator",
+        "explanation": "The metrics wrapper records an attempt and delegates through the same read contract."
+      },
+      {
+        "title": "Translate via adapter",
+        "explanation": "Validate/convert the string ID and call the incompatible legacy method."
+      },
+      {
+        "title": "Return through layers",
+        "explanation": "Return content through the wrapper and let the facade format the preview; preserve errors."
+      }
+    ],
+    "knowledgeCheck": "Which wrapper is an Adapter if it changes String IDs to integer IDs, and why is the metrics wrapper different?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-269.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern269.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern269.java; java -cp .pattern-classes Pattern269",
+    "code": "import java.util.concurrent.atomic.AtomicInteger;\npublic class Pattern269 {\n interface Documents {String read(String id);}\n static class LegacySdk {String fetchNumeric(int id){return \"document:\"+id;}}\n // Adapter changes the interface (String ID to legacy numeric ID).\n record LegacyAdapter(LegacySdk sdk) implements Documents {\n  public String read(String id){return sdk.fetchNumeric(Integer.parseInt(id));}\n }\n // Decorator keeps the same interface and wraps behavior.\n record MeteredDocuments(Documents delegate,AtomicInteger calls) implements Documents {\n  public String read(String id){calls.incrementAndGet();return delegate.read(id);}\n }\n // Facade exposes one convenient use case across several operations.\n record PreviewFacade(Documents documents) {\n  String preview(String id){return documents.read(id).toUpperCase(java.util.Locale.ROOT);}\n }\n public static void main(String[] args){\n  var calls=new AtomicInteger();\n  Documents docs=new MeteredDocuments(new LegacyAdapter(new LegacySdk()),calls);\n  String preview=new PreviewFacade(docs).preview(\"42\");\n  if(!preview.equals(\"DOCUMENT:42\")||calls.get()!=1)throw new AssertionError();\n  try{docs.read(\"bad-id\");throw new AssertionError();}catch(NumberFormatException expected){}\n  if(calls.get()!=2)throw new AssertionError(\"attempts include failures\");\n  System.out.println(\"PASS: facade delegates through decorator and adapter\");\n }\n}\n",
+    "diagram": "Call the facade → Apply decorator → Translate via adapter → Return through layers"
   },
   {
     "id": 270,
@@ -5051,13 +5873,67 @@
     "question": "Observer vs Pub/Sub vs Mediator?",
     "answer": "They decouple senders and receivers at different scales.",
     "priority": "Medium",
-    "explanation": "They decouple senders and receivers at different scales.",
-    "why": "Observer notifies in-process listeners; Pub/Sub routes events via broker; Mediator coordinates interactions among objects.",
-    "example": "OrderCreated Kafka event fans out to email and analytics services.",
-    "tradeoffs": "Events do not guarantee exactly-once side effects.",
+    "explanation": "Observer is an object-level notification relationship. Broker-based publish/subscribe separates producers from consumers through messaging infrastructure. Mediator centralizes collaboration rules so colleagues do not all call one another directly. These are not interchangeable delivery guarantees.",
+    "why": "A doorbell alerts nearby listeners; a postal service routes to distant subscribers; an event coordinator tells collaborators what to do next.",
+    "example": "OrderCreated needs email and analytics. A local observer invokes listeners in the current process. Separate services may consume the event through a broker. A checkout mediator can instead explicitly coordinate reserve, record and request-payment steps.",
+    "tradeoffs": "A local event bus is not Kafka, and this lab does not run a broker. The in-memory set is not restart-safe or concurrency-safe. Use a broker only when durability, independent lifecycles or distribution justify its cost.",
     "followups": [
       "When would a direct synchronous call be better?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Observer, Pub/Sub and Mediator: different decoupling",
+    "lessonSections": [
+      {
+        "title": "Observer",
+        "explanation": "The subject keeps listeners and notifies them when something changes. This demo uses synchronous callbacks, so a slow listener delays publish and an exception stops later callbacks. Observer itself does not mandate synchronous execution or durable delivery."
+      },
+      {
+        "title": "Broker Pub/Sub",
+        "explanation": "A broker routes publications to subscriptions. For email and analytics to each receive every Kafka event, use separate consumer groups; consumers in one group share partitions rather than all receiving each event. A real design needs retention, retries, offsets and consumer idempotency."
+      },
+      {
+        "title": "Mediator",
+        "explanation": "A coordinator owns the collaboration sequence. Components delegate coordination to it rather than directly knowing every other component. An application mediator can be local; a durable distributed saga orchestrator additionally records recoverable state."
+      },
+      {
+        "title": "Choreography versus orchestration",
+        "explanation": "Consumers reacting to events can form choreography. An orchestrator directs a workflow. Neither is universally better: independent notifications suit events, while tightly ordered business decisions may need explicit coordination."
+      },
+      {
+        "title": "Delivery is not effect",
+        "explanation": "A duplicate event must not create a second email or shipment unintentionally. Consumer-local in-memory deduplication only lasts for that process; durable deduplication must share a transaction or idempotent boundary with the business effect. External sends can still have uncertainty."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab checks synchronous observer delivery, duplicate handling in one consumer and a separate mediator sequence. The broker discussion is conceptual; no broker or distributed transaction is simulated."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Observe locally",
+        "explanation": "Register email and analytics listeners; publishing invokes local callbacks in this demo."
+      },
+      {
+        "title": "Expect duplicate delivery",
+        "explanation": "Publishing the same event again reaches both listeners again; this is deliberately visible."
+      },
+      {
+        "title": "Deduplicate each effect",
+        "explanation": "The demo email consumer remembers event IDs; analytics deliberately records both deliveries."
+      },
+      {
+        "title": "Coordinate explicitly",
+        "explanation": "The separate mediator demo executes reserve, record order and request payment in a defined local order."
+      }
+    ],
+    "knowledgeCheck": "If email and analytics are in the same Kafka consumer group, will each always see every order event?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-270.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern270.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern270.java; java -cp .pattern-classes Pattern270",
+    "code": "import java.util.*;\nimport java.util.function.Consumer;\npublic class Pattern270 {\n record OrderCreated(String eventId){}\n // In-process observer: synchronous delivery in this deliberately small demo.\n static class OrderEvents {\n  final List<Consumer<OrderCreated>> listeners=new ArrayList<>();\n  void subscribe(Consumer<OrderCreated> listener){listeners.add(listener);}\n  void publish(OrderCreated event){for(var listener:List.copyOf(listeners))listener.accept(event);}\n }\n // Consumer-local deduplication models one concern of broker pub/sub.\n // In production use durable transactional state, not this in-memory set.\n static class EmailConsumer {\n  final Set<String> processed=new HashSet<>();int sent;\n  void on(OrderCreated event){if(processed.add(event.eventId()))sent++;}\n }\n // Mediator explicitly coordinates collaboration for one use case.\n record CheckoutMediator(List<String> workflow) {\n  void checkout(){workflow.add(\"reserve\");workflow.add(\"record order\");workflow.add(\"request payment\");}\n }\n public static void main(String[] args){\n  var events=new OrderEvents();var email=new EmailConsumer();var analytics=new ArrayList<String>();\n  events.subscribe(email::on);events.subscribe(e->analytics.add(e.eventId()));\n  var event=new OrderCreated(\"e81\");events.publish(event);events.publish(event);\n  if(email.sent!=1||analytics.size()!=2)throw new AssertionError();\n  var steps=new ArrayList<String>();new CheckoutMediator(steps).checkout();\n  if(!steps.equals(List.of(\"reserve\",\"record order\",\"request payment\")))throw new AssertionError();\n  System.out.println(\"PASS: local observers, per-consumer deduplication and mediator sequence\");\n }\n}\n",
+    "diagram": "Observe locally → Expect duplicate delivery → Deduplicate each effect → Coordinate explicitly"
   },
   {
     "id": 271,
@@ -5065,13 +5941,67 @@
     "question": "Singleton pattern and Spring singleton scope?",
     "answer": "Singleton controls instance count, while Spring singleton is one instance per bean definition per container.",
     "priority": "Medium",
-    "explanation": "Singleton controls instance count, while Spring singleton is one instance per bean definition per container.",
-    "why": "Prefer Spring-managed stateless services; avoid mutable shared state; enum singleton for JVM-level utility where justified.",
-    "example": "Stateless Spring OrderService safely serves concurrent requests.",
-    "tradeoffs": "Singleton bean does not mean globally unique across application replicas.",
+    "explanation": "The Singleton pattern restricts construction and exposes one instance within its defined runtime scope. A Spring singleton is one managed instance for a bean definition in one container. Neither means one global instance across multiple servers, nor does either make mutable fields automatically safe.",
+    "why": "One shared receptionist serves many people, but must not put the current caller’s private details in a shared notebook slot.",
+    "example": "A shared OrderService receives two simultaneous requests: 5,000 paise × 2 and 7,000 paise × 3. Request amounts belong in method parameters and locals. A field currentCustomer or lastAmount would let callers overwrite each other.",
+    "tradeoffs": "An AtomicInteger protects one counter, not an entire multi-step workflow or other replicas. Do not cache per-request authentication data in singleton fields. Prototype injection also does not magically create one dependency per method call.",
     "followups": [
       "Why is mutable state in singleton service risky?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Singleton scope does not mean thread safety",
+    "lessonSections": [
+      {
+        "title": "Classic Java singleton",
+        "explanation": "An enum constant gives controlled instance identity per defining classloader. Other patterns use a static holder or synchronization. Classloader boundaries matter; do not call a JVM object a globally unique distributed coordinator."
+      },
+      {
+        "title": "Spring singleton",
+        "explanation": "The container returns the bean instance for that definition. Two bean definitions of the same class can produce two instances, and two application containers have separate scopes. Manually using new bypasses container management."
+      },
+      {
+        "title": "Concurrency safety",
+        "explanation": "Prefer immutable dependencies and local request state. Shared mutable caches, counters and collections need appropriate synchronization or concurrent structures. Stateless service code still depends on the thread-safety and scope of its collaborators."
+      },
+      {
+        "title": "Dependency injection and testing",
+        "explanation": "Inject collaborators rather than looking up global singletons from inside business methods. Tests can supply substitutes; hidden global state otherwise leaks between tests."
+      },
+      {
+        "title": "Cluster-wide rules",
+        "explanation": "With three application replicas there may be three service instances. Use a database uniqueness rule or an appropriate distributed ownership protocol to protect a global booking, not an in-memory singleton lock."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The Java 21 lab checks enum identity and two concurrent calculations with independent inputs. It uses no Spring container; Spring scope rules are explained separately."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Create shared service",
+        "explanation": "Construct a service with an immutable Rules dependency; a container would manage this lifetime in Spring."
+      },
+      {
+        "title": "Handle request A",
+        "explanation": "Compute its total from parameters and locals without writing request state to fields."
+      },
+      {
+        "title": "Handle request B",
+        "explanation": "A second thread independently computes another total through the same service object."
+      },
+      {
+        "title": "Check scope",
+        "explanation": "Enum identity is stable within this classloader; a new service object is still distinct from the shared one."
+      }
+    ],
+    "knowledgeCheck": "Why can a singleton bean’s synchronized method fail to protect the last stock item across three application replicas?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-271.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern271.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern271.java; java -cp .pattern-classes Pattern271",
+    "code": "import java.util.concurrent.*;\npublic class Pattern271 {\n // One enum instance per defining classloader; no cross-replica guarantee.\n enum Rules {INSTANCE;\n  long total(long unitPaise,int quantity){if(unitPaise<0||quantity<0)throw new IllegalArgumentException();return Math.multiplyExact(unitPaise,quantity);}\n }\n // A Spring-managed service should similarly keep request values in locals.\n static class OrderService {\n  final Rules rules;\n  OrderService(Rules rules){this.rules=rules;}\n  long price(long unitPaise,int quantity){return rules.total(unitPaise,quantity);}\n }\n public static void main(String[] args)throws Exception{\n  if(Rules.INSTANCE!=Rules.INSTANCE)throw new AssertionError();\n  var shared=new OrderService(Rules.INSTANCE);\n  try(var pool=Executors.newFixedThreadPool(2)){\n   var a=pool.submit(()->shared.price(5000,2));var b=pool.submit(()->shared.price(7000,3));\n   if(a.get()!=10000L||b.get()!=21000L)throw new AssertionError();\n  }\n  // Merely using the same class does not make manually constructed services identical.\n  if(new OrderService(Rules.INSTANCE)==shared)throw new AssertionError();\n  System.out.println(\"PASS: enum identity and independent concurrent request values\");\n }\n}\n",
+    "diagram": "Create shared service → Handle request A → Handle request B → Check scope"
   },
   {
     "id": 272,
@@ -5079,13 +6009,67 @@
     "question": "Explain Repository, Unit of Work and Specification patterns.",
     "answer": "They isolate persistence and compose queries while keeping domain intent readable.",
     "priority": "Medium",
-    "explanation": "They isolate persistence and compose queries while keeping domain intent readable.",
-    "why": "Repository abstracts aggregate access; Unit of Work tracks transaction changes; Specification composes predicates.",
-    "example": "Spring Data repository queries audit records by status, owner and date.",
-    "tradeoffs": "Avoid leaking ORM entities into external API contracts.",
+    "explanation": "Repository presents domain-oriented access to stored aggregates. Unit of Work tracks changes belonging to a business operation and coordinates writing them. Specification represents a reusable selection rule. They cooperate but do not mean the same thing.",
+    "why": "A librarian finds records, a transaction folder collects changes, and a filter describes which records you want.",
+    "example": "An auditor lists Alice’s open audit records. A repository accepts a composed owner-is-Alice AND status-is-OPEN rule. A separate operation changes several related records inside one transaction rather than committing each repository call independently.",
+    "tradeoffs": "The list-based lab is not a real transactional database: no isolation, concurrency, durable recovery or ORM dirty checking is provided. Real rollback and constraints must be tested against the actual persistence stack.",
     "followups": [
       "What is the N+1 query problem?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Repository, Unit of Work and Specification",
+    "lessonSections": [
+      {
+        "title": "Repository",
+        "explanation": "Use methods such as findOpenAuditsFor(owner) or matching(specification) to describe intent. Do not blindly wrap every existing repository in another identical CRUD layer. Domain aggregate boundaries and query requirements should shape the interface."
+      },
+      {
+        "title": "Unit of Work",
+        "explanation": "An ORM persistence context tracks managed entities and changes. A service-level transaction commonly defines the business commit/rollback boundary. Unit of Work and database transaction are related concepts, not synonyms; tracking changes does not by itself guarantee ACID behavior."
+      },
+      {
+        "title": "Specification",
+        "explanation": "Combine predicates such as ownedBy(alice).and(isOpen()). The lab uses java.util.function.Predicate over a list. Spring Data JPA Specification builds database Criteria predicates; filtering a fully loaded table in Java is not a scalable substitute."
+      },
+      {
+        "title": "Spring service boundary",
+        "explanation": "A transaction around a service operation can include several repository calls to the same participating transaction manager. Merely adding @Transactional does not atomically include a remote payment service. Proxy invocation and rollback rules must be understood for the chosen setup."
+      },
+      {
+        "title": "Performance and API boundaries",
+        "explanation": "Avoid N+1: loading parents and lazily accessing each child may issue many queries. Use suitable projections, fetch strategies or batching after measuring SQL. Map persistence entities to API values so lazy loading, internal fields and graph shape do not become the public contract."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab checks a composed query, an explicit staged commit and discarded uncommitted work. It intentionally does not claim database transaction guarantees."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Compose intent",
+        "explanation": "Build owner and status predicates; combine them with AND."
+      },
+      {
+        "title": "Query repository",
+        "explanation": "The demo repository evaluates the composed rule against committed local rows."
+      },
+      {
+        "title": "Stage changes",
+        "explanation": "UnitOfWork.save stages a new value; it does not immediately mutate the committed list."
+      },
+      {
+        "title": "Finish boundary",
+        "explanation": "commit copies staged changes; closing without commit discards them in this teaching model."
+      }
+    ],
+    "knowledgeCheck": "Why is a composed Java Predicate over all loaded rows different from a JPA Specification executed in SQL?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-272.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern272.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern272.java; java -cp .pattern-classes Pattern272",
+    "code": "import java.util.*;\nimport java.util.function.Predicate;\npublic class Pattern272 {\n record Audit(long id,String owner,String status){}\n interface Audits {List<Audit> matching(Predicate<Audit> specification);void save(Audit audit);}\n // Teaching model of staged changes. Not a database/ORM or concurrency implementation.\n static class UnitOfWork implements Audits,AutoCloseable {\n  final List<Audit> database;final List<Audit> pending=new ArrayList<>();\n  UnitOfWork(List<Audit> database){this.database=database;}\n  public void save(Audit audit){pending.add(audit);}\n  public List<Audit> matching(Predicate<Audit> spec){return database.stream().filter(spec).toList();}\n  void commit(){database.addAll(pending);pending.clear();}\n  public void close(){pending.clear();} // discard uncommitted changes\n }\n public static void main(String[] args){\n  var rows=new ArrayList<Audit>();\n  try(var work=new UnitOfWork(rows)){work.save(new Audit(1,\"alice\",\"OPEN\"));work.commit();}\n  try(var work=new UnitOfWork(rows)){work.save(new Audit(2,\"bob\",\"OPEN\"));} // no commit\n  Predicate<Audit> owned=a->a.owner().equals(\"alice\");Predicate<Audit> open=a->a.status().equals(\"OPEN\");\n  try(var work=new UnitOfWork(rows)){\n   if(work.matching(owned.and(open)).size()!=1||rows.size()!=1)throw new AssertionError();\n  }\n  System.out.println(\"PASS: repository query, composed predicate, commit and discarded staging\");\n }\n}\n",
+    "diagram": "Compose intent → Query repository → Stage changes → Finish boundary"
   },
   {
     "id": 273,
@@ -5093,13 +6077,67 @@
     "question": "Explain Strangler Fig pattern for legacy modernization.",
     "answer": "Gradual replacement reduces big-bang migration risk.",
     "priority": "Medium",
-    "explanation": "Gradual replacement reduces big-bang migration risk.",
-    "why": "Route selected capabilities to new service behind proxy; migrate data incrementally; compare results; retire old paths.",
-    "example": "Move legacy Documentum document retrieval to Alfresco service behind same API.",
-    "tradeoffs": "Dual writes need careful reconciliation and rollback plans.",
+    "explanation": "Strangler Fig gradually moves selected capabilities from a legacy system to a replacement behind a stable entry point. Routing, compatibility, data ownership and rollback are part of the migration; a reverse proxy alone is not a complete modernization plan.",
+    "why": "Renovate a building room by room while keeping a safe entrance, rather than demolishing it with everyone inside.",
+    "example": "A document API keeps GET /documents/{id}. Document 42 is validated in the modern repository while document 7 still belongs to the legacy path. The router selects one owner; clients retain the same external contract.",
+    "tradeoffs": "Two live paths increase operational complexity. A routing facade can become a bottleneck. Big-bang replacement may be reasonable for a small isolated system, but do not assume gradual routing solves dual writes.",
     "followups": [
       "How do you validate data parity?"
-    ]
+    ],
+    "detailStatus": "Expanded",
+    "learningTitle": "Strangler Fig: replace one capability at a time",
+    "lessonSections": [
+      {
+        "title": "Choose a migration slice",
+        "explanation": "Start with a bounded capability or cohort such as read-only retrieval for migrated documents. Keep authorization, document version and error semantics compatible. Arbitrary percentage routing is unsafe if the selected backend lacks the requested data."
+      },
+      {
+        "title": "Establish data parity",
+        "explanation": "Backfill documents and metadata, verify checksums/counts, compare ACLs and versions, then reconcile changes during the copy. A matching byte count alone does not prove permission or metadata parity."
+      },
+      {
+        "title": "Cut over ownership",
+        "explanation": "Define one authoritative writer per entity/capability during each phase. Replication or change capture needs ordering and idempotency. Uncoordinated writes to old and new stores create divergence."
+      },
+      {
+        "title": "Validate safely",
+        "explanation": "Canary eligible traffic and compare results/latency/errors. Shadow only suitable side-effect-free reads with privacy and access controls; never duplicate payments or writes merely to compare responses."
+      },
+      {
+        "title": "Rollback and retire",
+        "explanation": "Before rollback after modern writes, restore a valid authoritative view or reconcile data; flipping a route is insufficient. After parity and stability, retire legacy paths, jobs, credentials and data according to retention requirements."
+      },
+      {
+        "title": "What the lab proves",
+        "explanation": "The lab checks migrated versus legacy routes and route-only rollback. It models no data backfill, ACL migration, dual writes or network calls."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Keep stable entry point",
+        "explanation": "Clients call one Documents API; routing policy identifies eligible migrated entities."
+      },
+      {
+        "title": "Route one owner",
+        "explanation": "The demo routes document 42 to modern and other IDs to legacy; these are alternatives, not both calls."
+      },
+      {
+        "title": "Validate before expansion",
+        "explanation": "Check content, ACL and version parity plus errors and latency before adding more entities."
+      },
+      {
+        "title": "Rollback deliberately",
+        "explanation": "The lab can revert routing only. A real rollback after writes requires data synchronization and ownership recovery."
+      }
+    ],
+    "knowledgeCheck": "Why can flipping the route back lose access to new data written only in the replacement system?",
+    "diagramImage": "docs/design-patterns/diagrams/pattern-273.svg",
+    "guidePath": "docs/design-patterns-java-distributed-systems.md",
+    "labPath": "examples/design-patterns/Pattern273.java",
+    "labType": "Java 21",
+    "runCommand": "javac -d .pattern-classes examples/design-patterns/Pattern273.java; java -cp .pattern-classes Pattern273",
+    "code": "import java.util.*;\npublic class Pattern273 {\n interface Documents {String read(String id);}\n record Router(Documents legacy,Documents modern,Set<String> migrated) implements Documents {\n  Router{migrated=Set.copyOf(migrated);}\n  public String read(String id){return (migrated.contains(id)?modern:legacy).read(id);}\n }\n public static void main(String[] args){\n  Documents legacy=id->\"legacy:\"+id,modern=id->\"modern:\"+id;\n  Documents canary=new Router(legacy,modern,Set.of(\"42\"));\n  if(!canary.read(\"42\").equals(\"modern:42\")||!canary.read(\"7\").equals(\"legacy:7\"))throw new AssertionError();\n  Documents rollback=new Router(legacy,modern,Set.of());\n  if(!rollback.read(\"42\").equals(\"legacy:42\"))throw new AssertionError();\n  // Only route rollback is demonstrated. Data parity and write ownership need a separate protocol.\n  System.out.println(\"PASS: migrated routing, legacy routing and route-only rollback\");\n }\n}\n",
+    "diagram": "Keep stable entry point → Route one owner → Validate before expansion → Rollback deliberately"
   },
   {
     "id": 274,

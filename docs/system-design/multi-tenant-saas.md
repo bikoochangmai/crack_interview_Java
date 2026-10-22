@@ -1,50 +1,41 @@
-# System Design: Multi-tenant SaaS
+# Multi-tenant SaaS: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 1K tenants, regulatory isolation. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** Two companies share one project-tracking service but must never see each other’s tasks.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Tenant isolation in every data path, per-tenant authorization/quotas, recoverable onboarding and fair resource use.
 
-Given **1K tenants, regulatory isolation**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+GET /projects derives tenant from authenticated membership. Project primary/unique keys and queries include tenant_id. Tenant, Membership, Project, AuditRecord.
 
-`Tenant-scoped APIs and audit exports`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Multi-tenant SaaS architecture](diagrams/multi-tenant-saas.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Tenant, User, Resource(tenant_id), AuditLog`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Resolve tenant from verified identity and membership. Apply it in database access, cache keys, search filters and object storage authorization. Jobs carry trusted tenant context and recheck permissions as required. Test cross-tenant IDs deliberately, not only happy-path requests.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Entra → API → tenant middleware → PostgreSQL RLS → object storage tenant prefix
-```
+Shared tables are economical but need strict isolation controls; database-per-tenant offers different isolation and operating costs. Large tenants may need separate resource pools.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Tenant isolation at query, cache, queue and retrieval; per-tenant keys/quotas.
+Missing tenant filters leak data. Unscoped cache keys collide. A noisy tenant can consume shared pools, so use per-tenant quotas and workload isolation.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Cross-tenant data leaks, noisy neighbor, tenant migration. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+Size for both total tenants and largest tenant. One tenant with 80% of requests can invalidate an average-per-tenant capacity estimate.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Isolation tests, per-tenant latency, leakage incidents. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+If database queries are scoped correctly but Redis keys omit tenant_id, is isolation complete?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

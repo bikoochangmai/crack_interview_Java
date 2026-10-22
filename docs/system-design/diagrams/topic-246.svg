@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" aria-labelledby="title desc"><title id="title">Store a message before acknowledging it</title><desc id="desc">Send stable message ID → Persist before ack → Attempt live delivery → Recover on reconnect. Illustrative sequence; conditions are explained in the steps.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="960" rx="18" fill="#0f172a"/>
+<text x="40" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25" font-weight="bold">246. Store a message before acknowledging it</text>
+<text x="40" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="16">Illustrative flow • follow steps 1–4 and check the conditions on each step</text>
+<rect x="40" y="110" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="140" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">1. Send stable message ID</text>
+<text x="60" y="170" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Send conversation ID, client message ID and content over an authenticated connection.</text>
+<path d="M480,254 L480,275" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="278" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="308" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">2. Persist before ack</text>
+<text x="60" y="338" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Authorize membership, deduplicate the ID and commit message plus delivery event.</text>
+<path d="M480,422 L480,443" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="446" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="476" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">3. Attempt live delivery</text>
+<text x="60" y="506" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Find Bob’s active connection and push if present; offline messages stay in durable history.</text>
+<path d="M480,590 L480,611" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="614" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="644" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">4. Recover on reconnect</text>
+<text x="60" y="674" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Bob fetches after his cursor, acknowledges delivery and may separately send a read receipt.</text>
+<text x="40" y="818" fill="#fbbf24" font-family="Arial,sans-serif" font-size="19" font-weight="bold">Failure / trade-off to explain</text>
+<text x="40" y="848" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">A WebSocket is not durable storage. Push notifications are wake-up hints. Lost acknowledgements cause</text>
+<text x="40" y="869" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">retries and duplicate delivery attempts.</text>
+</svg>

@@ -1,50 +1,41 @@
-# System Design: E-commerce Checkout
+# E-commerce checkout: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 100K product views/minute; 5K checkouts/minute at peak. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** Two buyers request the last mug; one payment response is lost.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Create one order per purchase, prevent overselling, reconcile payment uncertainty and fulfill only confirmed orders.
 
-Given **100K product views/minute; 5K checkouts/minute at peak**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /checkout with idempotency key. Order, OrderLine, Reservation(state, expiry), PaymentAttempt(provider key/status), Outbox. Calculate price on the server.
 
-`GET /products; POST /orders; POST /payments`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![E-commerce checkout architecture](diagrams/e-commerce-checkout.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Product, Inventory(sku, available), Reservation, Order, Payment, Outbox`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Reserve stock with a conditional update and commit pending order plus outbox in one local transaction. The relay publishes payment work. A worker calls the provider outside that transaction. Verified callbacks/reconciliation update guarded order state, then schedule fulfillment.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Angular → API gateway → Catalog/Search; Checkout → Inventory → Payment PSP → Order → Outbox/Kafka
-```
+The provider charge and local database commit are not one ACID transaction. A saga persists progress and compensates with stock release/refund when required.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Atomic inventory reservation; idempotency key; payment webhook state machine; saga compensation.
+Treat a charge timeout as unknown. Query/retry with the same provider key. Define policy for late success after reservation expiry; never blindly release or fulfill twice.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Oversell, PSP timeout, duplicate webhook, eventual search consistency. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+For 60,000 checkouts/hour, average is 16.7/second. Flash-sale concentration on a single SKU may matter more than total average.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Oversell count=0, checkout success, payment reconciliation mismatch. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+Which local records must commit together to stop an order existing without a recoverable payment request?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

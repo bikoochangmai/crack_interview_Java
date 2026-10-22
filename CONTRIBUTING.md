@@ -60,3 +60,9 @@ If you add or modify questions in `data/questions.json`, update the correspondin
 Coding exercises also require constraints, bruteForce, bruteTime, bruteSpace, bruteCode, walkthrough and edgeCases; keep the Markdown equivalent synchronized. Expanded DevOps entries use contentBlocks (type text or code, plus text) to preserve complete HCL/YAML examples in the portal.
 
 Run `python scripts/validate_java_solutions.py` with JDK 17+ to compile and check both variants of all 20 exercises against samples and boundary cases.
+
+
+System-design lessons are authored in `scripts/expand_system_design.py`; regenerate its 26 entries, five topic guides and diagrams with `python scripts/expand_system_design.py`. Case studies and component diagrams are authored in `scripts/build_system_design_cases.py`. Run `python scripts/build_system_design_cases.py` after editing them. The browser check `node scripts/test_system_design.cjs` requires Playwright and Microsoft Edge (or set PLAYWRIGHT_CHANNEL to another installed channel). It verifies lesson images, step controls, SVG text bounds and mobile page width.
+
+
+Design-pattern lessons: edit `scripts/expand_design_patterns.py` and `examples/design-patterns/*.java`, regenerate with `python scripts/expand_design_patterns.py`, and run `python scripts/validate_pattern_labs.py` with JDK 21+. This checks all eight runnable labs and code/data synchronization. The shared browser check covers 34 system-design/design-pattern lessons and 44 diagrams.

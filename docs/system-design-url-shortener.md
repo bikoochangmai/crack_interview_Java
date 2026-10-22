@@ -1,41 +1,107 @@
 # System Design — URL Shortener
 
-3 senior-level interview questions with architectural trade-offs, practical examples and follow-ups.
+Read the example, follow the flow, then explain the failure case. These are illustrative designs, not documented company internals.
 
-> Answers are original study material. Product capabilities and cloud SKUs should be checked against current vendor documentation before deployment.
+[Beginner guide and glossary](system-design/visual-learning-guide.md) · [Case studies](system-design/README.md)
 
 ## 243. Design a TinyURL/ShortURL service end to end.
 
-**Concept:** Users create short links and expect low-latency, highly available redirects.
+### Build a short-link service
 
-**How and why:** POST /links validates URL and allocates unique Base62 code; GET /{code} looks up cache then DB and returns 302; use abuse checks, TTL and analytics events.
+A code is a coat-check ticket pointing to something stored elsewhere.
 
-**Real-world example:** Campaign marketing sends millions of redirect requests while link creation is comparatively rare.
+### What it means
 
-**Trade-offs / failure modes:** 301 may be cached aggressively; 302 offers more control over mutable destinations.
+A shortener stores code-to-URL mappings. Creation writes the mapping; opening a code reads it and returns an HTTP redirect. The browser then follows the Location header.
 
-**Interview follow-up:** How do you avoid code collisions and malicious destinations?
+### Worked real-world example
+
+POST /links stores aB72 mapped to https://example.test/products/42. GET /aB72 returns 302 and that target if the link is active.
+
+![Build a short-link service](system-design/diagrams/topic-243.svg)
+
+### Follow the flow
+
+1. **Create mapping:** Validate URL scheme and permissions, generate a code and insert it under a unique constraint.
+
+2. **Receive redirect:** Check a cache for the code; only on a miss read the mapping database.
+
+3. **Check link policy:** Apply expiration, disabled status and abuse policy. Missing links return 404; expiration can use a documented 410 policy.
+
+4. **Return Location:** Send the redirect; record analytics asynchronously so analytics failure does not block navigation.
+
+### Failure and trade-offs
+
+Permanent redirects may remain cached after target changes. Choose status and cache policy deliberately. Block dangerous schemes and provide takedowns.
+
+### Check your understanding
+
+Which is more important to preserve: one click metric or the code-to-URL mapping?
 
 ## 244. How would you generate globally unique short codes?
 
-**Concept:** Short codes need uniqueness, compactness and predictable capacity.
+### Generate unique codes
 
-**How and why:** Use database-generated IDs encoded Base62, a distributed ID service, or random tokens with unique constraint and retry.
+Sequential tickets need a unique allocator; random tickets need a collision check.
 
-**Real-world example:** Encode a 64-bit unique ID as Base62 to get compact tokens without collisions in the ID space.
+### What it means
 
-**Trade-offs / failure modes:** Sequential codes are guessable; obfuscation is not authorization.
+Base62 encodes numbers with 62 symbols; it does not generate uniqueness. Encode an allocated unique ID, or generate random codes and enforce uniqueness on insertion.
 
-**Interview follow-up:** How do you support custom aliases?
+### Worked real-world example
+
+Seven Base62 characters offer 62^7 = 3,521,614,606,208 possibilities. Birthday collisions are still possible when drawing many random codes.
+
+![Generate unique codes](system-design/diagrams/topic-244.svg)
+
+### Follow the flow
+
+1. **Choose strategy:** A database sequence is simple; random codes can reduce easy enumeration.
+
+2. **Build candidate:** Encode the allocated ID or draw random characters; define case sensitivity.
+
+3. **Insert uniquely:** Use the unique index as the arbiter. Checking existence before insertion alone races.
+
+4. **Retry collisions:** Generate another random candidate with bounded retries; never overwrite an existing mapping.
+
+### Failure and trade-offs
+
+Sequential codes expose ordering. Random codes are not authorization. Distributed timestamp IDs need worker IDs and clock-regression handling.
+
+### Check your understanding
+
+Why is Base62(123) unique only when 123 was allocated uniquely?
 
 ## 245. How do you scale ShortURL redirects to millions of requests?
 
-**Concept:** Read-heavy traffic benefits from cache, CDN and partition-aware storage.
+### Handle a viral link
 
-**How and why:** Cache hot code→URL mappings with TTL, replicate reads, rate-limit abuse, publish asynchronous click analytics.
+Repeatedly reading a popular ticket should not repeatedly open the archive.
 
-**Real-world example:** A viral link is served from edge/Redis rather than hitting PostgreSQL for every redirect.
+### What it means
 
-**Trade-offs / failure modes:** Cache invalidation matters for deleted or malicious URLs.
+Redirects usually outnumber creations. Cache active mappings and add stateless redirect instances. A viral code is a hot key even if all other keys are evenly distributed.
 
-**Interview follow-up:** What is the strategy for a cache miss during DB outage?
+### Worked real-world example
+
+An illustrative 100M redirects/day averages 1,157/second. A tenfold peak is 11,574/second. Even 99% cache hits leave about 116 database reads/second at peak.
+
+![Handle a viral link](system-design/diagrams/topic-245.svg)
+
+### Follow the flow
+
+1. **Receive hot request:** Edge or redirect API receives /sale42 under a cache policy compatible with mutability.
+
+2. **Read cached mapping:** Return a permitted cache hit; bounded local caches can reduce shared hot-key traffic.
+
+3. **Coalesce miss:** Only a miss triggers database reload; one refresher serves many waiting readers.
+
+4. **Separate analytics:** Emit bounded asynchronous metrics; decide explicitly whether to buffer or drop during failure.
+
+### Failure and trade-offs
+
+Cache outage exposes full traffic to the database. Bound fallback load and takedown propagation time; test the failure path.
+
+### Check your understanding
+
+How quickly must a disabled phishing link stop working across caches?

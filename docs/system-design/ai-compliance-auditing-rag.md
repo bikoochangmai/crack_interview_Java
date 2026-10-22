@@ -1,50 +1,41 @@
-# System Design: AI Compliance Auditing RAG
+# AI compliance auditing with RAG: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 100K policy PDFs, 500 simultaneous auditors. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** An auditor asks which policy governs storing customer records.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Answer from approved, authorized documents with citations; abstain when evidence is missing. Retrieved text is data, not permission to run its instructions.
 
-Given **100K policy PDFs, 500 simultaneous auditors**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /documents for ingestion; POST /questions for retrieval. Document(tenant, version, ACL), Chunk(source/page, text), Embedding, AuditRecord.
 
-`POST /documents; POST /ask; POST /findings/{id}/approve`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![AI compliance auditing with RAG architecture](diagrams/ai-compliance-auditing-rag.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Document, Version, Chunk, Embedding, ACL, Finding, Approval, AuditEvent`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Ingestion extracts approved document versions, chunks them, records provenance and indexes embeddings. At query time enforce tenant/ACL filtering, retrieve evidence, build a constrained prompt, then return citations and an audit record. Ingestion is a separate pipeline from the query arrows.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Blob → ingestion/OCR → chunk/embed → pgvector; Entra → API → hybrid retrieval → LLM → cited answer → approval gate
-```
+Similarity finds candidates, not truth. Verify citation linkage, document currency and access again as needed. Evaluate retrieval recall separately from answer faithfulness.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Tenant ACL filtering, versioned citations, outbox ingestion, structured output validation, human approval.
+A deleted or newly restricted document must be removed or filtered in retrieval. Prompt injection in a retrieved chunk must not grant tool authority. Missing evidence should produce abstention.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Prompt injection, wrong citations, ACL leaks, model drift, ingestion failures. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+For 10,000 documents × 30 chunks, store 300,000 chunks; estimate vector bytes from dimension × bytes/value plus index overhead.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Faithfulness, retrieval recall@k, tool accuracy, unauthorized retrieval=0. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+Can a perfectly fluent answer still be wrong if it cites an outdated policy?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

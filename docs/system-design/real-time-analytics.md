@@ -1,50 +1,41 @@
-# System Design: Real-time Analytics
+# Real-time analytics: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 1M events/sec burst. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** A dashboard shows recent orders by minute while events arrive late or twice.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Durable event ingestion, repeatable aggregates, bounded freshness, late-event handling and tenant-scoped dashboard reads.
 
-Given **1M events/sec burst**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+Event(id, event_time, tenant, order_value); Aggregate(tenant, window, version); GET /metrics?window=. Define event-time versus processing-time semantics.
 
-`POST /events; GET /dashboards`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Real-time analytics architecture](diagrams/real-time-analytics.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Event stream, Aggregation, MaterializedView`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Append events durably. A processor groups by event-time window, deduplicates or applies idempotent updates, then writes queryable aggregates. Dashboard reads the aggregate store. Watermarks and an allowed-lateness policy determine when old windows may be revised.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Clients → Event Hubs/Kafka → stream processing → OLAP store → dashboard
-```
+Processing time is when an event arrives; event time is when the order happened. Checkpoint/replay semantics must agree with sink idempotency to avoid double-counting.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Partition keys, watermarking, late events, exactly-once-aware sinks.
+A delayed phone connection can deliver yesterday’s event today. Define correction or side-output policy. Watch consumer lag, backlog and dashboard freshness separately.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Hot partitions, duplicate events, late arrivals, retention costs. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+At 5,000 events/second and 500 bytes/event, raw ingestion is 2.5 MB/second or about 216 GB/day before replicas and indexes.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor End-to-end freshness, consumer lag, data correctness. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+If the processor replays a batch after a crash, how do totals avoid doubling?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

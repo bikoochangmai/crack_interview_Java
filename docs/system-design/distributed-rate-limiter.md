@@ -1,50 +1,41 @@
-# System Design: Distributed Rate Limiter
+# Distributed rate limiter: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 1M requests/minute across regions. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** Protect a shared API from a tenant sending far more traffic than its plan permits.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Enforce per-tenant budgets across API instances with bounded latency and explicit behavior during limiter outages.
 
-Given **1M requests/minute across regions**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+Middleware check(tenant, route, cost). Policy(capacity, refill_rate), Bucket(tokens, last_refill, expiry). Use bounded key space.
 
-`HTTP middleware checks tenant/user token bucket`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Distributed rate limiter architecture](diagrams/distributed-rate-limiter.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`LimitPolicy, Counter/TokenBucket`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Compute replenished tokens from elapsed time, capped at capacity, then atomically consume the request cost. Admit only on success. Reject without a token using 429 and useful retry guidance. The allowed and rejection arrows are alternatives, not sequential calls.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Edge/API Gateway → Redis cluster or local token buckets → backend
-```
+A capacity-20 bucket refilling 10/second allows a short burst and sustained 10/second. Per-region budgets are simpler but can overshoot a global limit unless coordinated.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Token bucket for bursts; bounded keys; fallback policy and headers.
+Decide fail-open versus fail-closed by endpoint risk. Centralized hot keys and datastore outages can turn the limiter into a bottleneck; monitor decision latency.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Clock skew, Redis outage, hot tenants, fairness. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+One million requests/minute is about 16,667 limiter decisions/second, so the check must be cheap and measured under contention.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Allowed/rejected requests, latency overhead, false rejects. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+Why is GET tokens followed by SET tokens unsafe under concurrent requests?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

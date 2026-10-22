@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" aria-labelledby="title desc"><title id="title">Singleton scope does not mean thread safety</title><desc id="desc">Create shared service → Handle request A → Handle request B → Check scope. This is an illustrative pattern walkthrough.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="960" rx="18" fill="#0f172a"/>
+<text x="40" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25" font-weight="bold">271. Singleton scope does not mean thread safety</text>
+<text x="40" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="16">Follow the numbered roles • these are learning steps, not separate network services</text>
+<rect x="40" y="110" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="140" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">1. Create shared service</text>
+<text x="60" y="170" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Construct a service with an immutable Rules dependency; a container would manage this</text>
+<text x="60" y="192" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">lifetime in Spring.</text>
+<path d="M480,254 L480,275" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="278" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="308" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">2. Handle request A</text>
+<text x="60" y="338" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Compute its total from parameters and locals without writing request state to fields.</text>
+<path d="M480,422 L480,443" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="446" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="476" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">3. Handle request B</text>
+<text x="60" y="506" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">A second thread independently computes another total through the same service object.</text>
+<path d="M480,590 L480,611" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="614" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="644" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">4. Check scope</text>
+<text x="60" y="674" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Enum identity is stable within this classloader; a new service object is still distinct from</text>
+<text x="60" y="696" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">the shared one.</text>
+<text x="40" y="818" fill="#fbbf24" font-family="Arial,sans-serif" font-size="19" font-weight="bold">Boundary / failure to explain</text>
+<text x="40" y="848" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">An AtomicInteger protects one counter, not an entire multi-step workflow or other replicas. Do not</text>
+<text x="40" y="869" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">cache per-request authentication data in singleton fields. Prototype injection also does not</text>
+<text x="40" y="890" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">magically create one dependency per method call.</text>
+</svg>

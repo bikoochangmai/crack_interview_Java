@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" aria-labelledby="title desc"><title id="title">Find drivers near a pickup</title><desc id="desc">Update position → Search neighboring cells → Filter shortlist → Rank by travel ETA. Illustrative sequence; conditions are explained in the steps.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="960" rx="18" fill="#0f172a"/>
+<text x="40" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25" font-weight="bold">256. Find drivers near a pickup</text>
+<text x="40" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="16">Illustrative flow • follow steps 1–4 and check the conditions on each step</text>
+<rect x="40" y="110" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="140" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">1. Update position</text>
+<text x="60" y="170" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Store driver ID, coordinates, timestamp and availability hint; expire stale observations.</text>
+<path d="M480,254 L480,275" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="278" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="308" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">2. Search neighboring cells</text>
+<text x="60" y="338" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Include boundary neighbors and expand the radius if there are too few candidates.</text>
+<path d="M480,422 L480,443" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="446" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="476" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">3. Filter shortlist</text>
+<text x="60" y="506" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Reject stale, incompatible or unavailable drivers before expensive route calculations.</text>
+<path d="M480,590 L480,611" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="40" y="614" width="880" height="142" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="60" y="644" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21" font-weight="bold">4. Rank by travel ETA</text>
+<text x="60" y="674" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Compute route-based estimates for a bounded shortlist; matching still claims atomically.</text>
+<text x="40" y="818" fill="#fbbf24" font-family="Arial,sans-serif" font-size="19" font-weight="bold">Failure / trade-off to explain</text>
+<text x="40" y="848" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">Small cells create many neighbor queries; large cells scan many drivers. GPS jitter and high update</text>
+<text x="40" y="869" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16">rates need thresholds and expiry.</text>
+</svg>

@@ -49,6 +49,14 @@ Questions support concept, why/how, real-world example, trade-offs, follow-up an
 
 The AI guide groups OpenAI, Claude, Gemini, Llama, Ollama, vLLM, LangGraph, LangChain, LlamaIndex, MCP servers, vector databases, evaluation and security tools by use case. Product capabilities may change.
 
+## Design patterns explained
+
+[Eight expanded design-pattern lessons](docs/design-patterns-java-distributed-systems.md) explain each principle and pattern with comparisons, concrete scenarios, four-step SVG walkthroughs, Spring connections and eight runnable Java 21 labs. The portal includes the full explanations and interactive step controls.
+
+## Visual system-design lessons
+
+[Start with the beginner guide and glossary](docs/system-design/visual-learning-guide.md). All 26 System Design questions now include concrete examples, four-step walkthroughs and local SVG flowcharts in the portal. Ten case studies include component diagrams and failure walkthroughs. Select a step button to follow the request; open any diagram at full size.
+
 ## What you need to prepare
 
 | Preparation area | Required knowledge | Guide |

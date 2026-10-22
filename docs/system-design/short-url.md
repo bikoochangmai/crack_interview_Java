@@ -1,50 +1,41 @@
-# System Design: Short URL
+# Short URL: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 100M redirects/day, 1M creations/day. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** A college shares a long event-registration URL using /aB72.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Create links, redirect active links, expire/disable abuse. Redirect reads should stay fast; losing the mapping is worse than losing a click metric.
 
-Given **100M redirects/day, 1M creations/day**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /links {targetUrl}; GET /{code}. Link(code unique, target, owner, expires_at, status). Reject unsafe URL schemes.
 
-`POST /links; GET /{code}`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Short URL architecture](diagrams/short-url.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Link(code PK, target_url, owner, expires_at, status)`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Create validates and persists a unique mapping. Redirect checks cache, then database only on miss, verifies active status and returns 302 Location. The browser follows that Location; the API does not download the destination page. Analytics runs after the critical decision.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Client → CDN/WAF → Redirect API → Redis → Link DB; click event → Kafka → analytics
-```
+Cache descriptions/mappings according to an explicit freshness policy. Keep mutable redirects from being permanently cached. Use unique insertion and collision retries for codes.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Base62 IDs; cache hot links; async click metrics; abuse scanning; 302 for mutable redirects.
+Redis outage must not unleash unlimited fallback reads. Apply admission control. Define takedown propagation targets across caches.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Code collisions, expired links, phishing, hot keys, DB outage. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+100M redirects/day ÷ 86,400 = about 1,157/second average; assume a separate peak factor, then estimate cache-miss load. These are illustrative numbers.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor p95 redirect <100ms from edge where practical; cache hit, errors, redirect QPS. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+What happens if a mapping is disabled while its cached redirect is still fresh?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

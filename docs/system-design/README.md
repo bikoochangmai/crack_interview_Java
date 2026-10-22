@@ -1,5 +1,7 @@
 # System Design Case Studies
 
+**Start here:** [Plain-language visual guide and glossary](visual-learning-guide.md). Each case below includes a specific scenario, component diagram, request walkthrough, data/API ownership, failure recovery and capacity calculation. These are illustrative designs, not actual company internals.
+
 - [Short URL](short-url.md)
 - [WhatsApp-style Messaging](whatsapp-style-messaging.md)
 - [E-commerce Checkout](e-commerce-checkout.md)

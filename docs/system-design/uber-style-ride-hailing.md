@@ -1,50 +1,41 @@
-# System Design: Uber-style Ride Hailing
+# Uber-style ride hailing: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 100K active drivers, location update every 5s. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** A rider at a railway station needs an available driver who can reach them soon.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Location freshness, nearby search, one driver per active assignment and durable trip lifecycle. Illustrative design, not Uber internals.
 
-Given **100K active drivers, location update every 5s**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /rides; POST /offers/{id}/accept with expected state/version. DriverPosition(timestamp, coordinates), Trip(state, rider, driver, version), Assignment.
 
-`POST /rides; POST /rides/{id}/accept; driver location stream`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![Uber-style ride hailing architecture](diagrams/uber-style-ride-hailing.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`DriverLocation, DriverAvailability, Ride, Offer, TripEvent`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Find drivers in nearby cells including neighbors, discard stale positions, rank a shortlist by road ETA and send expiring offers. On acceptance, atomically claim available driver and pending trip within the authoritative boundary. Only committed assignment is confirmed to clients.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Driver GPS → location ingest → geo-index; rider → match service → offers → trip state → payment
-```
+Geographic index is a candidate view, not proof of availability. Use guarded state transitions. Separate-shard ownership requires a recoverable assignment protocol.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-H3/geohash candidate search; ETA ranking; atomic ride assignment; TTL offers.
+Reject late acceptances. On reconnect, fetch durable trip status. Fence stale owners so an expired lock cannot authorize a conflicting write.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Stale GPS, double acceptance, hot cells, surge fairness. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+50,000 drivers updating every five seconds create 10,000 location writes/second; coalesce updates and expire old positions.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Match latency, offer acceptance, GPS staleness, trip completion. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+Why might the nearest driver in straight-line distance not have the shortest pickup ETA?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

@@ -1,50 +1,41 @@
-# System Design: WhatsApp-style Messaging
+# WhatsApp-style messaging: a worked design
 
-**Interview level:** Senior / Staff / Solution Architect  
-**Scenario / capacity assumption:** 1M concurrent connections; delivery to offline users. These are illustrative starting assumptions; clarify them with the interviewer.
+**Real-world situation:** Alice sends Bob a message while he is offline.
 
-## 1. Functional and non-functional requirements
+This is an illustrative architecture, not a claim about a specific company’s implementation.
 
-Describe core user journeys, authorization and data lifecycle. Establish availability, latency, consistency, privacy, RTO/RPO and throughput targets. Distinguish essential MVP from optional features.
+## What we need and why
 
-## 2. Capacity and sizing
+Durable send, history, reconnect, per-conversation ordering and separate accepted/delivered/read states. This is an illustrative chat architecture, not WhatsApp internals.
 
-Given **1M concurrent connections; delivery to offline users**, estimate peak requests/sec, bytes/request, read/write ratio, storage growth and headroom. Verify with realistic load tests. State your assumptions explicitly.
+## API and data ownership
 
-## 3. APIs
+POST /conversations/{id}/messages; GET messages?after=cursor. Message(conversation, sequence, sender, client_message_id unique within its scope, ciphertext). DeviceCursor tracks delivery.
 
-`WebSocket send/ack; GET /conversations/{id}/messages`
+## Component diagram
 
-Define authentication, idempotency, pagination, status codes, versioning and failure responses for each endpoint.
+![WhatsApp-style messaging architecture](diagrams/whatsapp-style-messaging.svg)
 
-## 4. Data model
+Arrows show requests or emitted data. Responses generally return to callers and are omitted. Branches can be alternatives rather than steps that always run.
 
-`Conversation, Member, Message(id, conversation_id, seq, ciphertext, status)`
+## Follow one request
 
-Identify authoritative state, uniqueness constraints, indexes, TTL/retention, partition keys and transactional boundaries.
+Authenticate membership, deduplicate the send and commit message plus outbox. Acknowledge acceptance only after the durability contract is met. Worker delivers to connected devices. Bob fetches from durable history after reconnect even if a push notification was lost.
 
-## 5. High-level architecture
+## Why these components exist
 
-```text
-Mobile → WebSocket gateway → Message service → durable store → queue → recipient gateway/push
-```
+Use conversation sequences rather than phone clocks. Consumers deduplicate IDs. For end-to-end encryption, encrypt on the sender and decrypt on recipient devices with an established protocol.
 
-## 6. Core design decisions
+## Failure walkthrough
 
-Per-conversation sequencing; message IDs and dedupe; durable offline queue; end-to-end encryption.
+If the worker crashes after push but before recording progress, retry can duplicate delivery. Devices deduplicate. Offline users cannot rely on socket memory.
 
-## 7. Failure scenarios and trade-offs
+## Capacity worked example
 
-Reconnection duplicates, reordering, offline retention, group fan-out, encryption keys. Define retries with jitter, deadlines, backpressure, monitoring, compensations and a rollback plan.
+100,000 connected users sending one message/minute produce about 1,667 sends/second before group fan-out and multi-device copies.
 
-## 8. Observability and security
+## Explain it back
 
-Monitor Delivery latency, queue lag, duplicate rate, reconnect success. Add structured logs, traces, SLOs, access controls, audit logs, encryption and secret management.
+How does Bob recover if he receives sequence 42 before sequence 41?
 
-## 9. Interview follow-ups
-
-1. Which component fails first at 10× traffic?
-2. How do you avoid duplicate effects when clients retry?
-3. What consistency guarantee is required for the critical write?
-4. How would you deploy across two Azure regions?
-5. Which cost dominates at scale and how would you measure it?
+[Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)

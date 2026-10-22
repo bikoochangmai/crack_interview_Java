@@ -22,8 +22,27 @@ function navigation(){let nav=$('navTree');nav.replaceChildren();let allBtn=docu
 }
 function choose(category){activeCategory=category;$('category').value=category;refresh();}
 function addText(parent,tag,content,cls){let el=document.createElement(tag);if(cls)el.className=cls;el.textContent=content;parent.append(el);return el;}
+// Self-contained, keyboard-accessible walkthroughs; no external diagram service.
+function renderDesignLesson(parent, item) {
+ if (!Array.isArray(item.walkthroughSteps) || !item.walkthroughSteps.length) return;
+ addText(parent,'h3','Visual walkthrough — '+item.learningTitle);
+ const figure=document.createElement('figure');figure.className='design-figure';
+ const link=document.createElement('a');link.href=item.diagramImage;link.target='_blank';link.rel='noopener';
+ const img=document.createElement('img');img.src=item.diagramImage;img.alt=item.learningTitle+': '+item.diagram;img.loading='lazy';img.width=960;img.height=960;
+ link.append(img);figure.append(link);addText(figure,'figcaption','Illustrative flow. Select the image to open it at full size; use the steps below to follow the example.');parent.append(figure);
+ const panel=document.createElement('section');panel.className='design-walkthrough';panel.setAttribute('aria-label','Step-by-step request walkthrough');
+ const controls=document.createElement('div');controls.className='design-step-buttons';
+ const detail=document.createElement('div');detail.setAttribute('aria-live','polite');detail.setAttribute('aria-atomic','true');
+ const buttons=[];
+ const show=index=>{detail.replaceChildren();buttons.forEach((b,i)=>{b.setAttribute('aria-pressed',String(i===index));});const step=item.walkthroughSteps[index];addText(detail,'h4','Step '+(index+1)+' of '+item.walkthroughSteps.length+' — '+step.title);addText(detail,'p',step.explanation);};
+ item.walkthroughSteps.forEach((step,i)=>{const b=document.createElement('button');b.type='button';b.textContent=(i+1)+'. '+step.title;b.onclick=()=>show(i);buttons.push(b);controls.append(b);});
+ panel.append(controls,detail);parent.append(panel);show(0);
+ addText(parent,'h3','Check your understanding');addText(parent,'p',item.knowledgeCheck);
+ const guide=document.createElement('a');guide.href=item.guidePath||'docs/system-design/visual-learning-guide.md';guide.textContent='Beginner glossary and complete visual study guide';parent.append(guide);
+}
+
 function render(){let search=$('search').value.trim().toLowerCase(),cat=$('category').value,priority=$('priority').value,status=$('status').value;
- let data=all(),visible=data.filter(x=>(!cat||x.category===cat)&&(!priority||x.priority===priority)&&(!status||(status==='done'?done(x):!done(x)))&&(!search||[x.category,x.question,x.answer,x.example||'',x.problem||'',x.code||'',x.constraints||'',x.bruteForce||'',x.walkthrough||'',x.explanation||'',...(x.contentBlocks||[]).map(b=>b.text)].join(' ').toLowerCase().includes(search)));
+ let data=all(),visible=data.filter(x=>(!cat||x.category===cat)&&(!priority||x.priority===priority)&&(!status||(status==='done'?done(x):!done(x)))&&(!search||[x.category,x.question,x.answer,x.example||'',x.problem||'',x.code||'',x.constraints||'',x.bruteForce||'',x.walkthrough||'',x.explanation||'',x.learningTitle||'',x.knowledgeCheck||'',...(x.lessonSections||[]).map(section=>section.title+' '+section.explanation),...(x.walkthroughSteps||[]).map(step=>step.title+' '+step.explanation),...(x.contentBlocks||[]).map(b=>b.text)].join(' ').toLowerCase().includes(search)));
  $('count').textContent='Showing '+visible.length+' of '+data.length+' items';let root=$('questions');root.replaceChildren();if(!visible.length)addText(root,'p','No matching questions. Try clearing filters.','empty');let groups=new Map();for(const x of visible){if(!groups.has(x.category))groups.set(x.category,[]);groups.get(x.category).push(x);}
  for(const [name,items] of groups){addText(root,'h2',name+' ('+items.length+')','group');for(const x of items){let details=document.createElement('details'),summary=document.createElement('summary'),check=document.createElement('input');check.type='checkbox';check.className='check';check.checked=done(x);check.setAttribute('aria-label','Mark complete: '+x.question);check.onclick=e=>e.stopPropagation();check.onchange=()=>{completed[x.key]=check.checked;save();refresh();};addText(summary,'span',x.kind==='leetcode'?x.id:'#'+x.id,'num');summary.prepend(check);addText(summary,'span',x.question,'question');addText(summary,'span',x.priority,'pill'+(x.priority==='Medium'?' medium':'')+(x.priority==='Easy'?' easy':''));details.append(summary);
  let body=document.createElement('div');body.className='answer';if(x.kind==='leetcode'){addText(body,'h3','Problem');addText(body,'p',x.problem);addText(body,'h3','Input, output and constraints');addText(body,'p',x.constraints);addText(body,'h3','Worked example');addText(body,'p',x.example,'example');addText(body,'h3','Brute-force baseline');addText(body,'p',x.bruteForce);addText(body,'p','Time: '+x.bruteTime+' · Space: '+x.bruteSpace,'complexity');let brutePre=document.createElement('pre');addText(brutePre,'code',x.bruteCode);body.append(brutePre);addText(body,'h3','Why this approach works');addText(body,'p',x.approach);addText(body,'h3','Step-by-step explanation');addText(body,'p',x.walkthrough);addText(body,'h3','Edge cases');addText(body,'p',x.edgeCases);addText(body,'h3','Interview walkthrough');addText(body,'p','Start with the brute-force idea, identify its bottleneck, then explain how the chosen data structure or algorithm improves it. Walk through the example input and discuss empty inputs, duplicates and boundary conditions.');addText(body,'p','Time: '+x.time+' · Space: '+x.space,'complexity');addText(body,'h3','Java solution');let pre=document.createElement('pre');let code=document.createElement('code');code.textContent=x.code;pre.append(code);body.append(pre);}else if(Array.isArray(x.contentBlocks)){
@@ -34,11 +53,13 @@ function render(){let search=$('search').value.trim().toLowerCase(),cat=$('categ
   addText(body,'h3','What is it? — Concept');addText(body,'p',x.explanation||x.answer);
   if(x.why){addText(body,'h3','Why and when is it used?');addText(body,'p',x.why);}
   if(x.example){addText(body,'h3','Real-world / production example');addText(body,'p',x.example,'example');}
+  if(Array.isArray(x.lessonSections)){for(const section of x.lessonSections){addText(body,'h3',section.title);addText(body,'p',section.explanation);}}
   if(x.diagram){addText(body,'h3','Architecture / execution flow');addText(body,'p',x.diagram,'example');}if(x.runCommand){addText(body,'p','Run locally: '+x.runCommand,'complexity');}if(x.code){addText(body,'h3',x.labType ? x.labType+' runnable lab' : 'Java example');if(x.labPath)addText(body,'p','Source file: '+x.labPath,'complexity');let pre=document.createElement('pre');let code=document.createElement('code');code.textContent=x.code;pre.append(code);body.append(pre);}
   if(x.tradeoffs){addText(body,'h3','Trade-offs and failure modes');addText(body,'p',x.tradeoffs);}
   if(Array.isArray(x.followups)&&x.followups.length){addText(body,'h3','Interview follow-up questions');let ul=document.createElement('ul');for(const f of x.followups)addText(ul,'li',f);body.append(ul);}
   if(x.detailStatus==='Guided study — example needs review')addText(body,'p','Study prompt only: verify this scenario and add a runnable code example before treating it as a complete answer.','note');
 }
+renderDesignLesson(body,x);
 if(window.interviewAudio)window.interviewAudio.attach(body,x);
 let actions=document.createElement('div');actions.className='study-actions';let read=document.createElement('label');read.className='studied-label';let readCheck=document.createElement('input');readCheck.type='checkbox';readCheck.checked=!!studied[x.key];readCheck.setAttribute('aria-label','Mark studied: '+x.question);readCheck.onchange=()=>{studied[x.key]=readCheck.checked;saveStudied();};read.append(readCheck,document.createTextNode(' Studied / read'));actions.append(read);let master=document.createElement('label');master.className='mastered-label';let masterCheck=document.createElement('input');masterCheck.type='checkbox';masterCheck.checked=done(x);masterCheck.setAttribute('aria-label','Mark mastered: '+x.question);masterCheck.onchange=()=>{completed[x.key]=masterCheck.checked;save();refresh();};master.append(masterCheck,document.createTextNode(' ✓ Mastered (green navigation tick)'));actions.append(master);body.append(actions);
 details.append(body);root.append(details);}}
