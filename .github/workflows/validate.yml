@@ -2,10 +2,11 @@ name: Validate interview questions
 on:
   pull_request:
     paths:
-      - 'data/questions.json'
-      - 'data/leetcode.json'
-      - 'scripts/validate_leetcode.py'
-      - 'scripts/validate_questions.py'
+      - 'data/**'
+      - 'docs/**'
+      - 'js/**'
+      - 'css/**'
+      - 'scripts/**'
       - '.github/workflows/validate.yml'
   push:
     branches: [main]
@@ -25,3 +26,6 @@ jobs:
 
       - name: Validate Java coding problems
         run: python scripts/validate_leetcode.py
+
+      - name: Validate system-design tutorials and portal links
+        run: python scripts/validate_system_design_tutorials.py

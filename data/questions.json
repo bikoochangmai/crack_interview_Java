@@ -4562,7 +4562,18 @@
     ],
     "knowledgeCheck": "If traffic grows 100 times, which measurement would guide your first change?",
     "diagramImage": "docs/system-design/diagrams/topic-233.svg",
-    "diagram": "Clarify requirements → Estimate demand → Define API and data → Start and measure"
+    "diagram": "Clarify requirements → Estimate demand → Define API and data → Start and measure",
+    "lessonSections": [
+      {
+        "title": "Design the canteen before picking technology",
+        "explanation": "Start with a student placing a lunch order, not with a list of cloud products. Ask what must happen on the screen: browse a menu, choose quantity, place an order, pay and collect. Then ask what may go wrong: duplicate clicks, no stock and a lost payment response. Each requirement should have a measurable or testable outcome. For example, one logical click with retries creates one order, and confirmed orders survive the promised failure model."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "Work the numbers explicitly. Ten thousand students placing two orders in a ten-hour day means 20,000/36,000 = 0.56 order writes/second average. If 4,000 arrive in ten minutes, that interval is 6.7/second. Menu reads, payment calls, bytes stored and peak concentration are separate dimensions. Start with one API and database; test those assumptions. Use the checkout tutorial to see how an authoritative stock decision leads to API, schema and transaction choices. A design interview answer is an evolving argument, not a diagram chosen before the requirements."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 234,
@@ -4599,7 +4610,18 @@
     ],
     "knowledgeCheck": "If a response times out but the order exists, should the client create a fresh order?",
     "diagramImage": "docs/system-design/diagrams/topic-234.svg",
-    "diagram": "Resolve hostname → Connect securely → Authorize and query → Return response"
+    "diagram": "Resolve hostname → Connect securely → Authorize and query → Return response",
+    "lessonSections": [
+      {
+        "title": "Watch one browser request and its response",
+        "explanation": "Bob types https://go.learn.example/aB72xQ9. Split the URL into scheme, hostname and path. DNS resolves only the hostname; it does not translate the short code. Secure transport connects Bob to the shortener’s approved edge and certificate. An HTTP GET then carries the path and hostname to the application, which makes the mapping/access decision. Network setup can be reused across requests; HTTP/3 uses QUIC rather than assuming every request always starts a new TCP connection."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "The application returns 302 Location: https://courses.example/lesson/42. Bob’s browser follows that instruction with a second request to the destination hostname, whose DNS/TLS and application are separate. If the first service returns 302 and the second returns 500, the two operations had different outcomes. Use a trace/request ID for the boundaries you control, and do not send shortener credentials to the destination. The full Short URL tutorial includes the actual request/response headers."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 235,
@@ -4636,7 +4658,18 @@
     ],
     "knowledgeCheck": "Why does gateway token validation not replace order-ownership checks?",
     "diagramImage": "docs/system-design/diagrams/topic-235.svg",
-    "diagram": "Check edge cache → Apply gateway policy → Balance the request → Enforce object access"
+    "diagram": "Check edge cache → Apply gateway policy → Balance the request → Enforce object access",
+    "lessonSections": [
+      {
+        "title": "Add an entry component only for its responsibility",
+        "explanation": "Imagine a shop initially running one API behind HTTPS. Adding a second API instance creates a routing question: which healthy instance receives the next request? A load balancer solves that. A reverse proxy describes the role of accepting requests for upstream servers; load balancing may be one of its capabilities. A gateway can additionally enforce API token/quota policy. These roles can be implemented by one product; drawing four boxes is not mandatory."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "Now serve a public product image repeatedly to distant users: a CDN cache can answer near them. That does not mean a private order response belongs in a public cache. The application must still authorize that the order belongs to the caller even if a gateway validated their identity token. DNS chooses the hostname’s route; API routing chooses the backend/path; object authorization chooses whether the operation is allowed. If a gateway fails, bypassing it is safe only if the alternate route preserves required controls, not merely because the backend is reachable."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 236,
@@ -4673,7 +4706,18 @@
     ],
     "knowledgeCheck": "What happens if search shows a product that just sold out?",
     "diagramImage": "docs/system-design/diagrams/topic-236.svg",
-    "diagram": "Write authoritative data → Record a change event → Build search view → Read the right source"
+    "diagram": "Write authoritative data → Record a change event → Build search view → Read the right source",
+    "lessonSections": [
+      {
+        "title": "Design the data question before choosing SQL or NoSQL",
+        "explanation": "Follow checkout: order 81 and its order lines must agree about ownership, totals and state. A relational transaction and constraints are a useful starting point. Now follow a search request for waterproof shoes in size 9: relevance and filtering may need a derived search index. These are two different read/write contracts, not a rule that SQL is old and NoSQL is fast."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "Write the product change and an outbox event in the source database. An indexer applies versioned changes to the search view. A search result may briefly be stale; checkout still checks current authoritative price and stock. If the index is down, decide whether basic product browsing can use a simpler source lookup; do not make stock correctness depend on index availability. Evaluate a chosen document/key-value product by its actual transaction, query and consistency guarantees. Additional stores require rebuilds, version ordering and permission propagation."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 237,
@@ -4710,7 +4754,18 @@
     ],
     "knowledgeCheck": "Why can invalidation race with a cache refill?",
     "diagramImage": "docs/system-design/diagrams/topic-237.svg",
-    "diagram": "Look up product:42 → Load only on miss → Store with expiry → Handle writes"
+    "diagram": "Look up product:42 → Load only on miss → Store with expiry → Handle writes",
+    "lessonSections": [
+      {
+        "title": "Trace a cache hit, a miss and a racing writer",
+        "explanation": "Alice requests product 42. On a cache hit the API can return its permitted cached description without querying the database. On a miss it loads the authoritative row and stores a copy with a TTL. Only the miss branch calls the database; a straight arrow through both boxes can conceal that important choice. Coalesce simultaneous misses so 1,000 waiting readers do not all rebuild the same key."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "Now a writer commits a new price and invalidates product:42. A reader that loaded the old row before commit may refill the old value afterward. TTL bounds staleness but does not make that race disappear; version-aware updates, ordering and a business-approved freshness policy may be needed. Checkout should revalidate authoritative terms. When Redis is down, cap database fallback concurrency rather than replacing every cache hit with unlimited DB traffic. Test hit, miss, stale refill, invalidation and outage as distinct paths."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 238,
@@ -4747,7 +4802,18 @@
     ],
     "knowledgeCheck": "How would you recover from an accidental delete while every server remains healthy?",
     "diagramImage": "docs/system-design/diagrams/topic-238.svg",
-    "diagram": "Detect failure → Protect data → Recover safely → Verify recovery"
+    "diagram": "Detect failure → Protect data → Recover safely → Verify recovery",
+    "lessonSections": [
+      {
+        "title": "Recover an order service through three different disasters",
+        "explanation": "First stop one API process: a load balancer can remove it and use a healthy replica if state was external. Next lose the database writer: promotion requires the chosen replication guarantee and fencing the old writer, not just another API process. Finally delete yesterday’s records accidentally: a live replica may copy the delete, so tested historical backup/point-in-time restore is required. These are different recovery mechanisms."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "Set an example RTO of 30 minutes and RPO of five minutes, then run a drill. Measure time to restore usable user journeys and the actual committed-data gap, not merely time to start a VM. An asynchronous replica may not satisfy zero data loss. Authorization, DNS, certificates, secrets and dependent queues must also work in the recovery environment. Compare restored order/payment state and reconcile unknown external effects before opening full traffic. Availability architecture is incomplete without an executable ownership and recovery procedure."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 239,
@@ -4784,7 +4850,18 @@
     ],
     "knowledgeCheck": "Why can a social feed tolerate stale data more easily than last-seat booking?",
     "diagramImage": "docs/system-design/diagrams/topic-239.svg",
-    "diagram": "Network splits → Require write quorum → Read with overlap → Handle the minority"
+    "diagram": "Network splits → Require write quorum → Read with overlap → Handle the minority",
+    "lessonSections": [
+      {
+        "title": "Follow the last-seat decision during a partition",
+        "explanation": "Replicas A, B and C hold stock state. A and B can communicate, while C is isolated. If every side independently promises the last seat, two customers may get a success response for one seat. To preserve the required single-history decision, the isolated side may have to reject or delay. CAP concerns that partition-time trade-off between linearizable behavior and successful responses to every request; it is not a general instruction to pick any two database features."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "With a fixed replica set N=3, a write quorum W=2 and read quorum R=2 overlap because R+W>N. Explain which replicas participate and how reads reconcile versions. Overlap alone is not a proof of linearizability under concurrent writers or alternative/sloppy replica sets. For booking, use the actual database/consensus transaction contract. For a social feed you might accept stale reads explicitly. Authentication and stock consistency are independent: an authorized caller can still be rejected because the service cannot safely decide during the partition."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 240,
@@ -4821,7 +4898,18 @@
     ],
     "knowledgeCheck": "If five servers each allow 10 requests/second locally, what aggregate rate is possible?",
     "diagramImage": "docs/system-design/diagrams/topic-240.svg",
-    "diagram": "Identify caller → Consume atomically → Admit or reject → Bound downstream work"
+    "diagram": "Identify caller → Consume atomically → Admit or reject → Bound downstream work",
+    "lessonSections": [
+      {
+        "title": "Spend the final token across two servers",
+        "explanation": "A tenant’s bucket holds one token. Requests reach API instances A and B simultaneously. If both separately read one and later write zero, both enter. An atomic refill/compare/consume operation allows only one request at that boundary. Identify the tenant from verified credentials, not an arbitrary request header. A permitted quota decision still does not authorize access to someone else’s order."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "For capacity 20 and refill 10 tokens/second, an idle tenant may burst 20, then sustain around the refill rate under the policy. If five nodes instead each maintain an independent full bucket, total allowed traffic can multiply. Decide on shared ownership or allocated local budgets and acceptable overshoot. On store outage, define fail-open/fail-closed per endpoint risk. HTTP 429 should communicate rejection and retry guidance. Backpressure and bounded in-flight work also matter: rate permission cannot create extra database connections or make a slow provider fast."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 241,
@@ -4858,7 +4946,18 @@
     ],
     "knowledgeCheck": "What if identical keys arrive simultaneously at two API instances?",
     "diagramImage": "docs/system-design/diagrams/topic-241.svg",
-    "diagram": "Send stable key → Claim uniquely → Commit local effect → Replay or reconcile"
+    "diagram": "Send stable key → Claim uniquely → Commit local effect → Replay or reconcile",
+    "lessonSections": [
+      {
+        "title": "Replay a lost order response without replaying its effect",
+        "explanation": "Alice sends POST /orders with key purchase-81. The server commits order 81 but the response is lost. Alice does not know whether creation failed, so retrying with a fresh identity risks another order. Reuse purchase-81 for the same logical purchase. A tenant-scoped unique idempotency record plus payload fingerprint lets another API instance find the original result."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "The idempotency claim, local business change and stored result need a defined transactional/concurrent protocol. Two simultaneous claims must not both execute the effect. Different payload reuse is rejected; key retention defines how long replay is recognized. A remote payment is a separate effect: use the provider’s stable key and reconcile unknown outcome. An in-memory cache is not a durable, cluster-wide solution. Test lost response, simultaneous retry, payload conflict, crash before commit and crash after a remote call separately."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 242,
@@ -4895,7 +4994,18 @@
     ],
     "knowledgeCheck": "Why can sharding by country leave one database overloaded?",
     "diagramImage": "docs/system-design/diagrams/topic-242.svg",
-    "diagram": "Scale stateless APIs → Choose partition key → Route ownership → Rebalance carefully"
+    "diagram": "Scale stateless APIs → Choose partition key → Route ownership → Rebalance carefully",
+    "lessonSections": [
+      {
+        "title": "Scale the layer that is actually saturated",
+        "explanation": "A single API process saturates CPU while the database is comfortable. Add stateless API instances behind routing: that is horizontal application scaling. If the writer database is now saturated, adding more callers may make it worse. Partitioning divides records; sharding distributes partitions across independently operated nodes; replication copies the same records. These actions solve different constraints."
+      },
+      {
+        "title": "Work through the decision and failure",
+        "explanation": "For chat, conversation_id can keep one conversation’s messages on one partition for efficient ordered history reads. A routing map identifies the authoritative shard. A huge celebrity conversation is still a hot partition, even when most keys are balanced. Cross-shard queries, tenant authorization, migrations and ownership handoff become explicit design work. Rebalancing cannot let two nodes both act as current writer without a coordination rule. Measure CPU, write capacity, lock contention and hot-key distribution before choosing a shard key or claiming that more servers increase every form of capacity."
+      }
+    ],
+    "guidePath": "docs/system-design-foundations.md"
   },
   {
     "id": 243,
@@ -4932,7 +5042,404 @@
     ],
     "knowledgeCheck": "Which is more important to preserve: one click metric or the code-to-URL mapping?",
     "diagramImage": "docs/system-design/diagrams/topic-243.svg",
-    "diagram": "Create mapping → Receive redirect → Check link policy → Return Location"
+    "diagram": "Create mapping → Receive redirect → Check link policy → Return Location",
+    "guidePath": "docs/system-design/short-url.md",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "Build a Short URL service: from domain name to the destination page"
+      },
+      {
+        "type": "text",
+        "text": "This tutorial follows one feature from the user’s point of view, then builds the architecture needed to make it work. Read it in order. We introduce a component only after identifying the job it must do."
+      },
+      {
+        "type": "text",
+        "text": "All .example hostnames below are reserved teaching names. They are not working sites. In production, use a domain you own or a customer domain you have verified."
+      },
+      {
+        "type": "heading",
+        "text": "1. Start with the exact user journey"
+      },
+      {
+        "type": "text",
+        "text": "Alice runs a training website. She wants to share this long URL:"
+      },
+      {
+        "type": "code",
+        "text": "https://courses.example/java/system-design?campaign=october&lesson=short-links"
+      },
+      {
+        "type": "text",
+        "text": "She signs into our shortener, pastes it and receives:"
+      },
+      {
+        "type": "code",
+        "text": "https://go.learn.example/aB72xQ9"
+      },
+      {
+        "type": "text",
+        "text": "Bob receives that short URL in a message. He clicks it. His browser first contacts our shortener at go.learn.example. Our shortener looks up aB72xQ9, then tells his browser to navigate to the original URL. His browser makes a SECOND request to courses.example and loads the course page."
+      },
+      {
+        "type": "text",
+        "text": "The long URL is not compressed inside the code. We store a mapping. Without access to that mapping, the short code alone cannot reconstruct the destination."
+      },
+      {
+        "type": "text",
+        "text": "Our first version needs only three things: a domain that reaches our application, an application that creates/looks up mappings, and a durable database. Redis, a broker and analytics are later additions, not prerequisites for the redirect."
+      },
+      {
+        "type": "heading",
+        "text": "2. Where does the short domain come from?"
+      },
+      {
+        "type": "text",
+        "text": "It is a product/deployment choice, not an algorithm that guesses a domain from the long URL."
+      },
+      {
+        "type": "text",
+        "text": "As the shortener operator, we register and maintain a domain, or use a subdomain of an existing domain we control. For example, the owner of learn.example can configure go.learn.example. We do not need to register a separate domain for every link. Thousands of codes can share that hostname."
+      },
+      {
+        "type": "text",
+        "text": "We store the approved public origin as trusted configuration:"
+      },
+      {
+        "type": "code",
+        "text": "PUBLIC_SHORT_ORIGIN=https://go.learn.example\nreturned_short_url = PUBLIC_SHORT_ORIGIN + \"/\" + generated_code"
+      },
+      {
+        "type": "text",
+        "text": "The destination might be on courses.example, shop.example or another allowed website. That does not change our default short domain."
+      },
+      {
+        "type": "text",
+        "text": "Do not build public links from an arbitrary incoming Host or X-Forwarded-Host header. An attacker can forge those values unless a trusted proxy validates and replaces them. Use configured/verified origins and an allowed-host policy."
+      },
+      {
+        "type": "heading",
+        "text": "3. Connect that hostname to our application"
+      },
+      {
+        "type": "text",
+        "text": "Suppose our application runs behind a managed load balancer whose provider gives us an endpoint named shortener-edge.provider.example. We configure DNS for our subdomain to reach that endpoint, using the record type supported by the hosting provider."
+      },
+      {
+        "type": "code",
+        "text": "go.learn.example  CNAME  shortener-edge.provider.example"
+      },
+      {
+        "type": "text",
+        "text": "A CNAME aliases a hostname to another hostname. An A/AAAA record instead provides an IPv4/IPv6 address. Root/apex domains have DNS constraints; use the provider’s supported alias/flattening or address configuration rather than assuming every apex can have an ordinary CNAME."
+      },
+      {
+        "type": "text",
+        "text": "We also bind go.learn.example to the edge/hosting configuration and provision a TLS certificate covering that hostname. Correct DNS without the hosting binding or certificate is not a complete HTTPS deployment. Plan certificate renewal and domain renewal."
+      },
+      {
+        "type": "image",
+        "text": "Domain configuration and request routing",
+        "path": "docs/system-design/diagrams/short-url-domain.svg"
+      },
+      {
+        "type": "text",
+        "text": "Here is the crucial boundary: DNS resolves go.learn.example; it does not look up /aB72xQ9. The URL path is handled by our HTTP application after the browser reaches the server and establishes a secure connection."
+      },
+      {
+        "type": "text",
+        "text": "TLS SNI helps the edge select the certificate for the hostname. HTTP Host, or the HTTP/2/3 authority field, identifies the requested host for routing. Validate these through the trusted edge configuration; neither substitutes for user authorization."
+      },
+      {
+        "type": "heading",
+        "text": "4. Decide what must be stored"
+      },
+      {
+        "type": "text",
+        "text": "Each row must answer: for this approved short domain and this code, where should the browser go, who owns the link, and is it allowed to redirect now?"
+      },
+      {
+        "type": "text",
+        "text": "This is an illustrative PostgreSQL schema. Start without custom domains if that feature is unnecessary; one fixed domain still works."
+      },
+      {
+        "type": "code",
+        "text": "CREATE TABLE short_domain (\n    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    hostname TEXT NOT NULL UNIQUE,\n    tenant_id UUID,             -- NULL can identify the operator's default domain\n    verified_at TIMESTAMPTZ,\n    status TEXT NOT NULL CHECK (status IN ('PENDING', 'ACTIVE', 'DISABLED'))\n);\n\nCREATE TABLE short_link (\n    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    domain_id BIGINT NOT NULL REFERENCES short_domain(id),\n    code VARCHAR(16) NOT NULL,\n    target_url TEXT NOT NULL,\n    owner_id UUID NOT NULL,\n    tenant_id UUID NOT NULL,\n    access_mode TEXT NOT NULL CHECK (access_mode IN ('PUBLIC', 'RESTRICTED')),\n    status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'DISABLED')),\n    expires_at TIMESTAMPTZ,\n    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),\n    UNIQUE (domain_id, code)\n);"
+      },
+      {
+        "type": "text",
+        "text": "A restricted link also needs an ACL or another explicit audience policy, such as an owner-approved set of user IDs or verified tenant membership. That policy must be checked server-side; hiding the link in the UI is insufficient."
+      },
+      {
+        "type": "text",
+        "text": "Why include domain_id in uniqueness? go.team-a.example/sale and go.team-b.example/sale may legitimately point to different destinations. Lookup and cache keys must include the verified domain identity, not just sale."
+      },
+      {
+        "type": "text",
+        "text": "Normalize hostnames consistently, including case and internationalized domain handling, when registering and looking them up. Keep code comparison case-sensitive if the alphabet distinguishes upper/lower case; do not accidentally collapse two codes in routing or database collation."
+      },
+      {
+        "type": "heading",
+        "text": "5. Alice creates a short link"
+      },
+      {
+        "type": "text",
+        "text": "Alice signs into the management application. For a browser application, an OIDC login can establish a server-side session carried by a Secure, HttpOnly cookie. Protect cookie-authenticated write requests against CSRF. An API client may instead use an appropriate access token. These are alternative authentication setups, not a requirement to send both."
+      },
+      {
+        "type": "text",
+        "text": "For illustration, an API request might be:"
+      },
+      {
+        "type": "code",
+        "text": "POST /api/links HTTP/1.1\nHost: manage.learn.example\nAuthorization: Bearer <access-token-for-this-api>\nContent-Type: application/json\nIdempotency-Key: alice-create-81\n\n{\n  \"targetUrl\": \"https://courses.example/java/system-design?campaign=october&lesson=short-links\",\n  \"accessMode\": \"PUBLIC\",\n  \"expiresAt\": \"2026-11-30T23:59:59Z\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "The server performs these steps in order:"
+      },
+      {
+        "type": "text",
+        "text": "1. Authenticate Alice. Validate the credential using the chosen identity system. For a JWT access token, check signature, issuer, audience, expiry and required claims; merely decoding JSON does not authenticate it.\n2. Authorize creation. Derive Alice’s identity/tenant from verified credentials and membership. Check create permission, plan/quota and permission to use the selected short domain. Never trust ownerId or tenantId submitted by the client.\n3. Validate the target and settings. Parse an absolute URL, allow approved schemes such as HTTPS/HTTP, reject control characters and embedded credentials, enforce length/expiry limits and apply the product’s abuse policy. A corporate-only shortener might allowlist destination domains; a public shortener has a broader policy and needs abuse handling.\n4. Resolve the idempotency key within Alice’s tenant/operation scope. Store a request fingerprint and result under a unique constraint. The same key and payload should return the original result; conflicting payload reuse should be rejected. Make this durable claim and link creation one local transaction.\n5. Generate a candidate code and INSERT the mapping. A unique (domain_id, code) constraint is the final authority on collisions. On a random collision, retry with another candidate within a bounded limit. Do not overwrite the existing row.\n6. Commit before returning success. Build the short URL from the verified configured domain, then respond with the created resource."
+      },
+      {
+        "type": "code",
+        "text": "HTTP/1.1 201 Created\nContent-Type: application/json\nLocation: /api/links/9182\nCache-Control: no-store\n\n{\n  \"id\": 9182,\n  \"shortUrl\": \"https://go.learn.example/aB72xQ9\",\n  \"accessMode\": \"PUBLIC\"\n}"
+      },
+      {
+        "type": "text",
+        "text": "If the database committed but Alice lost the response, she retries with alice-create-81; she should get the same link rather than a second mapping. Creation idempotency is a business-operation rule, separate from resolving a short URL."
+      },
+      {
+        "type": "heading",
+        "text": "6. How is the code generated?"
+      },
+      {
+        "type": "text",
+        "text": "For this tutorial, choose cryptographically generated random Base62 candidates. Base62 is an alphabet of 62 characters, not encryption. Seven characters give 62^7 = 3,521,614,606,208 possible strings, but random collisions still occur as the number of links grows."
+      },
+      {
+        "type": "text",
+        "text": "We use a secure random source, a fixed maximum retry count and the database uniqueness constraint. Capacity, collision rate and abuse/enumeration requirements determine production code length; seven is an example, not a universal recommendation."
+      },
+      {
+        "type": "text",
+        "text": "An alternative is to allocate a unique integer from a database sequence and encode it in Base62. This simplifies uniqueness but makes codes predictable. Neither approach is an authorization mechanism. Avoid using a short code to protect confidential content."
+      },
+      {
+        "type": "text",
+        "text": "Illustrative control flow, not complete production code:"
+      },
+      {
+        "type": "code",
+        "text": "begin local transaction\n  claim (tenant, operation, idempotency_key) with request fingerprint\n  if previously completed: return original result after transaction handling\n  reject mismatched fingerprint or handle concurrent in-progress request\n  repeat up to configured collision limit:\n    draw candidate code\n    INSERT link ... ON CONFLICT (domain_id, code) DO NOTHING RETURNING id\n    if insert returned id: record completed idempotency result; commit; return\n  rollback and report temporary creation failure"
+      },
+      {
+        "type": "text",
+        "text": "PostgreSQL-style ON CONFLICT avoids treating a uniqueness collision as an unhandled error that leaves the surrounding transaction unusable. Transaction isolation, concurrent idempotency claims and retry behavior must be implemented against the chosen database’s contract."
+      },
+      {
+        "type": "heading",
+        "text": "7. Bob clicks the short URL: trace both HTTP requests"
+      },
+      {
+        "type": "text",
+        "text": "Bob enters https://go.learn.example/aB72xQ9 in his browser."
+      },
+      {
+        "type": "text",
+        "text": "First, the browser resolves the short hostname using DNS, connects to the shortener’s edge, verifies its TLS certificate and sends this request:"
+      },
+      {
+        "type": "code",
+        "text": "GET /aB72xQ9 HTTP/1.1\nHost: go.learn.example"
+      },
+      {
+        "type": "text",
+        "text": "Our application maps the validated hostname to an active short_domain row, then looks up (domain_id, aB72xQ9). It checks ACTIVE status, expiry, access policy and any abuse block. For an active PUBLIC link it returns:"
+      },
+      {
+        "type": "code",
+        "text": "HTTP/1.1 302 Found\nLocation: https://courses.example/java/system-design?campaign=october&lesson=short-links\nCache-Control: no-store\nReferrer-Policy: no-referrer"
+      },
+      {
+        "type": "text",
+        "text": "For this first version we choose no-store so browsers/shared caches do not retain a redirect that might be changed or disabled. That is an explicit simplicity/freshness choice; later we can cache eligible public mappings with defined invalidation and revocation bounds. Restricted redirects must not be served from a public shared cache."
+      },
+      {
+        "type": "text",
+        "text": "The browser reads Location and makes a separate HTTPS request to the destination:"
+      },
+      {
+        "type": "code",
+        "text": "GET /java/system-design?campaign=october&lesson=short-links HTTP/1.1\nHost: courses.example"
+      },
+      {
+        "type": "text",
+        "text": "The destination returns its own page or its own login response. Our shortener did not fetch or host the course page. It also did not transfer an authenticated shortener session to the course website. Cookies and credentials belong to their configured origins/domains and must not be copied into the destination URL."
+      },
+      {
+        "type": "image",
+        "text": "Two browser requests and the redirect response",
+        "path": "docs/system-design/diagrams/short-url-redirect.svg"
+      },
+      {
+        "type": "text",
+        "text": "Why 302? We want a temporary redirect for a GET link whose destination or availability can change. A permanent 301/308 may be retained by clients/caches and complicate updates. For method-preserving redirects 307/308 have different semantics; our public resolution endpoint is deliberately GET/HEAD, not a general forwarding endpoint for arbitrary POST bodies."
+      },
+      {
+        "type": "text",
+        "text": "HEAD can apply the same policy and return redirect headers without a response body. It should not necessarily count as a human click. Health checks, previews and security scanners can also issue GET requests."
+      },
+      {
+        "type": "heading",
+        "text": "8. Authentication and authorization are three separate questions"
+      },
+      {
+        "type": "text",
+        "text": "Who may manage the mapping? Alice must authenticate to create, edit, disable or view private analytics. The backend checks link.owner_id or a suitable tenant/admin policy on every management operation. Knowing /api/links/9182 is not enough. Bob must not edit Alice’s link by guessing that ID. Missing authentication can produce 401 on the API; authenticated-but-forbidden access can produce 403, or a deliberate 404 policy to avoid exposing existence."
+      },
+      {
+        "type": "text",
+        "text": "Who may resolve it? A PUBLIC link intentionally permits anonymous resolution. Bob does not need a shortener account. PUBLIC means anyone with/discovering the link can resolve it; random-looking codes do not make it private."
+      },
+      {
+        "type": "text",
+        "text": "For a RESTRICTED link, require a shortener-side authenticated identity and check the link’s audience/ACL before revealing the destination. An interactive browser may be sent through a sign-in flow; an API request can receive 401. After login, return to a validated internal link identifier/path, not an arbitrary returnTo URL that creates an unintended redirect vulnerability. A logged-in user outside the audience must still be denied."
+      },
+      {
+        "type": "text",
+        "text": "Who may view the destination? The destination makes its own decision. If the course requires an enrollment/login, Bob must satisfy that policy at courses.example. Restricting the short URL cannot protect a publicly accessible destination once someone knows its long URL. To protect the resource itself, enforce authorization at the destination; if needed, design a separate bounded-lifetime signed-access mechanism there rather than pretending a short code grants secure access."
+      },
+      {
+        "type": "text",
+        "text": "Do not append identity tokens, passwords or session cookies to long URLs. They leak through logs, browser history and sharing. The example sets Referrer-Policy to reduce referral leakage, but that does not fix secrets deliberately placed in the target itself."
+      },
+      {
+        "type": "heading",
+        "text": "9. What if a customer wants their own domain?"
+      },
+      {
+        "type": "text",
+        "text": "A customer who owns team.example might want go.team.example/sale. DNS pointing at our infrastructure does not by itself prove that a specific logged-in tenant may claim that domain."
+      },
+      {
+        "type": "text",
+        "text": "The management workflow is:"
+      },
+      {
+        "type": "text",
+        "text": "1. A tenant admin requests the hostname. We normalize it, prevent competing active claims, and generate an expiring tenant-bound random ownership challenge.\n2. The admin adds the requested DNS TXT record. Our verification worker checks that the expected token is visible, including retry/propagation handling.\n3. The admin configures the provider-specific CNAME/address routing. We bind the hostname to the serving edge and provision the certificate.\n4. Only after ownership, routing and HTTPS readiness checks pass do we mark the domain ACTIVE for that tenant.\n5. We monitor renewal and domain lifecycle. On removal, disable our binding/certificate/tenant association safely and document DNS cleanup so dangling records cannot be claimed by another customer."
+      },
+      {
+        "type": "text",
+        "text": "For a click on go.team.example/sale, first resolve the approved host to that domain’s ID, then query (domain_id, sale). Never let an unverified Host header switch into another tenant. Reject unknown hosts instead of silently serving the operator’s default tenant."
+      },
+      {
+        "type": "heading",
+        "text": "10. Walk through failures before adding scale"
+      },
+      {
+        "type": "text",
+        "text": "The code does not exist. Database lookup succeeds but returns no matching row: respond 404. A short negative-cache lifetime may protect repeated misses later. Rate limits reduce enumeration. Do not confuse an empty result with a database timeout."
+      },
+      {
+        "type": "text",
+        "text": "The link expired or was disabled. Return the documented expired/blocked response, such as 410 or a safe branded unavailable page. Do not return Location. A policy can use 404 where exposing existence is undesirable. Management writes and cache invalidation must have an explicit revocation target."
+      },
+      {
+        "type": "text",
+        "text": "The user is not permitted. Deny before revealing the target. If the identity/ACL service is unavailable for a restricted link, fail closed with a temporary error rather than assume public access. Availability does not justify silently dropping a confidentiality rule."
+      },
+      {
+        "type": "text",
+        "text": "Redis is unavailable. Our first version has no Redis. Once it is added, a bounded fallback can query the database for active public mappings. Use timeouts, concurrency caps and circuit-breaking; unrestricted cache fallback can turn one outage into a database outage."
+      },
+      {
+        "type": "text",
+        "text": "The database is unavailable. Return a temporary 503 when authoritative lookup cannot be completed. Do not label it 404, invent a destination or silently use an expired mapping. A later public-cache policy may permit known active cached results within a documented freshness window. Restricted/disabled-state guarantees may require stronger checks or failing closed."
+      },
+      {
+        "type": "text",
+        "text": "One application instance dies. Keep durable mappings outside instance memory. A load balancer removes the unhealthy instance and routes new requests to another. Bound client/proxy retry attempts to avoid retry storms. A single-process first deployment has no such redundancy yet; add it when availability requirements demand it."
+      },
+      {
+        "type": "text",
+        "text": "DNS, domain registration or certificate fails. Bob may fail before HTTP reaches us: there may be no application status code at all. Monitor external DNS resolution and HTTPS probes, automate renewals, and test provider/edge bindings. More API replicas cannot repair an expired domain."
+      },
+      {
+        "type": "text",
+        "text": "The destination is down. We may successfully return 302 while the destination then times out or returns 500. Those are separate outcomes. Our service cannot guarantee arbitrary destination availability. Do not fetch every target synchronously to decide each redirect; that adds latency and server-side request forgery risk."
+      },
+      {
+        "type": "text",
+        "text": "Analytics is down. Redirecting should not wait for a dashboard update. Emit events asynchronously with a bounded buffer and a documented loss/durability policy. If exact billable clicks are required, define what counts as a click and design durable accounting separately. A browser following Location is not proof a human viewed the final page."
+      },
+      {
+        "type": "heading",
+        "text": "11. URL validation, abuse and SSRF"
+      },
+      {
+        "type": "text",
+        "text": "A URL shortener intentionally redirects to destinations, so a generic ban on all external redirects would defeat the product. Instead, define who can create links, which destinations are acceptable, how abuse is detected, and how blocked mappings are revoked."
+      },
+      {
+        "type": "text",
+        "text": "Parse URLs using a URI/URL library; do not concatenate untrusted text into headers. Restrict schemes, reject embedded credentials/control characters, bound input length and consider nested shortener chains, loops, malware and phishing. Limit creation rates and lookup misses; provide reporting and takedown procedures."
+      },
+      {
+        "type": "text",
+        "text": "A simple redirect returns Location without server-side fetching. If we later add title previews, screenshots, reputation scanning or URL reachability tests, our servers DO fetch targets. Isolate that worker, block internal/private/metadata destinations using robust network egress controls, revalidate redirect hops and resolved addresses, and handle DNS rebinding. Scheme validation alone does not prevent SSRF."
+      },
+      {
+        "type": "text",
+        "text": "Avoid storing unnecessary personal data in analytics. Do not log authentication tokens or sensitive target query strings. Restrict who can see a tenant’s links and analytics."
+      },
+      {
+        "type": "heading",
+        "text": "12. Evolve the architecture from the working version"
+      },
+      {
+        "type": "text",
+        "text": "At low traffic, one stateless API and PostgreSQL with (domain_id, code) indexing may be sufficient. Measure request latency, database time and error rates. Back up mappings and test restore; replication alone is not historical recovery."
+      },
+      {
+        "type": "text",
+        "text": "For an illustrative 100M redirects/day, average is 100,000,000 / 86,400 ≈ 1,157 requests/second. If we assume a tenfold peak, plan for about 11,574/second. At 99% cache hits, the peak database read rate is still about 116/second, plus creations and other operations. These are assumptions to load-test, not a capacity promise."
+      },
+      {
+        "type": "text",
+        "text": "Now add multiple API instances for service capacity/availability. Add a mapping cache only if database reads or latency justify it. Keys include domain ID. A cached record must carry the policy fields needed for its allowed usage, not only the long URL. Define TTL, version/invalidation strategy, hot-key protection and takedown behavior."
+      },
+      {
+        "type": "text",
+        "text": "Add queues/workers for analytics or scanning because those tasks need a different latency/failure path. Keep the actual redirect journey short. Add sharding only when measured data/traffic demands exceed a simpler database design; choose a distribution strategy that still handles viral hot links."
+      },
+      {
+        "type": "text",
+        "text": "Monitor creation success, redirect status/latency, database/cache errors, miss rates, blocked attempts and external DNS/TLS health separately. For a healthy 302 followed by a broken target, the shortener metric alone cannot report destination success."
+      },
+      {
+        "type": "heading",
+        "text": "13. Verify the design with concrete scenarios"
+      },
+      {
+        "type": "text",
+        "text": "1. Alice creates a PUBLIC link, Bob resolves it, and a browser follows Location to the exact original path and query.\n2. Alice repeats a timed-out create request with the same idempotency key; one mapping exists.\n3. Two code candidates collide; one insert wins and the other retries without changing the winner’s target.\n4. Bob calls Alice’s management endpoint; it is denied without modification.\n5. A RESTRICTED link denies an anonymous user, permits an allowed user after login, and denies a different authenticated user.\n6. Two approved domains both use /sale; each resolves only its own mapping. An unknown Host is rejected.\n7. Disable/expire a link after caching; verify the advertised revocation behavior rather than assuming deletion is instantaneous everywhere.\n8. Break Redis, the database, DNS and the destination separately; confirm their different observable outcomes.\n9. Simulate an unavailable authorization dependency; restricted links fail closed.\n10. Simulate lost analytics; the documented redirect behavior remains intact."
+      },
+      {
+        "type": "text",
+        "text": "These are acceptance scenarios for an implementation, not claims that this repository deploys a running shortener. The repository contains the tutorial and diagrams."
+      },
+      {
+        "type": "heading",
+        "text": "14. Explain the whole design in an interview"
+      },
+      {
+        "type": "text",
+        "text": "We own or verify a short hostname and configure DNS, hosting bindings and TLS so it reaches our service. An authenticated creator submits a validated destination. We store a domain-scoped unique code mapping and return the configured public origin plus code. On a click, our API checks the domain, mapping status, expiry and access policy, then returns a temporary redirect with Location. The browser separately requests the destination, which enforces its own access rules. We distinguish missing links, denied access and temporary infrastructure failures, then add caches, replicas and background workers only for measured capacity or availability needs."
+      }
+    ]
   },
   {
     "id": 244,
@@ -4969,7 +5476,46 @@
     ],
     "knowledgeCheck": "Why is Base62(123) unique only when 123 was allocated uniquely?",
     "diagramImage": "docs/system-design/diagrams/topic-244.svg",
-    "diagram": "Choose strategy → Build candidate → Insert uniquely → Retry collisions"
+    "diagram": "Choose strategy → Build candidate → Insert uniquely → Retry collisions",
+    "guidePath": "docs/system-design/short-url.md",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "How would you generate globally unique short codes?"
+      },
+      {
+        "type": "text",
+        "text": "Follow the same Alice/Bob short-link journey. The complete tutorial below explains domain setup, authentication, authorization and failure handling."
+      },
+      {
+        "type": "heading",
+        "text": "6. How is the code generated?"
+      },
+      {
+        "type": "text",
+        "text": "For this tutorial, choose cryptographically generated random Base62 candidates. Base62 is an alphabet of 62 characters, not encryption. Seven characters give 62^7 = 3,521,614,606,208 possible strings, but random collisions still occur as the number of links grows."
+      },
+      {
+        "type": "text",
+        "text": "We use a secure random source, a fixed maximum retry count and the database uniqueness constraint. Capacity, collision rate and abuse/enumeration requirements determine production code length; seven is an example, not a universal recommendation."
+      },
+      {
+        "type": "text",
+        "text": "An alternative is to allocate a unique integer from a database sequence and encode it in Base62. This simplifies uniqueness but makes codes predictable. Neither approach is an authorization mechanism. Avoid using a short code to protect confidential content."
+      },
+      {
+        "type": "text",
+        "text": "Illustrative control flow, not complete production code:"
+      },
+      {
+        "type": "code",
+        "text": "begin local transaction\n  claim (tenant, operation, idempotency_key) with request fingerprint\n  if previously completed: return original result after transaction handling\n  reject mismatched fingerprint or handle concurrent in-progress request\n  repeat up to configured collision limit:\n    draw candidate code\n    INSERT link ... ON CONFLICT (domain_id, code) DO NOTHING RETURNING id\n    if insert returned id: record completed idempotency result; commit; return\n  rollback and report temporary creation failure"
+      },
+      {
+        "type": "text",
+        "text": "PostgreSQL-style ON CONFLICT avoids treating a uniqueness collision as an unhandled error that leaves the surrounding transaction unusable. Transaction isolation, concurrent idempotency claims and retry behavior must be implemented against the chosen database’s contract."
+      }
+    ]
   },
   {
     "id": 245,
@@ -5006,7 +5552,42 @@
     ],
     "knowledgeCheck": "How quickly must a disabled phishing link stop working across caches?",
     "diagramImage": "docs/system-design/diagrams/topic-245.svg",
-    "diagram": "Receive hot request → Read cached mapping → Coalesce miss → Separate analytics"
+    "diagram": "Receive hot request → Read cached mapping → Coalesce miss → Separate analytics",
+    "guidePath": "docs/system-design/short-url.md",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "How do you scale ShortURL redirects to millions of requests?"
+      },
+      {
+        "type": "text",
+        "text": "Follow the same Alice/Bob short-link journey. The complete tutorial below explains domain setup, authentication, authorization and failure handling."
+      },
+      {
+        "type": "heading",
+        "text": "12. Evolve the architecture from the working version"
+      },
+      {
+        "type": "text",
+        "text": "At low traffic, one stateless API and PostgreSQL with (domain_id, code) indexing may be sufficient. Measure request latency, database time and error rates. Back up mappings and test restore; replication alone is not historical recovery."
+      },
+      {
+        "type": "text",
+        "text": "For an illustrative 100M redirects/day, average is 100,000,000 / 86,400 ≈ 1,157 requests/second. If we assume a tenfold peak, plan for about 11,574/second. At 99% cache hits, the peak database read rate is still about 116/second, plus creations and other operations. These are assumptions to load-test, not a capacity promise."
+      },
+      {
+        "type": "text",
+        "text": "Now add multiple API instances for service capacity/availability. Add a mapping cache only if database reads or latency justify it. Keys include domain ID. A cached record must carry the policy fields needed for its allowed usage, not only the long URL. Define TTL, version/invalidation strategy, hot-key protection and takedown behavior."
+      },
+      {
+        "type": "text",
+        "text": "Add queues/workers for analytics or scanning because those tasks need a different latency/failure path. Keep the actual redirect journey short. Add sharding only when measured data/traffic demands exceed a simpler database design; choose a distribution strategy that still handles viral hot links."
+      },
+      {
+        "type": "text",
+        "text": "Monitor creation success, redirect status/latency, database/cache errors, miss rates, blocked attempts and external DNS/TLS health separately. For a healthy 302 followed by a broken target, the shortener metric alone cannot report destination success."
+      }
+    ]
   },
   {
     "id": 246,
@@ -5043,7 +5624,123 @@
     ],
     "knowledgeCheck": "What should accepted mean if Bob has no active connection?",
     "diagramImage": "docs/system-design/diagrams/topic-246.svg",
-    "diagram": "Send stable message ID → Persist before ack → Attempt live delivery → Recover on reconnect"
+    "diagram": "Send stable message ID → Persist before ack → Attempt live delivery → Recover on reconnect",
+    "guidePath": "docs/system-design/whatsapp-style-messaging.md",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "Build WhatsApp-style messaging: follow the complete user journey"
+      },
+      {
+        "type": "text",
+        "text": "Read in order: each decision below follows from the same real-world situation. Domains ending in .example are reserved teaching names, not live services. These are illustrative designs, not descriptions of a company’s internal implementation."
+      },
+      {
+        "type": "heading",
+        "text": "1. Start with Alice and Bob, not a broker"
+      },
+      {
+        "type": "text",
+        "text": "Alice types “Meet at 6” and presses Send. Bob has no mobile connection. Alice should learn that the service accepted the message, while Bob must receive it after reconnecting. Accepted, delivered and read are different facts. We will build that sequence first. A live socket alone cannot satisfy it because disconnecting would lose the only delivery path."
+      },
+      {
+        "type": "heading",
+        "text": "2. How the apps find the service"
+      },
+      {
+        "type": "text",
+        "text": "The operator configures an owned hostname such as chat.learn.example in DNS, binds it to an HTTPS/WebSocket edge and provisions its certificate. The app has this approved service origin in configuration. The domain of Bob’s email address does not decide which server owns the chat. DNS locates the service; conversation and recipient IDs select application records after connection. A mobile reconnect can reach another server, so required state must not exist only on the old socket node."
+      },
+      {
+        "type": "heading",
+        "text": "3. Log in and send one message"
+      },
+      {
+        "type": "text",
+        "text": "Alice authenticates and establishes an authorized connection. A WebSocket handshake must validate the credential and permitted browser origins where applicable; being connected is not permission to post to every conversation. Alice sends {conversationId: c7, clientMessageId: m81, ciphertext: ...}. The service derives the sender from the session, verifies membership and checks that m81 has not already been accepted for that sender/conversation."
+      },
+      {
+        "type": "text",
+        "text": "The concrete API/data vocabulary used in this journey:"
+      },
+      {
+        "type": "code",
+        "text": "POST /conversations/{id}/messages; GET messages?after=cursor. Message(conversation, sequence, sender, client_message_id unique within its scope, ciphertext). DeviceCursor tracks delivery."
+      },
+      {
+        "type": "text",
+        "text": "A concrete request and observable response for this journey (illustrative API contract):"
+      },
+      {
+        "type": "code",
+        "text": "POST /conversations/c7/messages\nAuthorization: Bearer <chat-access-token>\nContent-Type: application/json\n\n{\"clientMessageId\":\"m81\",\"ciphertext\":\"<encrypted-envelope>\"}\n\nHTTP/1.1 201 Created\n{\"messageId\":\"m81\",\"sequence\":41,\"state\":\"ACCEPTED\"}\n\nGET /conversations/c7/messages?after=40\nAuthorization: Bearer <bob-access-token>\n\nHTTP/1.1 200 OK\n{\"messages\":[{\"messageId\":\"m81\",\"sequence\":41,\"ciphertext\":\"<encrypted-envelope>\"}],\"cursor\":41}"
+      },
+      {
+        "type": "image",
+        "text": "WhatsApp-style messaging component overview",
+        "path": "docs/system-design/diagrams/whatsapp-style-messaging.svg"
+      },
+      {
+        "type": "text",
+        "text": "Use this diagram to locate the responsibilities just introduced. Arrows show selected requests/data; the paragraphs distinguish return responses, alternatives and transaction boundaries."
+      },
+      {
+        "type": "heading",
+        "text": "4. Commit before showing accepted"
+      },
+      {
+        "type": "text",
+        "text": "Within the chosen database boundary, insert the message, assign its conversation sequence and store a delivery outbox event. Return accepted only after the promised durability level is met. If the response disappears, Alice retries m81 and receives the original sequence rather than creating another message. A single partition owner or transactional sequencer can order one conversation; phone clocks cannot reliably do so. An outbox relay can publish twice, so workers and recipients must tolerate duplicates."
+      },
+      {
+        "type": "heading",
+        "text": "5. Deliver now or recover later"
+      },
+      {
+        "type": "text",
+        "text": "A delivery worker looks up Bob’s connected devices in a session directory. When Bob is offline, a notification can wake his app but is not the message database. On reconnect Bob authenticates, proves membership again and requests messages after cursor 40. If he gets 42 before 41, he fetches the missing range. Devices deduplicate IDs, acknowledge delivered state and later explicitly report read state. History retention and tombstones determine what an old cursor can recover."
+      },
+      {
+        "type": "heading",
+        "text": "6. Keep privacy rules on every path"
+      },
+      {
+        "type": "text",
+        "text": "Check membership for send, history reads, attachment access and socket subscriptions, not just conversation creation. Revocation must reach live sessions or be enforced at each operation. End-to-end encryption happens on authorized devices using an established protocol; TLS alone only encrypts the connection to the service. Store encrypted envelopes and explicit metadata. Multi-device keys, attachments, backup recovery and joining/leaving groups require deliberate policies."
+      },
+      {
+        "type": "heading",
+        "text": "7. Rehearse the failures"
+      },
+      {
+        "type": "text",
+        "text": "Kill the socket server after database commit: the message remains and reconnect recovers it. Kill the worker after push: redelivery is possible and Bob deduplicates. Lose database access: do not acknowledge durable acceptance. Lose the membership service: deny protected reads/sends temporarily rather than bypass membership. Expire a device session: require reauthentication. For groups, choose a fan-out model that does not block acceptance on every recipient; huge groups may fetch shared history. Measure accepted-message latency, reconnect gaps and delivery lag separately."
+      },
+      {
+        "type": "heading",
+        "text": "8. Prove the first version before scaling"
+      },
+      {
+        "type": "text",
+        "text": "Begin with one authenticated API/socket service and durable conversation storage. Test two devices, an offline recipient, retry of the same client ID, forbidden conversation reads and history after reconnect. Then add multiple connection nodes, a shared session directory and background delivery workers for measured connection count and fan-out needs. Do not claim global ordering or exactly-once external effects merely because a broker exists."
+      },
+      {
+        "type": "heading",
+        "text": "Work the capacity assumption"
+      },
+      {
+        "type": "text",
+        "text": "100,000 connected users sending one message/minute produce about 1,667 sends/second before group fan-out and multi-device copies. These are illustrative assumptions; measure the chosen implementation and peak distribution before treating them as capacity."
+      },
+      {
+        "type": "heading",
+        "text": "Explain the journey back"
+      },
+      {
+        "type": "text",
+        "text": "How does Bob recover if he receives sequence 42 before sequence 41? Then explain the hostname, caller identity, object-level permission, authoritative record, success acknowledgement and crash/retry behavior for this same action."
+      }
+    ]
   },
   {
     "id": 247,
@@ -5080,7 +5777,26 @@
     ],
     "knowledgeCheck": "Why is a phone timestamp unreliable as the only ordering key?",
     "diagramImage": "docs/system-design/diagrams/topic-247.svg",
-    "diagram": "Accept stable ID → Assign sequence → Deliver with retries → Resume from cursor"
+    "diagram": "Accept stable ID → Assign sequence → Deliver with retries → Resume from cursor",
+    "guidePath": "docs/system-design/whatsapp-style-messaging.md",
+    "lessonSections": [
+      {
+        "title": "Log in and send one message",
+        "explanation": "Alice authenticates and establishes an authorized connection. A WebSocket handshake must validate the credential and permitted browser origins where applicable; being connected is not permission to post to every conversation. Alice sends {conversationId: c7, clientMessageId: m81, ciphertext: ...}. The service derives the sender from the session, verifies membership and checks that m81 has not already been accepted for that sender/conversation."
+      },
+      {
+        "title": "Commit before showing accepted",
+        "explanation": "Within the chosen database boundary, insert the message, assign its conversation sequence and store a delivery outbox event. Return accepted only after the promised durability level is met. If the response disappears, Alice retries m81 and receives the original sequence rather than creating another message. A single partition owner or transactional sequencer can order one conversation; phone clocks cannot reliably do so. An outbox relay can publish twice, so workers and recipients must tolerate duplicates."
+      },
+      {
+        "title": "Deliver now or recover later",
+        "explanation": "A delivery worker looks up Bob’s connected devices in a session directory. When Bob is offline, a notification can wake his app but is not the message database. On reconnect Bob authenticates, proves membership again and requests messages after cursor 40. If he gets 42 before 41, he fetches the missing range. Devices deduplicate IDs, acknowledge delivered state and later explicitly report read state. History retention and tombstones determine what an old cursor can recover."
+      },
+      {
+        "title": "Rehearse the failures",
+        "explanation": "Kill the socket server after database commit: the message remains and reconnect recovers it. Kill the worker after push: redelivery is possible and Bob deduplicates. Lose database access: do not acknowledge durable acceptance. Lose the membership service: deny protected reads/sends temporarily rather than bypass membership. Expire a device session: require reauthentication. For groups, choose a fan-out model that does not block acceptance on every recipient; huge groups may fetch shared history. Measure accepted-message latency, reconnect gaps and delivery lag separately."
+      }
+    ]
   },
   {
     "id": 248,
@@ -5117,7 +5833,26 @@
     ],
     "knowledgeCheck": "May a departed member read a message sent after leaving?",
     "diagramImage": "docs/system-design/diagrams/topic-248.svg",
-    "diagram": "Check membership → Commit once → Fan out asynchronously → Expire presence"
+    "diagram": "Check membership → Commit once → Fan out asynchronously → Expire presence",
+    "guidePath": "docs/system-design/whatsapp-style-messaging.md",
+    "lessonSections": [
+      {
+        "title": "Deliver now or recover later",
+        "explanation": "A delivery worker looks up Bob’s connected devices in a session directory. When Bob is offline, a notification can wake his app but is not the message database. On reconnect Bob authenticates, proves membership again and requests messages after cursor 40. If he gets 42 before 41, he fetches the missing range. Devices deduplicate IDs, acknowledge delivered state and later explicitly report read state. History retention and tombstones determine what an old cursor can recover."
+      },
+      {
+        "title": "Keep privacy rules on every path",
+        "explanation": "Check membership for send, history reads, attachment access and socket subscriptions, not just conversation creation. Revocation must reach live sessions or be enforced at each operation. End-to-end encryption happens on authorized devices using an established protocol; TLS alone only encrypts the connection to the service. Store encrypted envelopes and explicit metadata. Multi-device keys, attachments, backup recovery and joining/leaving groups require deliberate policies."
+      },
+      {
+        "title": "Rehearse the failures",
+        "explanation": "Kill the socket server after database commit: the message remains and reconnect recovers it. Kill the worker after push: redelivery is possible and Bob deduplicates. Lose database access: do not acknowledge durable acceptance. Lose the membership service: deny protected reads/sends temporarily rather than bypass membership. Expire a device session: require reauthentication. For groups, choose a fan-out model that does not block acceptance on every recipient; huge groups may fetch shared history. Measure accepted-message latency, reconnect gaps and delivery lag separately."
+      },
+      {
+        "title": "Prove the first version before scaling",
+        "explanation": "Begin with one authenticated API/socket service and durable conversation storage. Test two devices, an offline recipient, retry of the same client ID, forbidden conversation reads and history after reconnect. Then add multiple connection nodes, a shared session directory and background delivery workers for measured connection count and fan-out needs. Do not claim global ordering or exactly-once external effects merely because a broker exists."
+      }
+    ]
   },
   {
     "id": 249,
@@ -5154,7 +5889,26 @@
     ],
     "knowledgeCheck": "Why does HTTPS alone not provide Alice-to-Bob end-to-end encryption?",
     "diagramImage": "docs/system-design/diagrams/topic-249.svg",
-    "diagram": "Authenticate device keys → Encrypt on sender → Store and route ciphertext → Decrypt on recipient"
+    "diagram": "Authenticate device keys → Encrypt on sender → Store and route ciphertext → Decrypt on recipient",
+    "guidePath": "docs/system-design/whatsapp-style-messaging.md",
+    "lessonSections": [
+      {
+        "title": "How the apps find the service",
+        "explanation": "The operator configures an owned hostname such as chat.learn.example in DNS, binds it to an HTTPS/WebSocket edge and provisions its certificate. The app has this approved service origin in configuration. The domain of Bob’s email address does not decide which server owns the chat. DNS locates the service; conversation and recipient IDs select application records after connection. A mobile reconnect can reach another server, so required state must not exist only on the old socket node."
+      },
+      {
+        "title": "Log in and send one message",
+        "explanation": "Alice authenticates and establishes an authorized connection. A WebSocket handshake must validate the credential and permitted browser origins where applicable; being connected is not permission to post to every conversation. Alice sends {conversationId: c7, clientMessageId: m81, ciphertext: ...}. The service derives the sender from the session, verifies membership and checks that m81 has not already been accepted for that sender/conversation."
+      },
+      {
+        "title": "Keep privacy rules on every path",
+        "explanation": "Check membership for send, history reads, attachment access and socket subscriptions, not just conversation creation. Revocation must reach live sessions or be enforced at each operation. End-to-end encryption happens on authorized devices using an established protocol; TLS alone only encrypts the connection to the service. Store encrypted envelopes and explicit metadata. Multi-device keys, attachments, backup recovery and joining/leaving groups require deliberate policies."
+      },
+      {
+        "title": "Rehearse the failures",
+        "explanation": "Kill the socket server after database commit: the message remains and reconnect recovers it. Kill the worker after push: redelivery is possible and Bob deduplicates. Lose database access: do not acknowledge durable acceptance. Lose the membership service: deny protected reads/sends temporarily rather than bypass membership. Expire a device session: require reauthentication. For groups, choose a fan-out model that does not block acceptance on every recipient; huge groups may fetch shared history. Measure accepted-message latency, reconnect gaps and delivery lag separately."
+      }
+    ]
   },
   {
     "id": 250,
@@ -5191,7 +5945,123 @@
     ],
     "knowledgeCheck": "Why must the server reject a client-supplied discounted total?",
     "diagramImage": "docs/system-design/diagrams/topic-250.svg",
-    "diagram": "Browse → Build cart → Validate checkout → Complete workflow"
+    "diagram": "Browse → Build cart → Validate checkout → Complete workflow",
+    "guidePath": "docs/system-design/e-commerce-checkout.md",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "Build E-commerce checkout: follow the complete user journey"
+      },
+      {
+        "type": "text",
+        "text": "Read in order: each decision below follows from the same real-world situation. Domains ending in .example are reserved teaching names, not live services. These are illustrative designs, not descriptions of a company’s internal implementation."
+      },
+      {
+        "type": "heading",
+        "text": "1. Follow one purchase of the last mug"
+      },
+      {
+        "type": "text",
+        "text": "Alice adds mug-42 to her cart, then clicks Pay. At the same moment Bob buys the last available mug. Our task is to produce one correct order and one intended payment effect per purchase, while giving the losing buyer an honest sold-out result. Cached product pages are discovery views, not inventory reservations. Start by choosing where the stock decision is authoritative."
+      },
+      {
+        "type": "heading",
+        "text": "2. Where the browser sends requests"
+      },
+      {
+        "type": "text",
+        "text": "The shop operator owns shop.learn.example and configures DNS, edge routing and TLS for the web/API origin. A separate payment provider owns its own API/domain. The shop calls that approved provider endpoint from trusted configuration. A return URL shown to a browser is not proof of payment; a customer can visit or modify a browser URL. Confirm outcomes using authenticated server-to-server responses, signed callbacks and reconciliation."
+      },
+      {
+        "type": "heading",
+        "text": "3. Create a trusted checkout request"
+      },
+      {
+        "type": "text",
+        "text": "Alice signs in or receives a deliberately scoped guest-checkout session. POST /checkout contains item IDs, quantities, delivery choices and an idempotency key purchase-81, not a trusted total or owner ID. The server derives cart ownership from the verified session and recomputes price, currency, tax and eligibility. Cookie-based writes need CSRF protection. Card details should use the provider’s appropriate hosted/tokenized integration rather than passing raw card data through an interview toy API."
+      },
+      {
+        "type": "text",
+        "text": "The concrete API/data vocabulary used in this journey:"
+      },
+      {
+        "type": "code",
+        "text": "POST /checkout with idempotency key. Order, OrderLine, Reservation(state, expiry), PaymentAttempt(provider key/status), Outbox. Calculate price on the server."
+      },
+      {
+        "type": "text",
+        "text": "A concrete request and observable response for this journey (illustrative API contract):"
+      },
+      {
+        "type": "code",
+        "text": "POST /checkout\nAuthorization: Bearer <buyer-access-token>\nIdempotency-Key: purchase-81\nContent-Type: application/json\n\n{\"items\":[{\"sku\":\"mug-42\",\"quantity\":1}],\"paymentMethodRef\":\"<provider-token>\"}\n\nHTTP/1.1 202 Accepted\n{\"orderId\":81,\"state\":\"PAYMENT_PENDING\",\"statusUrl\":\"/orders/81\"}\n\nGET /orders/81\nAuthorization: Bearer <same-buyers-access-token>\n\nHTTP/1.1 200 OK\n{\"orderId\":81,\"state\":\"CONFIRMED\"}"
+      },
+      {
+        "type": "image",
+        "text": "E-commerce checkout component overview",
+        "path": "docs/system-design/diagrams/e-commerce-checkout.svg"
+      },
+      {
+        "type": "text",
+        "text": "Use this diagram to locate the responsibilities just introduced. Arrows show selected requests/data; the paragraphs distinguish return responses, alternatives and transaction boundaries."
+      },
+      {
+        "type": "heading",
+        "text": "4. Make the stock decision atomic"
+      },
+      {
+        "type": "text",
+        "text": "Inside a short local transaction, claim the purchase key, conditionally decrement available stock and create a pending order, reservation and payment outbox intent. UPDATE inventory SET available=available-1 WHERE sku=:sku AND available>=1 RETURNING available lets one buyer win the last unit. Check the affected row; an earlier SELECT is not a guarantee. If any required change fails, roll back all local changes. Do not hold this transaction open while a remote payment call runs."
+      },
+      {
+        "type": "heading",
+        "text": "5. Move from pending to a known payment result"
+      },
+      {
+        "type": "text",
+        "text": "A worker reads the committed intent and calls the provider with a stable provider idempotency key. A timeout means unknown: the card may already be charged. Query/retry using the same reference according to the provider contract. Verify webhook authenticity and deduplicate its event ID. A guarded order transition marks payment confirmed and records fulfillment intent. A duplicated callback cannot create a second shipment. A local transaction cannot magically include the remote provider."
+      },
+      {
+        "type": "heading",
+        "text": "6. Handle cancellation, expiry and refunds"
+      },
+      {
+        "type": "text",
+        "text": "Reserve stock for a defined interval. Expiry and payment success can race, so reservation states and version guards must decide exactly which action wins. A late successful charge after release needs policy: reacquire stock or refund. Refund is compensation recorded as a new business event, not rollback of time. Customers can only view/cancel their own orders; staff refund permissions and audit trails are separate from ordinary customer rights."
+      },
+      {
+        "type": "heading",
+        "text": "7. Search and browse without weakening checkout"
+      },
+      {
+        "type": "text",
+        "text": "Product changes flow to a derived search index; search can filter/rank and recommendations can fail independently. Cart entries carry item identity/quantity, not permanent price promises. A stale search result may show a sold-out mug; checkout revalidates authoritative state. Begin with transactional order/stock ownership, then split services only with a defined reservation protocol and recovery for partial success."
+      },
+      {
+        "type": "heading",
+        "text": "8. Test what the buyer sees under failure"
+      },
+      {
+        "type": "text",
+        "text": "Retry purchase-81 after losing its response and assert one order. Race two buyers for stock=1 and assert only one reservation. Delay payment success until after expiry and verify compensation. Submit someone else’s order ID and deny it. Simulate database outage before commit: do not report success. Stop analytics/email workers: the paid order remains durable. Track pending-payment age, reservation leaks, reconciliation backlog and duplicate-effect attempts, not only HTTP 200 counts."
+      },
+      {
+        "type": "heading",
+        "text": "Work the capacity assumption"
+      },
+      {
+        "type": "text",
+        "text": "For 60,000 checkouts/hour, average is 16.7/second. Flash-sale concentration on a single SKU may matter more than total average. These are illustrative assumptions; measure the chosen implementation and peak distribution before treating them as capacity."
+      },
+      {
+        "type": "heading",
+        "text": "Explain the journey back"
+      },
+      {
+        "type": "text",
+        "text": "Which local records must commit together to stop an order existing without a recoverable payment request? Then explain the hostname, caller identity, object-level permission, authoritative record, success acknowledgement and crash/retry behavior for this same action."
+      }
+    ]
   },
   {
     "id": 251,
@@ -5228,7 +6098,30 @@
     ],
     "knowledgeCheck": "What response should buyer B receive after buyer A commits?",
     "diagramImage": "docs/system-design/diagrams/topic-251.svg",
-    "diagram": "Begin reservation → Update conditionally → Commit together → Expire with guards"
+    "diagram": "Begin reservation → Update conditionally → Commit together → Expire with guards",
+    "guidePath": "docs/system-design/e-commerce-checkout.md",
+    "lessonSections": [
+      {
+        "title": "Follow one purchase of the last mug",
+        "explanation": "Alice adds mug-42 to her cart, then clicks Pay. At the same moment Bob buys the last available mug. Our task is to produce one correct order and one intended payment effect per purchase, while giving the losing buyer an honest sold-out result. Cached product pages are discovery views, not inventory reservations. Start by choosing where the stock decision is authoritative."
+      },
+      {
+        "title": "Create a trusted checkout request",
+        "explanation": "Alice signs in or receives a deliberately scoped guest-checkout session. POST /checkout contains item IDs, quantities, delivery choices and an idempotency key purchase-81, not a trusted total or owner ID. The server derives cart ownership from the verified session and recomputes price, currency, tax and eligibility. Cookie-based writes need CSRF protection. Card details should use the provider’s appropriate hosted/tokenized integration rather than passing raw card data through an interview toy API."
+      },
+      {
+        "title": "Make the stock decision atomic",
+        "explanation": "Inside a short local transaction, claim the purchase key, conditionally decrement available stock and create a pending order, reservation and payment outbox intent. UPDATE inventory SET available=available-1 WHERE sku=:sku AND available>=1 RETURNING available lets one buyer win the last unit. Check the affected row; an earlier SELECT is not a guarantee. If any required change fails, roll back all local changes. Do not hold this transaction open while a remote payment call runs."
+      },
+      {
+        "title": "Handle cancellation, expiry and refunds",
+        "explanation": "Reserve stock for a defined interval. Expiry and payment success can race, so reservation states and version guards must decide exactly which action wins. A late successful charge after release needs policy: reacquire stock or refund. Refund is compensation recorded as a new business event, not rollback of time. Customers can only view/cancel their own orders; staff refund permissions and audit trails are separate from ordinary customer rights."
+      },
+      {
+        "title": "Test what the buyer sees under failure",
+        "explanation": "Retry purchase-81 after losing its response and assert one order. Race two buyers for stock=1 and assert only one reservation. Delay payment success until after expiry and verify compensation. Submit someone else’s order ID and deny it. Simulate database outage before commit: do not report success. Stop analytics/email workers: the paid order remains durable. Track pending-payment age, reservation leaks, reconciliation backlog and duplicate-effect attempts, not only HTTP 200 counts."
+      }
+    ]
   },
   {
     "id": 252,
@@ -5265,7 +6158,30 @@
     ],
     "knowledgeCheck": "Why is unknown more accurate than failed after a payment timeout?",
     "diagramImage": "docs/system-design/diagrams/topic-252.svg",
-    "diagram": "Record intent → Request payment → Verify outcome → Transition once"
+    "diagram": "Record intent → Request payment → Verify outcome → Transition once",
+    "guidePath": "docs/system-design/e-commerce-checkout.md",
+    "lessonSections": [
+      {
+        "title": "Create a trusted checkout request",
+        "explanation": "Alice signs in or receives a deliberately scoped guest-checkout session. POST /checkout contains item IDs, quantities, delivery choices and an idempotency key purchase-81, not a trusted total or owner ID. The server derives cart ownership from the verified session and recomputes price, currency, tax and eligibility. Cookie-based writes need CSRF protection. Card details should use the provider’s appropriate hosted/tokenized integration rather than passing raw card data through an interview toy API."
+      },
+      {
+        "title": "Make the stock decision atomic",
+        "explanation": "Inside a short local transaction, claim the purchase key, conditionally decrement available stock and create a pending order, reservation and payment outbox intent. UPDATE inventory SET available=available-1 WHERE sku=:sku AND available>=1 RETURNING available lets one buyer win the last unit. Check the affected row; an earlier SELECT is not a guarantee. If any required change fails, roll back all local changes. Do not hold this transaction open while a remote payment call runs."
+      },
+      {
+        "title": "Move from pending to a known payment result",
+        "explanation": "A worker reads the committed intent and calls the provider with a stable provider idempotency key. A timeout means unknown: the card may already be charged. Query/retry using the same reference according to the provider contract. Verify webhook authenticity and deduplicate its event ID. A guarded order transition marks payment confirmed and records fulfillment intent. A duplicated callback cannot create a second shipment. A local transaction cannot magically include the remote provider."
+      },
+      {
+        "title": "Handle cancellation, expiry and refunds",
+        "explanation": "Reserve stock for a defined interval. Expiry and payment success can race, so reservation states and version guards must decide exactly which action wins. A late successful charge after release needs policy: reacquire stock or refund. Refund is compensation recorded as a new business event, not rollback of time. Customers can only view/cancel their own orders; staff refund permissions and audit trails are separate from ordinary customer rights."
+      },
+      {
+        "title": "Test what the buyer sees under failure",
+        "explanation": "Retry purchase-81 after losing its response and assert one order. Race two buyers for stock=1 and assert only one reservation. Delay payment success until after expiry and verify compensation. Submit someone else’s order ID and deny it. Simulate database outage before commit: do not report success. Stop analytics/email workers: the paid order remains durable. Track pending-payment age, reservation leaks, reconciliation backlog and duplicate-effect attempts, not only HTTP 200 counts."
+      }
+    ]
   },
   {
     "id": 253,
@@ -5302,7 +6218,22 @@
     ],
     "knowledgeCheck": "Which crash window causes duplicate publication?",
     "diagramImage": "docs/system-design/diagrams/topic-253.svg",
-    "diagram": "Commit both → Relay committed rows → Record publication progress → Deduplicate consumer"
+    "diagram": "Commit both → Relay committed rows → Record publication progress → Deduplicate consumer",
+    "guidePath": "docs/system-design/e-commerce-checkout.md",
+    "lessonSections": [
+      {
+        "title": "Make the stock decision atomic",
+        "explanation": "Inside a short local transaction, claim the purchase key, conditionally decrement available stock and create a pending order, reservation and payment outbox intent. UPDATE inventory SET available=available-1 WHERE sku=:sku AND available>=1 RETURNING available lets one buyer win the last unit. Check the affected row; an earlier SELECT is not a guarantee. If any required change fails, roll back all local changes. Do not hold this transaction open while a remote payment call runs."
+      },
+      {
+        "title": "Move from pending to a known payment result",
+        "explanation": "A worker reads the committed intent and calls the provider with a stable provider idempotency key. A timeout means unknown: the card may already be charged. Query/retry using the same reference according to the provider contract. Verify webhook authenticity and deduplicate its event ID. A guarded order transition marks payment confirmed and records fulfillment intent. A duplicated callback cannot create a second shipment. A local transaction cannot magically include the remote provider."
+      },
+      {
+        "title": "Test what the buyer sees under failure",
+        "explanation": "Retry purchase-81 after losing its response and assert one order. Race two buyers for stock=1 and assert only one reservation. Delay payment success until after expiry and verify compensation. Submit someone else’s order ID and deny it. Simulate database outage before commit: do not report success. Stop analytics/email workers: the paid order remains durable. Track pending-payment age, reservation leaks, reconciliation backlog and duplicate-effect attempts, not only HTTP 200 counts."
+      }
+    ]
   },
   {
     "id": 254,
@@ -5339,7 +6270,26 @@
     ],
     "knowledgeCheck": "What should users still be able to do when recommendations are down?",
     "diagramImage": "docs/system-design/diagrams/topic-254.svg",
-    "diagram": "Change catalog → Update index → Search and rank → Recheck purchase"
+    "diagram": "Change catalog → Update index → Search and rank → Recheck purchase",
+    "guidePath": "docs/system-design/e-commerce-checkout.md",
+    "lessonSections": [
+      {
+        "title": "Follow one purchase of the last mug",
+        "explanation": "Alice adds mug-42 to her cart, then clicks Pay. At the same moment Bob buys the last available mug. Our task is to produce one correct order and one intended payment effect per purchase, while giving the losing buyer an honest sold-out result. Cached product pages are discovery views, not inventory reservations. Start by choosing where the stock decision is authoritative."
+      },
+      {
+        "title": "Create a trusted checkout request",
+        "explanation": "Alice signs in or receives a deliberately scoped guest-checkout session. POST /checkout contains item IDs, quantities, delivery choices and an idempotency key purchase-81, not a trusted total or owner ID. The server derives cart ownership from the verified session and recomputes price, currency, tax and eligibility. Cookie-based writes need CSRF protection. Card details should use the provider’s appropriate hosted/tokenized integration rather than passing raw card data through an interview toy API."
+      },
+      {
+        "title": "Search and browse without weakening checkout",
+        "explanation": "Product changes flow to a derived search index; search can filter/rank and recommendations can fail independently. Cart entries carry item identity/quantity, not permanent price promises. A stale search result may show a sold-out mug; checkout revalidates authoritative state. Begin with transactional order/stock ownership, then split services only with a defined reservation protocol and recovery for partial success."
+      },
+      {
+        "title": "Test what the buyer sees under failure",
+        "explanation": "Retry purchase-81 after losing its response and assert one order. Race two buyers for stock=1 and assert only one reservation. Delay payment success until after expiry and verify compensation. Submit someone else’s order ID and deny it. Simulate database outage before commit: do not report success. Stop analytics/email workers: the paid order remains durable. Track pending-payment age, reservation leaks, reconciliation backlog and duplicate-effect attempts, not only HTTP 200 counts."
+      }
+    ]
   },
   {
     "id": 255,
@@ -5376,7 +6326,123 @@
     ],
     "knowledgeCheck": "If a geographic index says free but the trip database says busy, which wins?",
     "diagramImage": "docs/system-design/diagrams/topic-255.svg",
-    "diagram": "Request ride → Find candidates → Offer and claim → Run lifecycle"
+    "diagram": "Request ride → Find candidates → Offer and claim → Run lifecycle",
+    "guidePath": "docs/system-design/uber-style-ride-hailing.md",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "Build Uber-style ride hailing: follow the complete user journey"
+      },
+      {
+        "type": "text",
+        "text": "Read in order: each decision below follows from the same real-world situation. Domains ending in .example are reserved teaching names, not live services. These are illustrative designs, not descriptions of a company’s internal implementation."
+      },
+      {
+        "type": "heading",
+        "text": "1. Follow a station pickup"
+      },
+      {
+        "type": "text",
+        "text": "Alice requests a car at a railway station. Driver D7 appears closest, but another rider is also trying to book D7. We need to find likely candidates quickly and then confirm exactly one valid assignment. Fresh-looking coordinates are a search hint; authoritative trip/driver state decides whether the assignment exists. A diagram that treats those as the same fact misses the core race."
+      },
+      {
+        "type": "heading",
+        "text": "2. How rider and driver apps connect"
+      },
+      {
+        "type": "text",
+        "text": "Both apps use the operator’s configured HTTPS origin, for example rides.learn.example, backed by owned DNS, edge bindings and TLS. Authenticated APIs carry durable requests; sockets or push carry timely updates. GPS selects a geographic search area inside the application, not a different DNS domain for every driver. Region routing can reduce latency, but ownership of a trip/driver must remain explicit during handoff."
+      },
+      {
+        "type": "heading",
+        "text": "3. Authenticate roles and validate a ride request"
+      },
+      {
+        "type": "text",
+        "text": "POST /rides includes pickup, destination, quote ID and an idempotency key. Derive rider identity from credentials. Validate supported area and quote terms. A driver session may update only its own authorized vehicle/location and accept offers addressed to that driver. Rider and driver permissions differ; guessing a trip ID must not reveal another passenger’s route or permit cancellation."
+      },
+      {
+        "type": "text",
+        "text": "The concrete API/data vocabulary used in this journey:"
+      },
+      {
+        "type": "code",
+        "text": "POST /rides; POST /offers/{id}/accept with expected state/version. DriverPosition(timestamp, coordinates), Trip(state, rider, driver, version), Assignment."
+      },
+      {
+        "type": "text",
+        "text": "A concrete request and observable response for this journey (illustrative API contract):"
+      },
+      {
+        "type": "code",
+        "text": "POST /rides\nAuthorization: Bearer <rider-access-token>\nIdempotency-Key: ride-81\nContent-Type: application/json\n\n{\"pickup\":{\"lat\":26.14,\"lon\":91.74},\"destinationRef\":\"station-east-gate\",\"quoteId\":\"q17\"}\n\nHTTP/1.1 202 Accepted\n{\"tripId\":\"T81\",\"state\":\"SEARCHING\"}\n\nPOST /offers/O17/accept\nAuthorization: Bearer <authorized-driver-access-token>\nContent-Type: application/json\n\n{\"expectedVersion\":3}\n\nHTTP/1.1 200 OK\n{\"tripId\":\"T81\",\"state\":\"ACCEPTED\",\"driverId\":\"D7\",\"version\":4}"
+      },
+      {
+        "type": "image",
+        "text": "Uber-style ride hailing component overview",
+        "path": "docs/system-design/diagrams/uber-style-ride-hailing.svg"
+      },
+      {
+        "type": "text",
+        "text": "Use this diagram to locate the responsibilities just introduced. Arrows show selected requests/data; the paragraphs distinguish return responses, alternatives and transaction boundaries."
+      },
+      {
+        "type": "heading",
+        "text": "4. Find candidates then send expiring offers"
+      },
+      {
+        "type": "text",
+        "text": "Drivers publish timestamped positions. A geographic index searches the pickup cell plus neighbors, expanding radius if needed. Discard stale/ineligible candidates and compute road ETAs for a bounded shortlist: distance across a river can be misleading. Send offers containing trip, driver, expiry and expected state/version. Choosing one candidate is not yet a successful booking."
+      },
+      {
+        "type": "heading",
+        "text": "5. Confirm one driver with guarded state"
+      },
+      {
+        "type": "text",
+        "text": "On acceptance, recheck expiry and availability. If trip and driver share a database boundary, conditionally reserve the available driver and move the pending trip to accepted in one transaction, with an outbox update. Roll back if either condition fails. If separately owned shards/services are involved, use an assignment owner or recoverable reservation protocol with fencing. Do not pretend a short Redis lock supplies a cross-service transaction."
+      },
+      {
+        "type": "heading",
+        "text": "6. Run the trip and price contract"
+      },
+      {
+        "type": "text",
+        "text": "Persist allowed transitions: accepted, arrived, started, completed or a permitted cancellation. Late acceptances and old client versions cannot rewind state. A quote has stored currency, terms, pricing-policy version and expiry. ETA is a prediction based on route/traffic and should communicate uncertainty. Local demand/supply can inform bounded, smoothed surge policy; the rider accepts recorded terms rather than an undocumented moving price."
+      },
+      {
+        "type": "heading",
+        "text": "7. Recover when phones and workers fail"
+      },
+      {
+        "type": "text",
+        "text": "If Alice loses connection after assignment commit, a retry/reconnect fetches the same durable trip. Duplicate offers cannot assign D7 twice. An expired offer is rejected even if the phone shows it. If the position store fails, avoid inventing nearby drivers; use a documented temporary-unavailable policy. Stop status-push delivery: clients can refresh durable state. A payment timeout after trip completion requires separate payment reconciliation, not changing the trip back to started."
+      },
+      {
+        "type": "heading",
+        "text": "8. Build and verify in stages"
+      },
+      {
+        "type": "text",
+        "text": "First test one region with a few drivers, neighbor-cell search, two competing riders, late acceptance, stale coordinates and forbidden trip reads. Then measure position write volume, candidate-search time, assignment conflicts and notification lag. Add geographic partitioning for fleet size and load, while retaining a clear owner for assignments and tested recovery during region failure."
+      },
+      {
+        "type": "heading",
+        "text": "Work the capacity assumption"
+      },
+      {
+        "type": "text",
+        "text": "50,000 drivers updating every five seconds create 10,000 location writes/second; coalesce updates and expire old positions. These are illustrative assumptions; measure the chosen implementation and peak distribution before treating them as capacity."
+      },
+      {
+        "type": "heading",
+        "text": "Explain the journey back"
+      },
+      {
+        "type": "text",
+        "text": "Why might the nearest driver in straight-line distance not have the shortest pickup ETA? Then explain the hostname, caller identity, object-level permission, authoritative record, success acknowledgement and crash/retry behavior for this same action."
+      }
+    ]
   },
   {
     "id": 256,
@@ -5413,7 +6479,26 @@
     ],
     "knowledgeCheck": "Why does searching only the rider’s own cell miss some nearby drivers?",
     "diagramImage": "docs/system-design/diagrams/topic-256.svg",
-    "diagram": "Update position → Search neighboring cells → Filter shortlist → Rank by travel ETA"
+    "diagram": "Update position → Search neighboring cells → Filter shortlist → Rank by travel ETA",
+    "guidePath": "docs/system-design/uber-style-ride-hailing.md",
+    "lessonSections": [
+      {
+        "title": "Follow a station pickup",
+        "explanation": "Alice requests a car at a railway station. Driver D7 appears closest, but another rider is also trying to book D7. We need to find likely candidates quickly and then confirm exactly one valid assignment. Fresh-looking coordinates are a search hint; authoritative trip/driver state decides whether the assignment exists. A diagram that treats those as the same fact misses the core race."
+      },
+      {
+        "title": "How rider and driver apps connect",
+        "explanation": "Both apps use the operator’s configured HTTPS origin, for example rides.learn.example, backed by owned DNS, edge bindings and TLS. Authenticated APIs carry durable requests; sockets or push carry timely updates. GPS selects a geographic search area inside the application, not a different DNS domain for every driver. Region routing can reduce latency, but ownership of a trip/driver must remain explicit during handoff."
+      },
+      {
+        "title": "Find candidates then send expiring offers",
+        "explanation": "Drivers publish timestamped positions. A geographic index searches the pickup cell plus neighbors, expanding radius if needed. Discard stale/ineligible candidates and compute road ETAs for a bounded shortlist: distance across a river can be misleading. Send offers containing trip, driver, expiry and expected state/version. Choosing one candidate is not yet a successful booking."
+      },
+      {
+        "title": "Recover when phones and workers fail",
+        "explanation": "If Alice loses connection after assignment commit, a retry/reconnect fetches the same durable trip. Duplicate offers cannot assign D7 twice. An expired offer is rejected even if the phone shows it. If the position store fails, avoid inventing nearby drivers; use a documented temporary-unavailable policy. Stop status-push delivery: clients can refresh durable state. A payment timeout after trip completion requires separate payment reconciliation, not changing the trip back to started."
+      }
+    ]
   },
   {
     "id": 257,
@@ -5450,7 +6535,26 @@
     ],
     "knowledgeCheck": "How should an acceptance arriving after offer expiry be handled?",
     "diagramImage": "docs/system-design/diagrams/topic-257.svg",
-    "diagram": "Read expected state → Claim atomically → Publish after commit → Reject late actions"
+    "diagram": "Read expected state → Claim atomically → Publish after commit → Reject late actions",
+    "guidePath": "docs/system-design/uber-style-ride-hailing.md",
+    "lessonSections": [
+      {
+        "title": "Authenticate roles and validate a ride request",
+        "explanation": "POST /rides includes pickup, destination, quote ID and an idempotency key. Derive rider identity from credentials. Validate supported area and quote terms. A driver session may update only its own authorized vehicle/location and accept offers addressed to that driver. Rider and driver permissions differ; guessing a trip ID must not reveal another passenger’s route or permit cancellation."
+      },
+      {
+        "title": "Find candidates then send expiring offers",
+        "explanation": "Drivers publish timestamped positions. A geographic index searches the pickup cell plus neighbors, expanding radius if needed. Discard stale/ineligible candidates and compute road ETAs for a bounded shortlist: distance across a river can be misleading. Send offers containing trip, driver, expiry and expected state/version. Choosing one candidate is not yet a successful booking."
+      },
+      {
+        "title": "Confirm one driver with guarded state",
+        "explanation": "On acceptance, recheck expiry and availability. If trip and driver share a database boundary, conditionally reserve the available driver and move the pending trip to accepted in one transaction, with an outbox update. Roll back if either condition fails. If separately owned shards/services are involved, use an assignment owner or recoverable reservation protocol with fencing. Do not pretend a short Redis lock supplies a cross-service transaction."
+      },
+      {
+        "title": "Recover when phones and workers fail",
+        "explanation": "If Alice loses connection after assignment commit, a retry/reconnect fetches the same durable trip. Duplicate offers cannot assign D7 twice. An expired offer is rejected even if the phone shows it. If the position store fails, avoid inventing nearby drivers; use a documented temporary-unavailable policy. Stop status-push delivery: clients can refresh durable state. A payment timeout after trip completion requires separate payment reconciliation, not changing the trip back to started."
+      }
+    ]
   },
   {
     "id": 258,
@@ -5487,7 +6591,26 @@
     ],
     "knowledgeCheck": "What should happen if the quote expires while the rider decides?",
     "diagramImage": "docs/system-design/diagrams/topic-258.svg",
-    "diagram": "Collect signals → Estimate pickup → Store quote → Bind accepted terms"
+    "diagram": "Collect signals → Estimate pickup → Store quote → Bind accepted terms",
+    "guidePath": "docs/system-design/uber-style-ride-hailing.md",
+    "lessonSections": [
+      {
+        "title": "Follow a station pickup",
+        "explanation": "Alice requests a car at a railway station. Driver D7 appears closest, but another rider is also trying to book D7. We need to find likely candidates quickly and then confirm exactly one valid assignment. Fresh-looking coordinates are a search hint; authoritative trip/driver state decides whether the assignment exists. A diagram that treats those as the same fact misses the core race."
+      },
+      {
+        "title": "Find candidates then send expiring offers",
+        "explanation": "Drivers publish timestamped positions. A geographic index searches the pickup cell plus neighbors, expanding radius if needed. Discard stale/ineligible candidates and compute road ETAs for a bounded shortlist: distance across a river can be misleading. Send offers containing trip, driver, expiry and expected state/version. Choosing one candidate is not yet a successful booking."
+      },
+      {
+        "title": "Run the trip and price contract",
+        "explanation": "Persist allowed transitions: accepted, arrived, started, completed or a permitted cancellation. Late acceptances and old client versions cannot rewind state. A quote has stored currency, terms, pricing-policy version and expiry. ETA is a prediction based on route/traffic and should communicate uncertainty. Local demand/supply can inform bounded, smoothed surge policy; the rider accepts recorded terms rather than an undocumented moving price."
+      },
+      {
+        "title": "Build and verify in stages",
+        "explanation": "First test one region with a few drivers, neighbor-cell search, two competing riders, late acceptance, stale coordinates and forbidden trip reads. Then measure position write volume, candidate-search time, assignment conflicts and notification lag. Add geographic partitioning for fleet size and load, while retaining a clear owner for assignments and tested recovery during region failure."
+      }
+    ]
   },
   {
     "id": 259,

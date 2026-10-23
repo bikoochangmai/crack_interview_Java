@@ -55,7 +55,7 @@ The AI guide groups OpenAI, Claude, Gemini, Llama, Ollama, vLLM, LangGraph, Lang
 
 ## Visual system-design lessons
 
-[Start with the beginner guide and glossary](docs/system-design/visual-learning-guide.md). All 26 System Design questions now include concrete examples, four-step walkthroughs and local SVG flowcharts in the portal. Ten case studies include component diagrams and failure walkthroughs. Select a step button to follow the request; open any diagram at full size.
+[Start with the beginner guide and glossary](docs/system-design/visual-learning-guide.md). All 26 System Design questions now include concrete examples, four-step walkthroughs and local SVG flowcharts in the portal. All ten case studies now follow a continuous user journey with domain/connection setup, authentication, authorization and explicit failure/recovery. [Start with the complete Short URL tutorial](docs/system-design/short-url.md), including DNS/TLS, request/response headers, public/private access and custom domains. Select a step button to follow the request; open any diagram at full size.
 
 ## What you need to prepare
 

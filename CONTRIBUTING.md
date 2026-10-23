@@ -66,3 +66,6 @@ System-design lessons are authored in `scripts/expand_system_design.py`; regener
 
 
 Design-pattern lessons: edit `scripts/expand_design_patterns.py` and `examples/design-patterns/*.java`, regenerate with `python scripts/expand_design_patterns.py`, and run `python scripts/validate_pattern_labs.py` with JDK 21+. This checks all eight runnable labs and code/data synchronization. The shared browser check covers 34 system-design/design-pattern lessons and 44 diagrams.
+
+
+Narrative system-design sources live in `scripts/system_design_tutorials.py`. The canonical Short URL tutorial is hand-authored in `docs/system-design/short-url.md` and is preserved by regeneration. Run `python scripts/system_design_tutorials.py` to synchronize all ten cases, five top-level topic guides and portal explanations. Both older diagram generators also apply this narrative layer so they cannot revert the lessons to revision cues. Run `python scripts/validate_system_design_tutorials.py` and the shared browser check before publishing.

@@ -1,26 +1,20 @@
-# System Design — Foundations
+# System design foundations: learn through worked requests
 
-Read the example, follow the flow, then explain the failure case. These are illustrative designs, not documented company internals.
-
-[Beginner guide and glossary](system-design/visual-learning-guide.md) · [Case studies](system-design/README.md)
+Read these ten lessons in sequence, then build [the Short URL service](system-design/short-url.md). Each lesson changes one part of a concrete request rather than introducing disconnected technology names.
 
 ## 233. How do you approach a system design interview?
 
-### Plan before drawing boxes
+### Design the canteen before picking technology
 
-Design a college canteen app. Students browse menus and place orders; staff prepare them.
+Start with a student placing a lunch order, not with a list of cloud products. Ask what must happen on the screen: browse a menu, choose quantity, place an order, pay and collect. Then ask what may go wrong: duplicate clicks, no stock and a lost payment response. Each requirement should have a measurable or testable outcome. For example, one logical click with retries creates one order, and confirmed orders survive the promised failure model.
 
-### What it means
+### Work through the decision and failure
 
-Functional requirements describe actions. Non-functional requirements describe acceptable latency, availability and data loss. Begin with one API and database; add components only to solve a demonstrated constraint.
-
-### Worked real-world example
-
-Assume 10,000 students placing two orders/day over ten hours: 20,000/36,000 = 0.56 orders/second on average. If 20% arrive in a ten-minute rush, peak is 4,000/600 = 6.7/second. Reads may be much higher.
+Work the numbers explicitly. Ten thousand students placing two orders in a ten-hour day means 20,000/36,000 = 0.56 order writes/second average. If 4,000 arrive in ten minutes, that interval is 6.7/second. Menu reads, payment calls, bytes stored and peak concentration are separate dimensions. Start with one API and database; test those assumptions. Use the checkout tutorial to see how an authoritative stock decision leads to API, schema and transaction choices. A design interview answer is an evolving argument, not a diagram chosen before the requirements.
 
 ![Plan before drawing boxes](system-design/diagrams/topic-233.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Clarify requirements:** Ask whether cancellation, payment and offline recovery are required.
 
@@ -30,31 +24,23 @@ Assume 10,000 students placing two orders/day over ten hours: 20,000/36,000 = 0.
 
 4. **Start and measure:** Use a stateless application and transactional database. Measure bottlenecks before adding caches or queues.
 
-### Failure and trade-offs
-
-Premature microservices add network failures and deployment work. A design is justified by requirements, not box count.
-
-### Check your understanding
+### Explain it back
 
 If traffic grows 100 times, which measurement would guide your first change?
 
 ## 234. Explain client-server architecture and HTTP request lifecycle.
 
-### Follow a browser request
+### Watch one browser request and its response
 
-A student opens GET /orders/42 to see their lunch order.
+Bob types https://go.learn.example/aB72xQ9. Split the URL into scheme, hostname and path. DNS resolves only the hostname; it does not translate the short code. Secure transport connects Bob to the shortener’s approved edge and certificate. An HTTP GET then carries the path and hostname to the application, which makes the mapping/access decision. Network setup can be reused across requests; HTTP/3 uses QUIC rather than assuming every request always starts a new TCP connection.
 
-### What it means
+### Work through the decision and failure
 
-The browser is the client. The server verifies identity and access, applies rules and uses durable storage. The browser should never connect directly to your application database.
-
-### Worked real-world example
-
-Knowing an order ID is not permission to see it. The API must verify that order 42 belongs to the authenticated student.
+The application returns 302 Location: https://courses.example/lesson/42. Bob’s browser follows that instruction with a second request to the destination hostname, whose DNS/TLS and application are separate. If the first service returns 302 and the second returns 500, the two operations had different outcomes. Use a trace/request ID for the boundaries you control, and do not send shortener credentials to the destination. The full Short URL tutorial includes the actual request/response headers.
 
 ![Follow a browser request](system-design/diagrams/topic-234.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Resolve hostname:** DNS finds the network address; a cached result can skip a fresh lookup.
 
@@ -64,31 +50,23 @@ Knowing an order ID is not permission to see it. The API must verify that order 
 
 4. **Return response:** Send JSON and HTTP status; the browser renders it. A timeout leaves the outcome unknown.
 
-### Failure and trade-offs
-
-UI-only authorization can be bypassed. Correlation IDs help identify where a request spent time.
-
-### Check your understanding
+### Explain it back
 
 If a response times out but the order exists, should the client create a fresh order?
 
 ## 235. How do load balancers, reverse proxies, API gateways and CDNs differ?
 
-### Understand the front-door components
+### Add an entry component only for its responsibility
 
-A shopping page loads a public logo and a private order history.
+Imagine a shop initially running one API behind HTTPS. Adding a second API instance creates a routing question: which healthy instance receives the next request? A load balancer solves that. A reverse proxy describes the role of accepting requests for upstream servers; load balancing may be one of its capabilities. A gateway can additionally enforce API token/quota policy. These roles can be implemented by one product; drawing four boxes is not mandatory.
 
-### What it means
+### Work through the decision and failure
 
-A CDN caches eligible content near users. A reverse proxy fronts upstream servers. A load balancer selects healthy servers. An API gateway adds API policies such as authentication and quotas. One product may perform several roles.
-
-### Worked real-world example
-
-A cached logo can return from the CDN without reaching the application. Private history needs authorization and an appropriate private cache policy.
+Now serve a public product image repeatedly to distant users: a CDN cache can answer near them. That does not mean a private order response belongs in a public cache. The application must still authorize that the order belongs to the caller even if a gateway validated their identity token. DNS chooses the hostname’s route; API routing chooses the backend/path; object authorization chooses whether the operation is allowed. If a gateway fails, bypassing it is safe only if the alternate route preserves required controls, not merely because the backend is reachable.
 
 ![Understand the front-door components](system-design/diagrams/topic-235.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Check edge cache:** On an eligible cache hit, return immediately; the remaining steps are for forwarded API requests.
 
@@ -98,31 +76,23 @@ A cached logo can return from the CDN without reaching the application. Private 
 
 4. **Enforce object access:** The application checks whose order is requested, loads it and returns the response.
 
-### Failure and trade-offs
-
-Caching private responses publicly leaks data. WebSockets also need long-lived connection routing and a way to locate connected users.
-
-### Check your understanding
+### Explain it back
 
 Why does gateway token validation not replace order-ownership checks?
 
 ## 236. How do you choose between SQL, NoSQL and search engines?
 
-### Choose storage by access pattern
+### Design the data question before choosing SQL or NoSQL
 
-Orders require a ledger; product discovery requires a searchable index.
+Follow checkout: order 81 and its order lines must agree about ownership, totals and state. A relational transaction and constraints are a useful starting point. Now follow a search request for waterproof shoes in size 9: relevance and filtering may need a derived search index. These are two different read/write contracts, not a rule that SQL is old and NoSQL is fast.
 
-### What it means
+### Work through the decision and failure
 
-SQL supports relations and transactional invariants. Key-value stores suit known-key lookups. Documents suit aggregate retrieval. Search engines rank text and support filters. NoSQL products do not all share the same guarantees.
-
-### Worked real-world example
-
-Store orders and lines transactionally in PostgreSQL; derive a product search index for queries such as waterproof hiking shoe.
+Write the product change and an outbox event in the source database. An indexer applies versioned changes to the search view. A search result may briefly be stale; checkout still checks current authoritative price and stock. If the index is down, decide whether basic product browsing can use a simpler source lookup; do not make stock correctness depend on index availability. Evaluate a chosen document/key-value product by its actual transaction, query and consistency guarantees. Additional stores require rebuilds, version ordering and permission propagation.
 
 ![Choose storage by access pattern](system-design/diagrams/topic-236.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Write authoritative data:** Commit related order records together; use constraints for uniqueness and valid relationships.
 
@@ -132,31 +102,23 @@ Store orders and lines transactionally in PostgreSQL; derive a product search in
 
 4. **Read the right source:** Search the derived index; checkout rechecks authoritative price and stock.
 
-### Failure and trade-offs
-
-A second store adds synchronization, rebuilds and monitoring. Search can lag behind the source.
-
-### Check your understanding
+### Explain it back
 
 What happens if search shows a product that just sold out?
 
 ## 237. Explain caching strategies and cache invalidation.
 
-### Cache a replaceable copy
+### Trace a cache hit, a miss and a racing writer
 
-A waiter remembers the menu but checks the kitchen before promising the last meal.
+Alice requests product 42. On a cache hit the API can return its permitted cached description without querying the database. On a miss it loads the authoritative row and stores a copy with a TTL. Only the miss branch calls the database; a straight arrow through both boxes can conceal that important choice. Coalesce simultaneous misses so 1,000 waiting readers do not all rebuild the same key.
 
-### What it means
+### Work through the decision and failure
 
-A cache avoids repeated expensive reads. In cache-aside, the application checks cache first, loads the database on a miss and stores a copy with expiry. TTL limits lifetime; it does not promise freshness.
-
-### Worked real-world example
-
-Product 42 gets 1,000 reads/minute and two changes/day. Cache its description; final stock and price checks still use authoritative state.
+Now a writer commits a new price and invalidates product:42. A reader that loaded the old row before commit may refill the old value afterward. TTL bounds staleness but does not make that race disappear; version-aware updates, ordering and a business-approved freshness policy may be needed. Checkout should revalidate authoritative terms. When Redis is down, cap database fallback concurrency rather than replacing every cache hit with unlimited DB traffic. Test hit, miss, stale refill, invalidation and outage as distinct paths.
 
 ![Cache a replaceable copy](system-design/diagrams/topic-237.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Look up product:42:** On a permitted fresh-enough hit, return the copy and skip database access.
 
@@ -166,31 +128,23 @@ Product 42 gets 1,000 reads/minute and two changes/day. Cache its description; f
 
 4. **Handle writes:** Commit the change then invalidate/update the copy; account for a concurrent stale reader refilling it.
 
-### Failure and trade-offs
-
-Cache failure can overwhelm the database through fallback. Bound fallback load; consider safe stale reads and version checks.
-
-### Check your understanding
+### Explain it back
 
 Why can invalidation race with a cache refill?
 
 ## 238. How do you design for high availability and disaster recovery?
 
-### Separate availability and recovery
+### Recover an order service through three different disasters
 
-A spare counter handles a broken counter; an off-site backup handles a destroyed building.
+First stop one API process: a load balancer can remove it and use a healthy replica if state was external. Next lose the database writer: promotion requires the chosen replication guarantee and fencing the old writer, not just another API process. Finally delete yesterday’s records accidentally: a live replica may copy the delete, so tested historical backup/point-in-time restore is required. These are different recovery mechanisms.
 
-### What it means
+### Work through the decision and failure
 
-High availability keeps serving during component failures. Disaster recovery restores service after major loss. Replicas provide live copies; backups provide historical recovery. Neither replaces a tested procedure.
-
-### Worked real-world example
-
-Assume a recovery-time objective (RTO) of 30 minutes and recovery-point objective (RPO) of five minutes. The first limits downtime; the second limits lost committed data.
+Set an example RTO of 30 minutes and RPO of five minutes, then run a drill. Measure time to restore usable user journeys and the actual committed-data gap, not merely time to start a VM. An asynchronous replica may not satisfy zero data loss. Authorization, DNS, certificates, secrets and dependent queues must also work in the recovery environment. Compare restored order/payment state and reconcile unknown external effects before opening full traffic. Availability architecture is incomplete without an executable ownership and recovery procedure.
 
 ![Separate availability and recovery](system-design/diagrams/topic-238.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Detect failure:** Health checks remove unhealthy API instances from routing.
 
@@ -200,31 +154,23 @@ Assume a recovery-time objective (RTO) of 30 minutes and recovery-point objectiv
 
 4. **Verify recovery:** Test real user journeys and measure actual downtime and data loss against objectives.
 
-### Failure and trade-offs
-
-Async replication may lose recent writes. Replicas also copy accidental deletes, so backups and restore drills remain essential.
-
-### Check your understanding
+### Explain it back
 
 How would you recover from an accidental delete while every server remains healthy?
 
 ## 239. Explain CAP theorem, consistency and quorum.
 
-### Handle disagreement during a partition
+### Follow the last-seat decision during a partition
 
-Two disconnected ticket counters cannot both safely sell the last seat.
+Replicas A, B and C hold stock state. A and B can communicate, while C is isolated. If every side independently promises the last seat, two customers may get a success response for one seat. To preserve the required single-history decision, the isolated side may have to reject or delay. CAP concerns that partition-time trade-off between linearizable behavior and successful responses to every request; it is not a general instruction to pick any two database features.
 
-### What it means
+### Work through the decision and failure
 
-During a network partition, a distributed shared-data service cannot always offer both linearizable consistency and a successful response to every request. CAP consistency refers to a single up-to-date logical history, not SQL constraint validity.
-
-### Worked real-world example
-
-For three replicas A, B and C, suppose A can reach B but C is isolated. A write requiring two acknowledgements cannot succeed on C alone.
+With a fixed replica set N=3, a write quorum W=2 and read quorum R=2 overlap because R+W>N. Explain which replicas participate and how reads reconcile versions. Overlap alone is not a proof of linearizability under concurrent writers or alternative/sloppy replica sets. For booking, use the actual database/consensus transaction contract. For a social feed you might accept stale reads explicitly. Authentication and stock consistency are independent: an authorized caller can still be rejected because the service cannot safely decide during the partition.
 
 ![Handle disagreement during a partition](system-design/diagrams/topic-239.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Network splits:** A and B communicate; C cannot reach them. Define the guarantee required by stock reservations.
 
@@ -234,31 +180,23 @@ For three replicas A, B and C, suppose A can reach B but C is isolated. A write 
 
 4. **Handle the minority:** Reject or time out operations that cannot meet their contract, then reconcile after connectivity returns.
 
-### Failure and trade-offs
-
-Quorum overlap alone does not prove linearizability. Version selection, concurrent writers and leader rules matter; sloppy quorums may use different replica sets.
-
-### Check your understanding
+### Explain it back
 
 Why can a social feed tolerate stale data more easily than last-seat booking?
 
 ## 240. Explain rate limiting, throttling and backpressure.
 
-### Control overload
+### Spend the final token across two servers
 
-A gate limits arrivals, a bounded queue holds a few people, and backpressure asks upstream to slow down.
+A tenant’s bucket holds one token. Requests reach API instances A and B simultaneously. If both separately read one and later write zero, both enter. An atomic refill/compare/consume operation allows only one request at that boundary. Identify the tenant from verified credentials, not an arbitrary request header. A permitted quota decision still does not authorize access to someone else’s order.
 
-### What it means
+### Work through the decision and failure
 
-Rate limiting caps arrivals over time. Throttling reduces or delays work. Backpressure propagates lack of capacity toward producers. Queues absorb short bursts but cannot fix sustained overload.
-
-### Worked real-world example
-
-A token bucket with capacity 20 and refill 10 tokens/second allows an idle customer a short burst, then limits the sustained rate.
+For capacity 20 and refill 10 tokens/second, an idle tenant may burst 20, then sustain around the refill rate under the policy. If five nodes instead each maintain an independent full bucket, total allowed traffic can multiply. Decide on shared ownership or allocated local budgets and acceptable overshoot. On store outage, define fail-open/fail-closed per endpoint risk. HTTP 429 should communicate rejection and retry guidance. Backpressure and bounded in-flight work also matter: rate permission cannot create extra database connections or make a slow provider fast.
 
 ![Control overload](system-design/diagrams/topic-240.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Identify caller:** Authenticate and derive the correct tenant/user key; do not trust an arbitrary tenant header.
 
@@ -268,31 +206,23 @@ A token bucket with capacity 20 and refill 10 tokens/second allows an idle custo
 
 4. **Bound downstream work:** Cap in-flight requests and queue length; signal pressure when consumers cannot keep up.
 
-### Failure and trade-offs
-
-Five independent per-node quotas can multiply the effective limit. Define fail-open/fail-closed behavior during limiter failure.
-
-### Check your understanding
+### Explain it back
 
 If five servers each allow 10 requests/second locally, what aggregate rate is possible?
 
 ## 241. How do you design idempotent APIs?
 
-### Make one operation safe to retry
+### Replay a lost order response without replaying its effect
 
-A purchase receipt number tells reception that a repeated call refers to the same order.
+Alice sends POST /orders with key purchase-81. The server commits order 81 but the response is lost. Alice does not know whether creation failed, so retrying with a fresh identity risks another order. Reuse purchase-81 for the same logical purchase. A tenant-scoped unique idempotency record plus payload fingerprint lets another API instance find the original result.
 
-### What it means
+### Work through the decision and failure
 
-Idempotency means retries of one logical request cause one intended business effect. A durable, concurrency-safe key identifies the operation. An in-memory map on one application instance is not sufficient.
-
-### Worked real-world example
-
-Order-request-81 commits, but its response is lost. A retry with the same key should return the original order rather than create another.
+The idempotency claim, local business change and stored result need a defined transactional/concurrent protocol. Two simultaneous claims must not both execute the effect. Different payload reuse is rejected; key retention defines how long replay is recognized. A remote payment is a separate effect: use the provider’s stable key and reconcile unknown outcome. An in-memory cache is not a durable, cluster-wide solution. Test lost response, simultaneous retry, payload conflict, crash before commit and crash after a remote call separately.
 
 ![Make one operation safe to retry](system-design/diagrams/topic-241.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Send stable key:** Generate one key per logical purchase and reuse it only for retries.
 
@@ -302,31 +232,23 @@ Order-request-81 commits, but its response is lost. A retry with the same key sh
 
 4. **Replay or reconcile:** Return the stored result. Remote payment requires its own stable provider key and outcome reconciliation.
 
-### Failure and trade-offs
-
-Reject reuse with a different payload. Define key retention. A local transaction cannot atomically commit a remote card charge.
-
-### Check your understanding
+### Explain it back
 
 What if identical keys arrive simultaneously at two API instances?
 
 ## 242. What are horizontal scaling, partitioning and sharding?
 
-### Scale workers versus divide data
+### Scale the layer that is actually saturated
 
-More cashiers can share one order book; sharding gives different cashiers different books.
+A single API process saturates CPU while the database is comfortable. Add stateless API instances behind routing: that is horizontal application scaling. If the writer database is now saturated, adding more callers may make it worse. Partitioning divides records; sharding distributes partitions across independently operated nodes; replication copies the same records. These actions solve different constraints.
 
-### What it means
+### Work through the decision and failure
 
-Horizontal scaling adds service instances. Partitioning splits a dataset. Sharding puts partitions on independently operated database nodes. Replication copies the same data. More API instances do not automatically increase database write capacity.
-
-### Worked real-world example
-
-Partition chat messages by conversation ID so one conversation can be read without querying every shard.
+For chat, conversation_id can keep one conversation’s messages on one partition for efficient ordered history reads. A routing map identifies the authoritative shard. A huge celebrity conversation is still a hot partition, even when most keys are balanced. Cross-shard queries, tenant authorization, migrations and ownership handoff become explicit design work. Rebalancing cannot let two nodes both act as current writer without a coordination rule. Measure CPU, write capacity, lock contention and hot-key distribution before choosing a shard key or claiming that more servers increase every form of capacity.
 
 ![Scale workers versus divide data](system-design/diagrams/topic-242.svg)
 
-### Follow the flow
+### Trace the steps
 
 1. **Scale stateless APIs:** A load balancer sends requests to multiple instances; persistent state remains external.
 
@@ -336,10 +258,6 @@ Partition chat messages by conversation ID so one conversation can be read witho
 
 4. **Rebalance carefully:** Move partitions with explicit ownership/version rules; monitor hot conversations.
 
-### Failure and trade-offs
-
-A celebrity group can overload a shard. Cross-shard transactions, global ordering and migrations add complexity.
-
-### Check your understanding
+### Explain it back
 
 Why can sharding by country leave one database overloaded?

@@ -1,0 +1,5 @@
+
+# Generated local validation / tutorial output
+__pycache__/
+*.py[cod]
+.pattern-classes/

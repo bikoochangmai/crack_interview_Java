@@ -60,6 +60,8 @@ def build():
    out += [f'{i}. **{step["title"]}:** {step["explanation"]}\n' for i,step in enumerate(q['walkthroughSteps'],1)]
    out += ['### Failure and trade-offs\n',q['tradeoffs']+'\n','### Check your understanding\n',q['knowledgeCheck']+'\n']
   (root/f'docs/system-design-{slug}.md').write_text('\n'.join(out),encoding='utf-8')
- print('Expanded 26 lessons with matching SVG diagrams and Markdown guides.')
+ from system_design_tutorials import build as build_tutorials
+ build_tutorials()
+ print('Expanded 26 lessons with narrative tutorials and diagrams.')
 
 if __name__=='__main__':build()

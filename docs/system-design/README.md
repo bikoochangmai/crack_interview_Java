@@ -1,6 +1,6 @@
 # System Design Case Studies
 
-**Start here:** [Plain-language visual guide and glossary](visual-learning-guide.md). Each case below includes a specific scenario, component diagram, request walkthrough, data/API ownership, failure recovery and capacity calculation. These are illustrative designs, not actual company internals.
+**Start here:** [Plain-language visual guide and glossary](visual-learning-guide.md). Read each case from beginning to end as one tutorial: user action, domain/connection setup, authentication, authorization, API and data changes, response, failure/recovery, and scaling. Start with Short URL, which shows actual HTTP request and response headers. These are illustrative designs, not actual company internals.
 
 - [Short URL](short-url.md)
 - [WhatsApp-style Messaging](whatsapp-style-messaging.md)

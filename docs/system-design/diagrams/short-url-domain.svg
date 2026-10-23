@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1120" viewBox="0 0 960 1120" role="img" aria-labelledby="title desc"><title id="title">Who owns the domain, and who handles the path?</title><desc id="desc">Five sequential explanatory steps from domain ownership to browser behavior.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="1120" rx="18" fill="#0f172a"/>
+<text x="35" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25">Who owns the domain, and who handles the path?</text>
+<text x="35" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="17">Reserved .example names illustrate configuration and request flow; these are not live URLs.</text>
+<rect x="35" y="110" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="144" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">1. Operator chooses a domain</text>
+<text x="55" y="176" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Register a real domain or use a subdomain you control. The destination domain does not</text>
+<text x="55" y="199" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">choose the short hostname.</text>
+<path d="M480,267 L480,291" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="295" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="329" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">2. DNS routes the hostname</text>
+<text x="55" y="361" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">go.learn.example aliases the approved hosting endpoint, or uses supported address/alias</text>
+<text x="55" y="384" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">records. DNS does not inspect /aB72xQ9.</text>
+<path d="M480,452 L480,476" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="480" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="514" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">3. Hosting binds the name and certificate</text>
+<text x="55" y="546" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Configure the edge for the hostname and provision/renew a valid TLS certificate. DNS alone</text>
+<text x="55" y="569" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">is insufficient.</text>
+<path d="M480,637 L480,661" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="665" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="699" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">4. Browser sends an HTTP request</text>
+<text x="55" y="731" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">After resolving/connecting securely, the browser sends GET /aB72xQ9 with the short</text>
+<text x="55" y="754" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">hostname.</text>
+<path d="M480,822 L480,846" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="850" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="884" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">5. Application resolves domain plus code</text>
+<text x="55" y="916" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Validate the host, find its domain ID, then check mapping, status, expiry and the access</text>
+<text x="55" y="939" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">policy.</text>
+<text x="35" y="1080" fill="#fbbf24" font-family="Arial,sans-serif" font-size="17">Authentication establishes identity; authorization decides each protected operation.</text>
+</svg>

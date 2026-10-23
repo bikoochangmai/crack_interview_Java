@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1120" viewBox="0 0 960 1120" role="img" aria-labelledby="title desc"><title id="title">One click produces two separate browser requests</title><desc id="desc">Five sequential explanatory steps from domain ownership to browser behavior.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker></defs>
+<rect width="960" height="1120" rx="18" fill="#0f172a"/>
+<text x="35" y="48" fill="#f8fafc" font-family="Arial,sans-serif" font-size="25">One click produces two separate browser requests</text>
+<text x="35" y="80" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="17">Reserved .example names illustrate configuration and request flow; these are not live URLs.</text>
+<rect x="35" y="110" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="144" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">1. Browser → shortener</text>
+<text x="55" y="176" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">GET https://go.learn.example/aB72xQ9. DNS/TLS reach the shortener, not the course site.</text>
+<path d="M480,267 L480,291" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="295" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="329" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">2. Shortener → mapping database</text>
+<text x="55" y="361" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">Resolve the approved domain and code. Check status, expiry and public/restricted access</text>
+<text x="55" y="384" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">before revealing the target.</text>
+<path d="M480,452 L480,476" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="480" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="514" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">3. Shortener → browser</text>
+<text x="55" y="546" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">HTTP 302; Location: https://courses.example/lesson/42; Cache-Control: no-store in the</text>
+<text x="55" y="569" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">tutorial baseline.</text>
+<path d="M480,637 L480,661" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="665" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="699" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">4. Browser → destination website</text>
+<text x="55" y="731" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">The browser follows Location and establishes its own request to courses.example. Shortener</text>
+<text x="55" y="754" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">credentials are not transferred.</text>
+<path d="M480,822 L480,846" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="35" y="850" width="890" height="155" rx="12" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="884" fill="#7dd3fc" font-family="Arial,sans-serif" font-size="21">5. Destination → browser</text>
+<text x="55" y="916" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">The course site returns its page, its login requirement, or its own error. The shortener’s</text>
+<text x="55" y="939" fill="#f1f5f9" font-family="Arial,sans-serif" font-size="17">302 is not proof the page loaded.</text>
+<text x="35" y="1080" fill="#fbbf24" font-family="Arial,sans-serif" font-size="17">Authentication establishes identity; authorization decides each protected operation.</text>
+</svg>

@@ -75,7 +75,10 @@ Arrows show requests or emitted data. Responses generally return to callers and 
 
 [Beginner glossary and learning order](visual-learning-guide.md) · [All case studies](README.md)
 '''
-  (root/f'docs/system-design/{slug}.md').write_text(content,encoding='utf-8')
- print('Built ten concrete case studies and ten component diagrams.')
+  if slug!='short-url':
+   (root/f'docs/system-design/{slug}.md').write_text(content,encoding='utf-8')
+ from system_design_tutorials import build as build_tutorials
+ build_tutorials()
+ print('Built ten component diagrams and narrative tutorials.')
 
 if __name__=='__main__':build()

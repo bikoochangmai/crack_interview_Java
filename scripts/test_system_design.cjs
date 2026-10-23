@@ -20,6 +20,7 @@ const root=path.resolve(__dirname,'..');
   const questions=JSON.parse(fs.readFileSync(path.join(root,'data/questions.json'),'utf8'));
   const lessons=questions.filter(q=>q.category.startsWith('System Design')||q.category.startsWith('Design Patterns'));
   assert.equal(lessons.length,34);
+  assert(questions.find(q=>q.id===243).contentBlocks.some(b=>b.text.includes('PUBLIC_SHORT_ORIGIN')));
   for(const q of lessons){
    assert.equal(q.walkthroughSteps.length,4);
    await page.selectOption('#category',q.category);
@@ -27,6 +28,7 @@ const root=path.resolve(__dirname,'..');
    await card.locator('summary').click();
    const image=card.locator('.design-figure img');await image.scrollIntoViewIfNeeded();
    await image.evaluate(img=>img.decode());
+   for(const tutorialImage of await card.locator('.tutorial-figure img').all()){await tutorialImage.scrollIntoViewIfNeeded();await tutorialImage.evaluate(img=>img.decode());assert((await tutorialImage.getAttribute('alt')).length>5);}
    assert.equal(await image.evaluate(img=>img.naturalWidth),960);
    if(q.guidePath)assert.equal(await card.locator('a').filter({hasText:'Beginner glossary'}).getAttribute('href'),q.guidePath);
    if(q.lessonSections)assert((await card.innerText()).includes(q.lessonSections[0].explanation));
@@ -43,7 +45,7 @@ const root=path.resolve(__dirname,'..');
    assert.deepEqual(overflow,[],file+' clipped text');
   }
   await page.goto(base);await page.waitForFunction(()=>document.getElementById('count').textContent.includes('386'));
-  await page.selectOption('#category',lessons.find(q=>q.id===266).category);
+  await page.selectOption('#category',lessons.find(q=>q.id===243).category);
   await page.locator('#questions details').first().locator('summary').click();
   await page.locator('.design-figure').first().scrollIntoViewIfNeeded();
   if(process.env.DESIGN_SCREENSHOT_DIR){await page.screenshot({path:path.join(process.env.DESIGN_SCREENSHOT_DIR,'system-design-desktop.png')});}
@@ -52,6 +54,6 @@ const root=path.resolve(__dirname,'..');
   await page.locator('.design-step-buttons button').nth(1).click();
   if(process.env.DESIGN_SCREENSHOT_DIR){await page.screenshot({path:path.join(process.env.DESIGN_SCREENSHOT_DIR,'system-design-mobile.png')});}
   assert.deepEqual(errors,[]);
-  console.log('PASS: 34 lesson images and step controls, 44 SVG text bounds, mobile width, no browser errors.');
+  console.log('PASS: 34 lesson images and step controls, 46 SVG text bounds, mobile width, no browser errors.');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

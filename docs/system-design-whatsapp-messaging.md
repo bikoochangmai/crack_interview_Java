@@ -1,141 +1,79 @@
-# System Design — WhatsApp & Messaging
+# Build WhatsApp-style messaging: follow the complete user journey
 
-Read the example, follow the flow, then explain the failure case. These are illustrative designs, not documented company internals.
+Read in order: each decision below follows from the same real-world situation. Domains ending in .example are reserved teaching names, not live services. These are illustrative designs, not descriptions of a company’s internal implementation.
 
-[Beginner guide and glossary](system-design/visual-learning-guide.md) · [Case studies](system-design/README.md)
+## 1. Start with Alice and Bob, not a broker
 
-## 246. Design a WhatsApp-like one-to-one chat system.
+Alice types “Meet at 6” and presses Send. Bob has no mobile connection. Alice should learn that the service accepted the message, while Bob must receive it after reconnecting. Accepted, delivered and read are different facts. We will build that sequence first. A live socket alone cannot satisfy it because disconnecting would lose the only delivery path.
 
-### Store a message before acknowledging it
+## 2. How the apps find the service
 
-A postal office accepting a letter and delivering it are separate events.
+The operator configures an owned hostname such as chat.learn.example in DNS, binds it to an HTTPS/WebSocket edge and provisions its certificate. The app has this approved service origin in configuration. The domain of Bob’s email address does not decide which server owns the chat. DNS locates the service; conversation and recipient IDs select application records after connection. A mobile reconnect can reach another server, so required state must not exist only on the old socket node.
 
-### What it means
+## 3. Log in and send one message
 
-Chat combines live connections with durable history. A server acknowledgement means accepted under a defined durability contract. Delivery and read receipts are separate states.
+Alice authenticates and establishes an authorized connection. A WebSocket handshake must validate the credential and permitted browser origins where applicable; being connected is not permission to post to every conversation. Alice sends {conversationId: c7, clientMessageId: m81, ciphertext: ...}. The service derives the sender from the session, verifies membership and checks that m81 has not already been accepted for that sender/conversation.
 
-### Worked real-world example
+The concrete API/data vocabulary used in this journey:
 
-Alice sends m81 while Bob is offline. Alice sees accepted after commit. Bob later reconnects with his last-seen cursor and fetches missing messages.
+```text
+POST /conversations/{id}/messages; GET messages?after=cursor. Message(conversation, sequence, sender, client_message_id unique within its scope, ciphertext). DeviceCursor tracks delivery.
+```
 
-![Store a message before acknowledging it](system-design/diagrams/topic-246.svg)
+A concrete request and observable response for this journey (illustrative API contract):
 
-### Follow the flow
+```http
+POST /conversations/c7/messages
+Authorization: Bearer <chat-access-token>
+Content-Type: application/json
 
-1. **Send stable message ID:** Send conversation ID, client message ID and content over an authenticated connection.
+{"clientMessageId":"m81","ciphertext":"<encrypted-envelope>"}
 
-2. **Persist before ack:** Authorize membership, deduplicate the ID and commit message plus delivery event.
+HTTP/1.1 201 Created
+{"messageId":"m81","sequence":41,"state":"ACCEPTED"}
 
-3. **Attempt live delivery:** Find Bob’s active connection and push if present; offline messages stay in durable history.
+GET /conversations/c7/messages?after=40
+Authorization: Bearer <bob-access-token>
 
-4. **Recover on reconnect:** Bob fetches after his cursor, acknowledges delivery and may separately send a read receipt.
+HTTP/1.1 200 OK
+{"messages":[{"messageId":"m81","sequence":41,"ciphertext":"<encrypted-envelope>"}],"cursor":41}
+```
 
-### Failure and trade-offs
+![WhatsApp-style messaging component overview](system-design/diagrams/whatsapp-style-messaging.svg)
 
-A WebSocket is not durable storage. Push notifications are wake-up hints. Lost acknowledgements cause retries and duplicate delivery attempts.
+Use this diagram to locate the responsibilities just introduced. Arrows show selected requests/data; the paragraphs distinguish return responses, alternatives and transaction boundaries.
 
-### Check your understanding
+## 4. Commit before showing accepted
 
-What should accepted mean if Bob has no active connection?
+Within the chosen database boundary, insert the message, assign its conversation sequence and store a delivery outbox event. Return accepted only after the promised durability level is met. If the response disappears, Alice retries m81 and receives the original sequence rather than creating another message. A single partition owner or transactional sequencer can order one conversation; phone clocks cannot reliably do so. An outbox relay can publish twice, so workers and recipients must tolerate duplicates.
 
-## 247. How do you handle ordering and duplicates in chat?
+## 5. Deliver now or recover later
 
-### Order messages and remove duplicates
+A delivery worker looks up Bob’s connected devices in a session directory. When Bob is offline, a notification can wake his app but is not the message database. On reconnect Bob authenticates, proves membership again and requests messages after cursor 40. If he gets 42 before 41, he fetches the missing range. Devices deduplicate IDs, acknowledge delivered state and later explicitly report read state. History retention and tombstones determine what an old cursor can recover.
 
-Numbered pages stay readable when the printer hands you the same page twice.
+## 6. Keep privacy rules on every path
 
-### What it means
+Check membership for send, history reads, attachment access and socket subscriptions, not just conversation creation. Revocation must reach live sessions or be enforced at each operation. End-to-end encryption happens on authorized devices using an established protocol; TLS alone only encrypts the connection to the service. Store encrypted envelopes and explicit metadata. Multi-device keys, attachments, backup recovery and joining/leaving groups require deliberate policies.
 
-Retries and reconnects can duplicate or reorder delivery. Use a stable client message ID for deduplication and an authoritative per-conversation sequence for accepted order.
+## 7. Rehearse the failures
 
-### Worked real-world example
+Kill the socket server after database commit: the message remains and reconnect recovers it. Kill the worker after push: redelivery is possible and Bob deduplicates. Lose database access: do not acknowledge durable acceptance. Lose the membership service: deny protected reads/sends temporarily rather than bypass membership. Expire a device session: require reauthentication. For groups, choose a fan-out model that does not block acceptance on every recipient; huge groups may fetch shared history. Measure accepted-message latency, reconnect gaps and delivery lag separately.
 
-m81 gets sequence 41 but Alice loses the response. Retrying must return 41. Bob receiving 42 before 41 can detect a gap and fetch missing history.
+## 8. Prove the first version before scaling
 
-![Order messages and remove duplicates](system-design/diagrams/topic-247.svg)
+Begin with one authenticated API/socket service and durable conversation storage. Test two devices, an offline recipient, retry of the same client ID, forbidden conversation reads and history after reconnect. Then add multiple connection nodes, a shared session directory and background delivery workers for measured connection count and fan-out needs. Do not claim global ordering or exactly-once external effects merely because a broker exists.
 
-### Follow the flow
+## Work the capacity assumption
 
-1. **Accept stable ID:** Use an appropriate conversation/sender/client-ID unique key bound to the original payload.
+100,000 connected users sending one message/minute produce about 1,667 sends/second before group fan-out and multi-device copies. These are illustrative assumptions; measure the chosen implementation and peak distribution before treating them as capacity.
 
-2. **Assign sequence:** A partition owner or transactional sequencer assigns conversation order at commit.
+## Explain the journey back
 
-3. **Deliver with retries:** Bob deduplicates already-applied IDs and buffers or fetches missing ranges.
+How does Bob recover if he receives sequence 42 before sequence 41? Then explain the hostname, caller identity, object-level permission, authoritative record, success acknowledgement and crash/retry behavior for this same action.
 
-4. **Resume from cursor:** Reconnect requests messages after a durable cursor, independent of the old socket.
+## Reference documentation
 
-### Failure and trade-offs
+- [Authorization on protected operations](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+- [Event delivery semantics](https://kafka.apache.org/41/design/design/)
 
-Conversation order is not global order. Huge groups can overload one ordering owner. Tombstones distinguish intentional deletion from a delivery gap.
-
-### Check your understanding
-
-Why is a phone timestamp unreliable as the only ordering key?
-
-## 248. How would you design WhatsApp group messaging and presence?
-
-### Deliver to a group and track presence
-
-A group announcement has many recipients; an attendance light is only a recent hint.
-
-### What it means
-
-Fan-out-on-write prepares individual deliveries; fan-out-on-read fetches shared history. Presence is usually approximate, based on heartbeats and expiry rather than a guaranteed disconnect notification.
-
-### Worked real-world example
-
-A 50-member study group can use per-member delivery tasks. A 100,000-member announcement channel may prefer shared history and cursor reads.
-
-![Deliver to a group and track presence](system-design/diagrams/topic-248.svg)
-
-### Follow the flow
-
-1. **Check membership:** Authorize the sender and define membership/version rules for recipients.
-
-2. **Commit once:** Persist group message and delivery event in one local transaction.
-
-3. **Fan out asynchronously:** Workers push to eligible devices; very large groups may fetch shared history instead.
-
-4. **Expire presence:** Heartbeats refresh TTLs; stale sessions disappear without blocking durable message delivery.
-
-### Failure and trade-offs
-
-Joining/leaving affects history access and in-flight delivery. Each device needs a cursor. Broadcasting every presence change to a huge group can dominate load.
-
-### Check your understanding
-
-May a departed member read a message sent after leaving?
-
-## 249. How does end-to-end encryption change messaging architecture?
-
-### Encrypt at the endpoints
-
-The server carries a locked parcel; only authorized devices can open it.
-
-### What it means
-
-End-to-end encryption keeps content encryption/decryption on endpoint devices. TLS protects a connection to the server but can still expose plaintext at that server. Use established audited protocols.
-
-### Worked real-world example
-
-Alice encrypts for Bob’s authorized devices before upload. The server queues ciphertext for offline delivery and cannot directly run plaintext search over it.
-
-![Encrypt at the endpoints](system-design/diagrams/topic-249.svg)
-
-### Follow the flow
-
-1. **Authenticate device keys:** The protocol verifies recipient device keys; enrollment and key-change verification matter.
-
-2. **Encrypt on sender:** Alice’s device produces encrypted envelopes before sending to the service.
-
-3. **Store and route ciphertext:** The service forwards envelopes; routing metadata such as recipients and timing can remain visible.
-
-4. **Decrypt on recipient:** Bob’s devices decrypt locally; backups and lost-device recovery need explicit key management.
-
-### Failure and trade-offs
-
-Server-side moderation and search change. Reports can deliberately disclose selected messages. Weak backups and compromised endpoints can defeat confidentiality.
-
-### Check your understanding
-
-Why does HTTPS alone not provide Alice-to-Bob end-to-end encryption?
+[All tutorials](system-design/README.md) · [Foundation lessons](system-design-foundations.md)
