@@ -10071,5 +10071,1715 @@
     "labPath": "examples/java21/VirtualThreadDemo.java",
     "runCommand": "javac examples/java21/VirtualThreadDemo.java; java -cp examples/java21 VirtualThreadDemo",
     "priority": "High"
+  },
+  {
+    "id": 367,
+    "category": "Low-Level Design — LLD",
+    "question": "Parking lot: levels, gates and atomic slot assignment?",
+    "priority": "High",
+    "answer": "Design one parking-lot process that can admit vehicles through multiple entry gates and close tickets at exit gates without assigning the same slot twice.",
+    "explanation": "Design one parking-lot process that can admit vehicles through multiple entry gates and close tickets at exit gates without assigning the same slot twice.",
+    "why": "Start with the state and invariants, then choose classes, operations and synchronization.",
+    "example": "A car enters E1 on level 1. There are car slots on levels 0 and 1 and a bike slot on level 0. Our explicit policy chooses an exact-type slot nearest the entry level, breaking ties by slot ID. The car receives ticket 1 for the level-1 slot; an exit gate later closes that ticket and returns the slot to the free pool.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Clarify the contract before classes",
+        "explanation": "We model bike/car/truck kinds, numbered levels, entry/exit gates, active tickets and currently parked plates. This version uses exact-type fit; if motorcycles may occupy car spaces, introduce a documented compatibility rule. Full capacity returns no ticket. Duplicate active admission for the same plate and unknown/closed tickets are errors. Payment, pricing, reservation expiry and sensor reconciliation are extensions, not silently implemented features."
+      },
+      {
+        "title": "Assign responsibilities",
+        "explanation": "Vehicle is immutable plate/type data. Slot has stable ID, level and kind. Gate has ID, level and direction. Ticket connects vehicle, assigned slot and entry gate. Lot owns the mutable free-slot and active-ticket indexes. Level is represented as a number on slots/gates; a richer product can promote it into a Level entity with physical capacity and display policies. UI panels and gate devices do not independently mutate the slot map."
+      },
+      {
+        "title": "Follow enter and exit",
+        "explanation": "enter validates gate and vehicle, rejects an already parked plate, selects a free compatible slot, removes it from free state and records a ticket. All of those steps share one synchronized boundary. exit checks an exit gate and active ticket, removes the ticket/plate and releases that exact slot. A wrong-direction gate must fail before changing state. A repeated exit is rejected rather than incrementing availability twice."
+      },
+      {
+        "title": "Reason about concurrency and complexity",
+        "explanation": "If two gates see one free slot, only one enter may finish with a ticket. The demo serializes the whole decision/update within one JVM. A free-slot scan costs O(s) for s available slots; indexes by level/type can improve selection but require consistent maintenance. Multiple application replicas need an authoritative database transaction/unique reservation or single assignment owner; synchronized does not coordinate separate processes."
+      },
+      {
+        "title": "Where authentication belongs",
+        "explanation": "A real HTTP/gate integration authenticates devices/operators and authorizes permitted lot/gate actions outside this local object API. Knowing a ticket number should not permit arbitrary refunds or ticket edits. Persist ticket and occupancy changes transactionally if restart recovery is required. The demo deliberately keeps state in memory and does not claim durable parking control."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Validate entry",
+        "explanation": "Check entry gate, vehicle kind and active plate before any slot mutation."
+      },
+      {
+        "title": "Select a slot",
+        "explanation": "Choose exact kind, nearest entry level, then stable slot ID from the free pool."
+      },
+      {
+        "title": "Commit admission",
+        "explanation": "Within the same lock, remove the slot and record vehicle plus ticket."
+      },
+      {
+        "title": "Close through exit",
+        "explanation": "Validate exit gate and active ticket, then release exactly that slot once."
+      }
+    ],
+    "tradeoffs": "The coarse lock favors correctness over throughput. Do not hold it while calling a payment terminal. A real payment/exit workflow needs recorded states and recovery for payment success followed by gate failure.",
+    "knowledgeCheck": "How would you prevent two entry gates on different servers from assigning the last car slot?",
+    "diagram": "Validate entry → Select a slot → Commit admission → Close through exit",
+    "diagramImage": "docs/lld/diagrams/parking-lot.svg",
+    "guidePath": "docs/lld/parking-lot.md",
+    "labPath": "examples/lld/ParkingLotDemo.java",
+    "labType": "Java 21",
+    "code": "import java.util.*;\nimport java.util.concurrent.*;\n\npublic class ParkingLotDemo {\n enum Kind {BIKE,CAR,TRUCK}\n enum Direction {ENTRY,EXIT}\n record Gate(String id,int level,Direction direction){}\n record Slot(String id,int level,Kind kind){}\n record Vehicle(String plate,Kind kind){}\n record Ticket(long id,Vehicle vehicle,Slot slot,String entryGate){}\n static class Lot {\n  private final Map<String,Gate> gates=new HashMap<>();\n  private final Map<String,Slot> free=new HashMap<>();\n  private final Map<Long,Ticket> active=new HashMap<>();\n  private final Set<String> parked=new HashSet<>();\n  private long nextId=1;\n  Lot(List<Gate> gates,List<Slot> slots){\n   for(Gate g:gates)if(this.gates.putIfAbsent(g.id(),g)!=null)throw new IllegalArgumentException(\"duplicate gate\");\n   for(Slot s:slots)if(free.putIfAbsent(s.id(),s)!=null)throw new IllegalArgumentException(\"duplicate slot\");\n  }\n  private Gate gate(String id,Direction direction){\n   Gate g=gates.get(id);if(g==null||g.direction()!=direction)throw new IllegalArgumentException(\"invalid gate\");return g;\n  }\n  synchronized Optional<Ticket> enter(String gateId,Vehicle vehicle){\n   Gate entry=gate(gateId,Direction.ENTRY);Objects.requireNonNull(vehicle);\n   if(vehicle.plate()==null||vehicle.plate().isBlank()||vehicle.kind()==null)throw new IllegalArgumentException(\"vehicle required\");\n   if(parked.contains(vehicle.plate()))throw new IllegalStateException(\"already parked\");\n   // Explicit policy: exact kind, nearest level to gate, then stable slot ID.\n   Optional<Slot> candidate=free.values().stream().filter(s->s.kind()==vehicle.kind())\n    .min(Comparator.<Slot>comparingLong(s->Math.abs((long)s.level()-entry.level())).thenComparing(Slot::id));\n   if(candidate.isEmpty())return Optional.empty();\n   Slot slot=candidate.get();Ticket ticket=new Ticket(nextId++,vehicle,slot,gateId);\n   free.remove(slot.id());parked.add(vehicle.plate());active.put(ticket.id(),ticket);return Optional.of(ticket);\n  }\n  synchronized Ticket exit(String gateId,long ticketId){\n   gate(gateId,Direction.EXIT);Ticket ticket=active.get(ticketId);\n   if(ticket==null)throw new IllegalArgumentException(\"unknown or closed ticket\");\n   active.remove(ticketId);parked.remove(ticket.vehicle().plate());free.put(ticket.slot().id(),ticket.slot());return ticket;\n  }\n }\n static void check(boolean value){if(!value)throw new AssertionError();}\n public static void main(String[] args)throws Exception{\n  var gates=List.of(new Gate(\"E0\",0,Direction.ENTRY),new Gate(\"E1\",1,Direction.ENTRY),new Gate(\"X0\",0,Direction.EXIT));\n  Lot lot=new Lot(gates,List.of(new Slot(\"L0-C1\",0,Kind.CAR),new Slot(\"L1-C1\",1,Kind.CAR),new Slot(\"L0-B1\",0,Kind.BIKE)));\n  Ticket ticket=lot.enter(\"E1\",new Vehicle(\"CAR-81\",Kind.CAR)).orElseThrow();check(ticket.slot().level()==1);\n  try{lot.enter(\"E0\",ticket.vehicle());throw new AssertionError();}catch(IllegalStateException expected){}\n  try{lot.exit(\"E0\",ticket.id());throw new AssertionError();}catch(IllegalArgumentException expected){}\n  check(lot.exit(\"X0\",ticket.id()).equals(ticket));\n  try{lot.exit(\"X0\",ticket.id());throw new AssertionError();}catch(IllegalArgumentException expected){}\n  Lot one=new Lot(gates,List.of(new Slot(\"only\",0,Kind.CAR)));\n  try(var pool=Executors.newFixedThreadPool(2)){\n   var a=pool.submit(()->one.enter(\"E0\",new Vehicle(\"A\",Kind.CAR)).isPresent());\n   var b=pool.submit(()->one.enter(\"E1\",new Vehicle(\"B\",Kind.CAR)).isPresent());\n   check((a.get()?1:0)+(b.get()?1:0)==1);\n  }\n  System.out.println(\"PASS: levels, gate validation, exact-kind policy, closed tickets and competing entries\");\n }\n}\n",
+    "runCommand": "javac -d .pattern-classes examples/lld/ParkingLotDemo.java; java -cp .pattern-classes ParkingLotDemo"
+  },
+  {
+    "id": 368,
+    "category": "Low-Level Design — LLD",
+    "question": "Tic Tac Toe: model turns, legal moves and terminal states?",
+    "priority": "High",
+    "answer": "Design a complete two-player 3×3 game using explicit board, player turn and game state. Choose Tic Tac Toe from the requested Chess-or-Tic-Tac-Toe exercise so the full rules can be implemented and tested.",
+    "explanation": "Design a complete two-player 3×3 game using explicit board, player turn and game state. Choose Tic Tac Toe from the requested Chess-or-Tic-Tac-Toe exercise so the full rules can be implemented and tested.",
+    "why": "Start with the state and invariants, then choose classes, operations and synchronization.",
+    "example": "X places at (0,0). O cannot overwrite that cell, and X cannot immediately play again. Later X fills the top row and the game becomes X_WON. All subsequent moves must be rejected. A different nine-move sequence fills the board without a win and becomes DRAW.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Choose the objects and invariants",
+        "explanation": "Mark is X or O; State is IN_PROGRESS, X_WON, O_WON or DRAW. Game owns a private 3×3 board, the current turn and the count of accepted moves. No UI or caller receives a mutable board reference. A move is accepted only when the game is active, the supplied player owns the turn, coordinates are in range and the cell is empty."
+      },
+      {
+        "title": "Execute one legal move",
+        "explanation": "Validate before mutation, place the mark and increment move count. Check the affected row/column and both diagonals. A win takes precedence over draw on the final cell. If there is no win and all nine cells are filled, declare draw; otherwise switch the turn. A rejected move must not advance the turn or consume a move. This transition is synchronized in the lab."
+      },
+      {
+        "title": "Separate rules from interaction",
+        "explanation": "A web controller translates an authorized player action into Game.move; a console or browser renders returned state. For online play, bind the authenticated user to an assigned mark server-side rather than accepting an arbitrary player field as authority. Persist moves or event history if reconnect/replay is required. A version guard can reject competing stale client moves across replicas."
+      },
+      {
+        "title": "Complexity and extension",
+        "explanation": "For this fixed 3×3 board a move check has constant bounded work. A generalized n×n scan costs O(n) per move; row/column counters can reduce checking work when the rules allow it. Chess is a larger extension requiring piece-specific movement, obstruction, check/checkmate, castling and promotion; those are not provided by renaming this board. Avoid inheritance hierarchies with unused piece types for a game with only two marks."
+      },
+      {
+        "title": "Verify the rules, not only a happy path",
+        "explanation": "The lab checks wrong turn, occupied cell, out-of-range coordinates, row and diagonal wins, draw and moves after termination. Add O wins, column/anti-diagonal wins and replay/version behavior when extending. Tests should assert that rejected commands leave state unchanged; they should not merely assert a status label after every method."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Receive a player move",
+        "explanation": "Verify active game, assigned turn, coordinates and empty target cell."
+      },
+      {
+        "title": "Apply once",
+        "explanation": "Place the mark and increase the count only after validation succeeds."
+      },
+      {
+        "title": "Evaluate the board",
+        "explanation": "Check row, column and diagonals; win precedes draw."
+      },
+      {
+        "title": "Transition state",
+        "explanation": "End on win/draw or switch the current turn; reject moves after termination."
+      }
+    ],
+    "tradeoffs": "A local lock makes one Game instance atomic, not a shared online match across servers. A client-side win check is useful for display but the server must remain authoritative.",
+    "knowledgeCheck": "Why must a full-board winning move become X_WON/O_WON rather than DRAW?",
+    "diagram": "Receive a player move → Apply once → Evaluate the board → Transition state",
+    "diagramImage": "docs/lld/diagrams/tic-tac-toe.svg",
+    "guidePath": "docs/lld/tic-tac-toe.md",
+    "labPath": "examples/lld/TicTacToeDemo.java",
+    "labType": "Java 21",
+    "code": "import java.util.*;\npublic class TicTacToeDemo {\n enum Mark {X,O}\n enum State {IN_PROGRESS,X_WON,O_WON,DRAW}\n static class Game {\n  private final Mark[][] board=new Mark[3][3];private Mark turn=Mark.X;private State state=State.IN_PROGRESS;private int moves;\n  synchronized State move(Mark player,int row,int col){\n   Objects.requireNonNull(player);\n   if(state!=State.IN_PROGRESS)throw new IllegalStateException(\"game over\");\n   if(player!=turn)throw new IllegalArgumentException(\"wrong turn\");\n   if(row<0||row>=3||col<0||col>=3||board[row][col]!=null)throw new IllegalArgumentException(\"invalid cell\");\n   board[row][col]=player;moves++;\n   boolean rowWin=true,colWin=true,diag=true,anti=true;\n   for(int i=0;i<3;i++){rowWin&=board[row][i]==player;colWin&=board[i][col]==player;diag&=board[i][i]==player;anti&=board[i][2-i]==player;}\n   if(rowWin||colWin||diag||anti)state=player==Mark.X?State.X_WON:State.O_WON;\n   else if(moves==9)state=State.DRAW;else turn=turn==Mark.X?Mark.O:Mark.X;\n   return state;\n  }\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args){\n  Game win=new Game();\n  try{win.move(Mark.O,0,0);throw new AssertionError();}catch(IllegalArgumentException expected){}\n  win.move(Mark.X,0,0);\n  try{win.move(Mark.O,0,0);throw new AssertionError();}catch(IllegalArgumentException expected){}\n  win.move(Mark.O,1,0);win.move(Mark.X,0,1);win.move(Mark.O,1,1);check(win.move(Mark.X,0,2)==State.X_WON);\n  try{win.move(Mark.O,2,2);throw new AssertionError();}catch(IllegalStateException expected){}\n  Game draw=new Game();int[][] cells={{0,0},{0,1},{0,2},{1,1},{1,0},{1,2},{2,1},{2,0},{2,2}};\n  State result=null;for(int i=0;i<cells.length;i++)result=draw.move(i%2==0?Mark.X:Mark.O,cells[i][0],cells[i][1]);check(result==State.DRAW);\n  Game diagonal=new Game();diagonal.move(Mark.X,0,0);diagonal.move(Mark.O,0,1);diagonal.move(Mark.X,1,1);diagonal.move(Mark.O,0,2);check(diagonal.move(Mark.X,2,2)==State.X_WON);\n  try{new Game().move(Mark.X,-1,0);throw new AssertionError();}catch(IllegalArgumentException expected){}\n  System.out.println(\"PASS: turn, occupied/out-of-range cells, row/diagonal wins, draw and terminal state\");\n }\n}\n",
+    "runCommand": "javac -d .pattern-classes examples/lld/TicTacToeDemo.java; java -cp .pattern-classes TicTacToeDemo"
+  },
+  {
+    "id": 369,
+    "category": "Low-Level Design — LLD",
+    "question": "LRU cache: expected O(1) lookup and eviction?",
+    "priority": "High",
+    "answer": "Build a bounded least-recently-used cache. Successful get and updating an existing key make it most recent. When inserting beyond capacity, evict the least recent key.",
+    "explanation": "Build a bounded least-recently-used cache. Successful get and updating an existing key make it most recent. When inserting beyond capacity, evict the least recent key.",
+    "why": "Start with the state and invariants, then choose classes, operations and synchronization.",
+    "example": "Capacity is two. put(1,A), put(2,B), get(1), put(3,C) must evict 2, because reading 1 made it newer. Updating 1 to A2 also refreshes it. A cache miss returns an explicit empty result; null keys/values are disallowed, and zero capacity is a disabled cache.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Why a map or list alone is insufficient",
+        "explanation": "A hash map quickly locates a key but does not provide the eviction order. A list preserves order but searching the whole list is O(n). Combine HashMap<K,Node> with a doubly linked list so the map finds the exact node and the node links allow constant pointer updates. Head/tail sentinels simplify empty and single-element cases."
+      },
+      {
+        "title": "Write the invariants",
+        "explanation": "Every map entry identifies exactly one list node. Every non-sentinel list node has a matching map entry. head.next is most recent and tail.prev is least recent. Forward/back links agree; size never exceeds capacity at the end of a public operation. Store only references internally; decide whether mutable cached values themselves require defensive copies at a higher boundary."
+      },
+      {
+        "title": "Trace get and put",
+        "explanation": "get finds a node, detaches it and moves it to the head. A miss does not create an entry. put on an existing key updates the value and moves the same node. put on a new key creates a node and, if over capacity, detaches tail.prev and removes its key from the map. Eviction must update both structures, not only the list."
+      },
+      {
+        "title": "Explain the O(1) claim precisely",
+        "explanation": "List unlink/link work is O(1). Hash-table operations are expected/amortized O(1) under normal hash distribution; do not claim deterministic constant time for every possible hash collision. Hash-map resizing can cost more for an individual operation. Memory is O(capacity). A successful get mutates recency, so it needs the same synchronization protection as writes in this exact-LRU implementation."
+      },
+      {
+        "title": "Compare implementation choices",
+        "explanation": "Java LinkedHashMap with access-order configuration and an eviction hook is a concise alternative; the explicit node implementation demonstrates the underlying design. The lab uses synchronized public operations for exact local order. High-throughput caches often use more elaborate or approximate policies. LRU is an eviction rule, not TTL, persistence, freshness, authorization or a distributed consistency guarantee."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Find the node",
+        "explanation": "Use the map to locate a key, returning empty on a miss."
+      },
+      {
+        "title": "Refresh recency",
+        "explanation": "Detach the found/updated node and insert it immediately after the head."
+      },
+      {
+        "title": "Enforce capacity",
+        "explanation": "On new insert beyond capacity, remove tail.prev from both list and map."
+      },
+      {
+        "title": "Check structural safety",
+        "explanation": "Map/list membership and links must agree after every completed operation."
+      }
+    ],
+    "tradeoffs": "Independent synchronization of map and list leaves races. A cached permission or price can still be stale. Decide cache validity separately from which entry is evicted.",
+    "knowledgeCheck": "Why is get a write operation from the point of view of concurrency in an access-ordered LRU cache?",
+    "diagram": "Find the node → Refresh recency → Enforce capacity → Check structural safety",
+    "diagramImage": "docs/lld/diagrams/lru-cache.svg",
+    "guidePath": "docs/lld/lru-cache.md",
+    "labPath": "examples/lld/LruCacheDemo.java",
+    "labType": "Java 21",
+    "code": "import java.util.*;\npublic class LruCacheDemo {\n static class Lru<K,V> {\n  private static class Node<K,V>{K key;V value;Node<K,V> prev,next;Node(K k,V v){key=k;value=v;}}\n  private final int capacity;private final Map<K,Node<K,V>> index=new HashMap<>();\n  private final Node<K,V> head=new Node<>(null,null),tail=new Node<>(null,null);\n  Lru(int capacity){if(capacity<0)throw new IllegalArgumentException();this.capacity=capacity;head.next=tail;tail.prev=head;}\n  private void detach(Node<K,V> n){n.prev.next=n.next;n.next.prev=n.prev;}\n  private void newest(Node<K,V> n){n.next=head.next;n.prev=head;head.next.prev=n;head.next=n;}\n  synchronized Optional<V> get(K key){Objects.requireNonNull(key);Node<K,V> n=index.get(key);if(n==null)return Optional.empty();detach(n);newest(n);return Optional.of(n.value);}\n  synchronized void put(K key,V value){Objects.requireNonNull(key);Objects.requireNonNull(value);\n   Node<K,V> n=index.get(key);if(n!=null){n.value=value;detach(n);newest(n);return;}\n   if(capacity==0)return;n=new Node<>(key,value);index.put(key,n);newest(n);\n   if(index.size()>capacity){Node<K,V> old=tail.prev;detach(old);index.remove(old.key);}\n  }\n  synchronized void verify(){\n   int count=0;Node<K,V> previous=head;\n   for(Node<K,V> n=head.next;n!=tail;n=n.next){if(n.prev!=previous||index.get(n.key)!=n)throw new AssertionError();previous=n;if(++count>index.size())throw new AssertionError(\"cycle\");}\n   if(tail.prev!=previous||count!=index.size()||count>capacity)throw new AssertionError();\n  }\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args){\n  Lru<Integer,String> cache=new Lru<>(2);cache.put(1,\"A\");cache.put(2,\"B\");cache.get(1);cache.put(3,\"C\");\n  check(cache.get(2).isEmpty());check(cache.get(1).orElseThrow().equals(\"A\"));cache.verify();\n  cache.put(1,\"A2\");cache.put(4,\"D\");check(cache.get(3).isEmpty());check(cache.get(1).orElseThrow().equals(\"A2\"));cache.verify();\n  Lru<Integer,String> zero=new Lru<>(0);zero.put(1,\"X\");check(zero.get(1).isEmpty());zero.verify();\n  Random random=new Random(81);Lru<Integer,Integer> actual=new Lru<>(5);\n  LinkedHashMap<Integer,Integer> model=new LinkedHashMap<>(16,.75f,true);\n  for(int i=0;i<1000;i++){\n   int key=random.nextInt(12);\n   if(random.nextBoolean()){int v=random.nextInt(100);actual.put(key,v);model.put(key,v);if(model.size()>5)model.remove(model.keySet().iterator().next());}\n   else check(actual.get(key).equals(Optional.ofNullable(model.get(key))));\n   actual.verify();\n  }\n  System.out.println(\"PASS: access/update recency, eviction, zero capacity, list invariants and reference-model comparison\");\n }\n}\n",
+    "runCommand": "javac -d .pattern-classes examples/lld/LruCacheDemo.java; java -cp .pattern-classes LruCacheDemo"
+  },
+  {
+    "id": 370,
+    "category": "Low-Level Design — LLD",
+    "question": "Thread-safe HashMap: define atomic operations first?",
+    "priority": "High",
+    "answer": "Design a map whose documented single-key operations are safe under concurrent access, then explain which compound operations still need one atomic boundary. Use a fixed striped teaching implementation, not a claim to reimplement ConcurrentHashMap.",
+    "explanation": "Design a map whose documented single-key operations are safe under concurrent access, then explain which compound operations still need one atomic boundary. Use a fixed striped teaching implementation, not a claim to reimplement ConcurrentHashMap.",
+    "why": "Start with the state and invariants, then choose classes, operations and synchronization.",
+    "example": "Eight threads each increment count 1,000 times. The result must be 8,000. A thread-safe get followed by a thread-safe put can still lose increments because the combined read-modify-write was not atomic. compute holds one key’s bucket write lock across the update.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Start with the contract",
+        "explanation": "Disallow null keys and values, use equals to distinguish colliding keys, define get-miss as null, allow compute returning null to remove a key, and provide an immutable consistent snapshot. Keys must keep stable hashCode/equals while stored. Thread-safe container structure does not make a mutable value object automatically safe."
+      },
+      {
+        "title": "Partition synchronization",
+        "explanation": "Choose a fixed number of buckets. Each owns an ordinary HashMap and a read/write lock. Hash the key with floorMod to safely handle negative hashes including Integer.MIN_VALUE. Reads take a bucket read lock; puts and compute take its write lock. Operations in different buckets can proceed independently, while colliding keys intentionally contend on one bucket."
+      },
+      {
+        "title": "Make read-modify-write atomic",
+        "explanation": "compute acquires the bucket write lock, reads old value, calculates replacement and updates/removes before unlocking in finally. Keep callbacks short, nonblocking and free of calls back into this map; calling across buckets or requesting a snapshot inside a callback can deadlock. An application needing external I/O should design that operation outside the lock with explicit race semantics."
+      },
+      {
+        "title": "Define global operations honestly",
+        "explanation": "A snapshot acquires all bucket read locks in a fixed order and releases in reverse, copying values into an immutable map. That blocks writers and is O(number of entries + stripes), unlike the expected single-key lookup cost. Per-bucket HashMap resizing is protected by that bucket lock; this demo does not dynamically change the stripe array or offer lock-free reads."
+      },
+      {
+        "title": "Production comparison",
+        "explanation": "Prefer Java ConcurrentHashMap when its documented operations match the need; use compute, merge or putIfAbsent instead of assuming get-plus-put is atomic. Do not describe modern ConcurrentHashMap as merely the old fixed Segment design. Its iteration/aggregate semantics differ from this lab’s all-bucket snapshot. A distributed key-value store additionally needs network, durability, replication and partition behavior."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Select a bucket",
+        "explanation": "Use a stable key hash and floorMod; colliding keys still require equals checks."
+      },
+      {
+        "title": "Acquire correct lock",
+        "explanation": "Read for get, write for put/compute; always release in finally."
+      },
+      {
+        "title": "Complete one atomic change",
+        "explanation": "Read old value and write/remove the replacement within the same bucket lock."
+      },
+      {
+        "title": "Coordinate a snapshot",
+        "explanation": "Acquire all bucket read locks in fixed order to make a consistent copied view."
+      }
+    ],
+    "tradeoffs": "Stripes improve parallelism only for keys spread across buckets. Hot keys remain contended. This in-memory map has no restart recovery and coordinates no separate processes.",
+    "knowledgeCheck": "Why can individually thread-safe get and put methods still produce a wrong concurrent counter?",
+    "diagram": "Select a bucket → Acquire correct lock → Complete one atomic change → Coordinate a snapshot",
+    "diagramImage": "docs/lld/diagrams/thread-safe-hashmap.svg",
+    "guidePath": "docs/lld/thread-safe-hashmap.md",
+    "labPath": "examples/lld/StripedMapDemo.java",
+    "labType": "Java 21",
+    "code": "import java.util.*;\nimport java.util.concurrent.*;\nimport java.util.concurrent.locks.*;\nimport java.util.function.BiFunction;\npublic class StripedMapDemo {\n static class Bucket<K,V>{final Map<K,V> values=new HashMap<>();final ReadWriteLock lock=new ReentrantReadWriteLock();}\n // Fixed stripes; not ConcurrentHashMap's implementation or performance contract.\n static class StripedMap<K,V>{\n  private final List<Bucket<K,V>> buckets;\n  StripedMap(int stripes){if(stripes<1)throw new IllegalArgumentException();buckets=new ArrayList<>();for(int i=0;i<stripes;i++)buckets.add(new Bucket<>());}\n  private Bucket<K,V> bucket(K key){Objects.requireNonNull(key);return buckets.get(Math.floorMod(key.hashCode(),buckets.size()));}\n  V get(K key){var b=bucket(key);b.lock.readLock().lock();try{return b.values.get(key);}finally{b.lock.readLock().unlock();}}\n  void put(K key,V value){Objects.requireNonNull(value);var b=bucket(key);b.lock.writeLock().lock();try{b.values.put(key,value);}finally{b.lock.writeLock().unlock();}}\n  V compute(K key,BiFunction<K,V,V> change){Objects.requireNonNull(change);var b=bucket(key);b.lock.writeLock().lock();try{\n   V next=change.apply(key,b.values.get(key));if(next==null)b.values.remove(key);else b.values.put(key,next);return next;\n  }finally{b.lock.writeLock().unlock();}}\n  // Callbacks must not invoke this map (including snapshot) or block on external work.\n  Map<K,V> snapshot(){for(var b:buckets)b.lock.readLock().lock();try{\n   Map<K,V> copy=new HashMap<>();for(var b:buckets)copy.putAll(b.values);return Map.copyOf(copy);\n  }finally{for(int i=buckets.size()-1;i>=0;i--)buckets.get(i).lock.readLock().unlock();}}\n }\n record Collision(String key){public int hashCode(){return Integer.MIN_VALUE;}}\n public static void main(String[] args)throws Exception{\n  var map=new StripedMap<String,Integer>(8);map.put(\"count\",0);\n  try(var pool=Executors.newFixedThreadPool(8)){\n   List<Future<?>> work=new ArrayList<>();for(int t=0;t<8;t++)work.add(pool.submit(()->{for(int i=0;i<1000;i++)map.compute(\"count\",(k,v)->v+1);}));\n   for(var f:work)f.get();\n  }\n  if(map.get(\"count\")!=8000||map.snapshot().get(\"count\")!=8000)throw new AssertionError();\n  map.compute(\"count\",(k,v)->null);if(map.get(\"count\")!=null)throw new AssertionError();\n  var collisions=new StripedMap<Collision,Integer>(3);collisions.put(new Collision(\"A\"),1);collisions.put(new Collision(\"B\"),2);\n  if(collisions.get(new Collision(\"A\"))!=1||collisions.get(new Collision(\"B\"))!=2)throw new AssertionError();\n  try{map.put(\"bad\",null);throw new AssertionError();}catch(NullPointerException expected){}\n  System.out.println(\"PASS: atomic increments, collision equality, MIN_VALUE hash, removal and consistent snapshot\");\n }\n}\n",
+    "runCommand": "javac -d .pattern-classes examples/lld/StripedMapDemo.java; java -cp .pattern-classes StripedMapDemo"
+  },
+  {
+    "id": 371,
+    "category": "Low-Level Design — LLD",
+    "question": "Rate limiter: token-bucket LLD and distributed boundary?",
+    "priority": "High",
+    "answer": "Implement a token bucket with injected time, atomic token accounting and tenant selection; then connect it to a cluster-wide admission design. The runnable Java bucket is local to one process.",
+    "explanation": "Implement a token bucket with injected time, atomic token accounting and tenant selection; then connect it to a cluster-wide admission design. The runnable Java bucket is local to one process.",
+    "why": "Start with the state and invariants, then choose classes, operations and synchronization.",
+    "example": "A tenant starts with capacity 2 and refill 1 token/second. Two requests succeed immediately, the third is rejected. After half a second there is still no full token; after another half second one request succeeds. Fifty simultaneous requests against a frozen ten-token bucket admit exactly ten.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Define policy and objects",
+        "explanation": "Bucket owns capacity, refill rate, tokens, last-observed time and a monotonic clock supplier. Limiter holds a fixed registry of configured tenant buckets so arbitrary keys cannot grow memory without bound in this demo. Each positive request cost consumes that many tokens; a cost above available tokens is rejected. Unknown tenants are rejected. Identity must already have been authenticated by the caller boundary."
+      },
+      {
+        "title": "Refill and consume atomically",
+        "explanation": "Inside one synchronized operation, compute elapsed monotonic time, add elapsed*rate capped at capacity, then compare and subtract cost. Keep fractional tokens so half-second waits accumulate correctly. The lab injects an AtomicLong clock to test without sleeps. System.nanoTime is appropriate for local elapsed time; separate machines do not share a comparable nanoTime origin."
+      },
+      {
+        "title": "Connect to API behavior",
+        "explanation": "On allow, continue to the backend, which still checks object-level authorization and resource capacity. On deny, return an appropriate HTTP 429 contract with retry guidance. Do not hold the bucket lock across backend processing. Rate limits bound arrivals; they do not replace in-flight limits, bounded queues, timeouts or backpressure."
+      },
+      {
+        "title": "Make cluster-wide semantics explicit",
+        "explanation": "Deploying this Java map on five independent servers creates five budgets. For a stricter shared per-tenant limit, route the key to one authoritative limiter owner or perform refill/consume atomically in a shared store/script with an explicit time/failover policy. Local/regional token allocations can reduce coordination if the product accepts a defined overshoot budget. Do not label a process-local synchronized block globally scalable by itself."
+      },
+      {
+        "title": "Handle failure and key lifecycle",
+        "explanation": "Choose fail-open or fail-closed per endpoint risk when the limiter store is unavailable; monitor the fallback. Bound key cardinality and idle lifetime in a dynamic registry. Concurrent bucket eviction/recreation must not reset an active budget and grant extra bursts. Backoff retry traffic and test hot tenants so the limiter does not become the bottleneck it was meant to prevent."
+      }
+    ],
+    "walkthroughSteps": [
+      {
+        "title": "Resolve trusted tenant",
+        "explanation": "Look up a configured policy from authenticated identity, not an arbitrary header."
+      },
+      {
+        "title": "Refill with elapsed time",
+        "explanation": "Add fractional tokens up to capacity under the same lock as consumption."
+      },
+      {
+        "title": "Consume or reject",
+        "explanation": "Atomically subtract only when sufficient tokens exist; return a clear decision."
+      },
+      {
+        "title": "Choose distributed ownership",
+        "explanation": "For multiple servers, coordinate the budget and document outage/overshoot behavior."
+      }
+    ],
+    "tradeoffs": "The double-based lab is an explanatory local algorithm, not a precision/accounting guarantee for financial quotas. Production designs can use bounded integer/fixed-point accounting and must define clock, failover and TTL semantics.",
+    "knowledgeCheck": "If the same tenant has a capacity-20 bucket independently on five servers, why can it receive a much larger initial burst?",
+    "diagram": "Resolve trusted tenant → Refill with elapsed time → Consume or reject → Choose distributed ownership",
+    "diagramImage": "docs/lld/diagrams/rate-limiter.svg",
+    "guidePath": "docs/lld/rate-limiter.md",
+    "labPath": "examples/lld/TokenBucketDemo.java",
+    "labType": "Java 21",
+    "code": "import java.util.*;\nimport java.util.concurrent.*;\nimport java.util.concurrent.atomic.*;\nimport java.util.function.LongSupplier;\npublic class TokenBucketDemo {\n static class Bucket {\n  private final double capacity,perSecond;private final LongSupplier clock;private double tokens;private long last;\n  Bucket(int capacity,double perSecond,LongSupplier clock){\n   if(capacity<1||!Double.isFinite(perSecond)||perSecond<=0)throw new IllegalArgumentException();\n   this.capacity=capacity;this.perSecond=perSecond;this.clock=Objects.requireNonNull(clock);tokens=capacity;last=clock.getAsLong();\n  }\n  synchronized boolean allow(int cost){\n   if(cost<1)throw new IllegalArgumentException(\"positive cost required\");long now=clock.getAsLong();long elapsed=now-last;\n   if(elapsed>0){tokens=Math.min(capacity,tokens+elapsed/1_000_000_000.0*perSecond);last=now;}\n   if(tokens<cost)return false;tokens-=cost;return true;\n  }\n }\n // A fixed authenticated-tenant registry avoids unbounded attacker-created keys in this demo.\n record Limiter(Map<String,Bucket> configured){\n  Limiter{configured=Map.copyOf(configured);}\n  boolean allow(String trustedTenant,int cost){Bucket b=configured.get(trustedTenant);if(b==null)throw new IllegalArgumentException(\"unknown tenant\");return b.allow(cost);}\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args)throws Exception{\n  AtomicLong time=new AtomicLong();Bucket b=new Bucket(2,1,time::get);check(b.allow(1));check(b.allow(1));check(!b.allow(1));\n  time.addAndGet(500_000_000);check(!b.allow(1));time.addAndGet(500_000_000);check(b.allow(1));check(!b.allow(1));\n  Bucket racing=new Bucket(10,1,time::get);AtomicInteger accepted=new AtomicInteger();\n  try(var pool=Executors.newFixedThreadPool(8)){\n   List<Future<?>> work=new ArrayList<>();for(int i=0;i<50;i++)work.add(pool.submit(()->{if(racing.allow(1))accepted.incrementAndGet();}));for(var f:work)f.get();\n  }\n  check(accepted.get()==10);\n  Limiter limiter=new Limiter(Map.of(\"A\",new Bucket(1,1,time::get),\"B\",new Bucket(1,1,time::get)));\n  check(limiter.allow(\"A\",1));check(!limiter.allow(\"A\",1));check(limiter.allow(\"B\",1));\n  try{b.allow(0);throw new AssertionError();}catch(IllegalArgumentException expected){}\n  System.out.println(\"PASS: burst/refill without sleeps, final-token concurrency, independent tenants and invalid cost\");\n }\n}\n",
+    "runCommand": "javac -d .pattern-classes examples/lld/TokenBucketDemo.java; java -cp .pattern-classes TokenBucketDemo"
+  },
+  {
+    "id": 372,
+    "category": "High-Level Design — Distributed Key-Value Store",
+    "question": "Design a distributed key-value store?",
+    "priority": "High",
+    "answer": "Alice’s service stores `profile:81` and later reads it from another application server. We want a key lookup service with a documented durability and consistency contract. A concurrent Java map is useful inside one node; it cannot by itself keep data across process crashes or coordinate nodes separated by a network.",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "Design a distributed key-value store: follow one write and one read"
+      },
+      {
+        "type": "text",
+        "text": "Alice’s service stores profile:81 and later reads it from another application server. We want a key lookup service with a documented durability and consistency contract. A concurrent Java map is useful inside one node; it cannot by itself keep data across process crashes or coordinate nodes separated by a network."
+      },
+      {
+        "type": "text",
+        "text": "All .example names are reserved teaching names. This is an illustrative design, not a claim to implement Raft or any particular database."
+      },
+      {
+        "type": "heading",
+        "text": "1. Choose the contract before drawing replicas"
+      },
+      {
+        "type": "text",
+        "text": "Our starting contract is per-key PUT, GET, DELETE and compare-and-set by version, scoped to an authenticated tenant. We want acknowledged writes to survive the failures covered by the configured quorum and durable storage policy. For this tutorial, linearizable operations for a key are handled by the current leader of its shard; minority partitions cannot accept writes requiring a quorum."
+      },
+      {
+        "type": "text",
+        "text": "We do not promise cross-shard transactions, unlimited availability during partition, or zero latency. A multi-key operation needs a separately designed transaction/ownership protocol. Atomicity for one key is not automatically a global snapshot."
+      },
+      {
+        "type": "heading",
+        "text": "2. Route the request to the right owner"
+      },
+      {
+        "type": "text",
+        "text": "The operator owns kv.learn.example and configures DNS, load balancing, TLS and workload access. DNS gets the caller to the service; it does not hash individual keys. A router derives the tenant from verified credentials and maps (tenant, key) to a shard using a versioned routing map/hash scheme. Include tenant identity in data, routing, cache and quota boundaries."
+      },
+      {
+        "type": "text",
+        "text": "For example, the router maps (A, profile:81) to shard S3. S3 has replicas N1, N2 and N3; N1 is currently leader. A stale router gets a controlled ownership redirect/retry rather than being allowed to create an independent writer. Internal nodes authenticate each other as well as client workloads."
+      },
+      {
+        "type": "heading",
+        "text": "3. Define the request and record"
+      },
+      {
+        "type": "code",
+        "text": "PUT /v1/keys/profile%3A81\nAuthorization: Bearer <tenant-A-workload-credential>\nContent-Type: application/json\nIdempotency-Key: change-81\n\n{\"value\":{\"name\":\"Alice\"},\"expectedVersion\":7}"
+      },
+      {
+        "type": "text",
+        "text": "This illustrative conditional PUT means update only if the authoritative version is 7. The storage record includes tenant, key, value/tombstone, logical version and any defined expiry metadata. Request identity and a result record can make retries recognizable under the service’s retention policy."
+      },
+      {
+        "type": "code",
+        "text": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"key\":\"profile:81\",\"version\":8,\"state\":\"COMMITTED\"}"
+      },
+      {
+        "type": "text",
+        "text": "Only return that success when the chosen consensus/durable-storage commit contract is met. A failed expected-version comparison returns a conflict such as 409 under this API contract. Authentication and per-key/namespace permission checks happen independently of version matching."
+      },
+      {
+        "type": "heading",
+        "text": "4. Follow the write through the shard"
+      },
+      {
+        "type": "image",
+        "text": "Router, shard leader, replicas and read path",
+        "path": "docs/system-design/diagrams/distributed-key-value-store.svg"
+      },
+      {
+        "type": "text",
+        "text": "The leader validates the operation, orders it in its replicated log and writes according to the configured durable-log policy. Followers append the replicated entries and acknowledge according to that policy. For a three-voter shard, a majority means two voters. A consensus implementation tracks terms, log matching and the valid commit point; do not replace it with “send to any two servers and accept the newest timestamp.”"
+      },
+      {
+        "type": "text",
+        "text": "After an entry is committed under the consensus protocol, replicas apply the ordered operation to their state machine. Return the successful versioned result at the appropriate point. If compare-and-set requires version 7, it must be evaluated against the authoritative ordered state, so two competing updates cannot both successfully claim the same prior version."
+      },
+      {
+        "type": "text",
+        "text": "Use an established consensus/storage implementation when building a real service. A few Java methods plus acknowledgements do not implement safe elections, durable recovery or all consensus rules."
+      },
+      {
+        "type": "heading",
+        "text": "5. Follow a read from another client"
+      },
+      {
+        "type": "code",
+        "text": "GET /v1/keys/profile%3A81\nAuthorization: Bearer <another-authorized-tenant-A-workload>"
+      },
+      {
+        "type": "text",
+        "text": "The router resolves the same shard. For the promised linearizable read, the serving protocol must establish current leadership/read authority, for example through the chosen consensus implementation’s read-index/quorum mechanism, before reading the applied state. Simply asking an old leader or an arbitrary follower can return stale data."
+      },
+      {
+        "type": "code",
+        "text": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"key\":\"profile:81\",\"version\":8,\"value\":{\"name\":\"Alice\"}}"
+      },
+      {
+        "type": "text",
+        "text": "An API may also expose explicitly weaker/stale reads for cheaper local/follower access. Name that choice in the contract. Never silently downgrade a strong read when a quorum is unavailable. A key absent under a completed authoritative read is different from a storage timeout."
+      },
+      {
+        "type": "heading",
+        "text": "6. Crash and retry the same operation"
+      },
+      {
+        "type": "text",
+        "text": "Suppose N1 commits version 8, but the response to Alice disappears. Alice cannot infer failure from timeout. With a stable request identity, the new leader can recognize a retained completed result; a compare-and-set retry with expectedVersion 7 otherwise conflicts because version 8 is already present. Define how the client learns whether its own write succeeded rather than teaching it to blindly overwrite with a new version."
+      },
+      {
+        "type": "text",
+        "text": "Now stop N1. The remaining voters elect according to the consensus protocol and preserve its committed-log guarantees. An old leader must not continue accepting writes after losing authority; terms and protocol checks fence stale ownership. If fewer than a majority are available, the strong write/read service may be temporarily unavailable. That is the deliberate partition-time consistency trade-off."
+      },
+      {
+        "type": "heading",
+        "text": "7. Recover storage, expiry and deleted records"
+      },
+      {
+        "type": "text",
+        "text": "A node reconstructs its state from a valid snapshot plus later durable log entries. Snapshots/checkpoints must agree with the replicated log position. Retention and compaction must not remove information still needed by lagging replicas or recovery. Durable logs/replicas are not substitutes for tested historical backups against accidental deletion/corruption."
+      },
+      {
+        "type": "text",
+        "text": "DELETE can be represented as an ordered tombstone until safe cleanup conditions are met. Otherwise a stale replica may resurrect a deleted value. TTL needs a documented clock/expiration contract: replicated expiry decisions and follower read semantics must agree with the promised visibility. Wall clocks across machines are not a universal conflict-resolution oracle."
+      },
+      {
+        "type": "heading",
+        "text": "8. Decide the failure response and authorization boundary"
+      },
+      {
+        "type": "text",
+        "text": "Reject a tenant-A credential trying to read tenant B’s namespace before returning its value or existence where that is sensitive. Access revocation, snapshots, administrative APIs, backups and operational logs all need appropriate authorization. TLS encrypts traffic; it does not decide which caller may modify a key."
+      },
+      {
+        "type": "text",
+        "text": "If the router is stale, retry the same logical request with bounded attempts against current ownership. If the shard cannot meet the requested guarantee, return a temporary error such as 503, not a fabricated 404 or silent stale success. If a write conflicts by version, report the conflict distinctly from infrastructure failure. Rate-limit hot tenants and bound request/value sizes so one caller cannot exhaust memory or log capacity."
+      },
+      {
+        "type": "heading",
+        "text": "9. Add shards only after one shard is correct"
+      },
+      {
+        "type": "text",
+        "text": "Replication adds copies for one shard’s durability/availability contract. Sharding distributes different keys across ownership groups for scale. If every shard hashes a celebrity key to one group, that hot key still has one authoritative write sequence. More shards do not split a single linearizable key’s writes automatically."
+      },
+      {
+        "type": "text",
+        "text": "Moving a key range between shards requires a versioned ownership/handoff protocol, transfer/catch-up and fencing so old and new groups cannot both be authoritative. Consistent hashing can reduce remapping but does not supply this protocol. During movement, define retry, read and write behavior explicitly."
+      },
+      {
+        "type": "heading",
+        "text": "10. Walk through acceptance tests"
+      },
+      {
+        "type": "text",
+        "text": "Create version 1, read it through another router, then race two expectedVersion=1 writes and require exactly one successful change under the chosen contract. Lose a reply after commit and retry with the same operation identity. Partition the leader from a majority and ensure it cannot continue acknowledging strong writes. Recover a follower from snapshot/log and verify ordered state. Delete a key, reconnect an old replica and ensure it is not resurrected. Query another tenant’s key and deny it."
+      },
+      {
+        "type": "text",
+        "text": "These are validation requirements for a real implementation, not claims that this repository runs a distributed store. Measure latency distributions, log/replication lag, disk pressure, leader changes, conflicts and hot-key concentration. Keep backup/restore and failure drills separate from happy-path throughput benchmarks."
+      },
+      {
+        "type": "heading",
+        "text": "References"
+      },
+      {
+        "type": "text",
+        "text": "- [etcd API consistency guarantees](https://etcd.io/docs/v3.5/learning/api_guarantees/)\n- [Raft: consensus protocol and paper](https://raft.github.io/)\n- [OWASP tenant isolation](https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html)"
+      },
+      {
+        "type": "text",
+        "text": "[LLD and HLD learning paths](../lld-hld-learning-path.md) · [All system-design tutorials](README.md)"
+      }
+    ],
+    "guidePath": "docs/system-design/distributed-key-value-store.md",
+    "learningTitle": "Design a distributed key-value store",
+    "walkthroughSteps": [
+      {
+        "title": "Authenticate and route",
+        "explanation": "Derive tenant/key and resolve the current authoritative shard owner."
+      },
+      {
+        "title": "Order the write",
+        "explanation": "The leader orders a validated operation in its consensus-controlled durable log."
+      },
+      {
+        "title": "Commit under the protocol",
+        "explanation": "Use the chosen majority/commit rules, apply state and return a versioned result."
+      },
+      {
+        "title": "Read with declared consistency",
+        "explanation": "Establish read authority for a strong read; do not silently substitute a stale follower."
+      }
+    ],
+    "knowledgeCheck": "Which acknowledgement is durable, which owner may decide, and what happens after a timeout?",
+    "diagram": "Authenticate and route → Order the write → Commit under the protocol → Read with declared consistency",
+    "diagramImage": "docs/system-design/diagrams/distributed-key-value-store.svg"
+  },
+  {
+    "id": 373,
+    "category": "High-Level Design — Notifications",
+    "question": "Design a notification system with fan-out and retries?",
+    "priority": "High",
+    "answer": "Read in order: each decision below follows from the same real-world situation. Domains ending in .example are reserved teaching names, not live services. These are illustrative designs, not descriptions of a company’s internal implementation.",
+    "detailStatus": "Expanded",
+    "contentBlocks": [
+      {
+        "type": "heading",
+        "text": "Build Notification platform: follow the complete user journey"
+      },
+      {
+        "type": "text",
+        "text": "Read in order: each decision below follows from the same real-world situation. Domains ending in .example are reserved teaching names, not live services. These are illustrative designs, not descriptions of a company’s internal implementation."
+      },
+      {
+        "type": "heading",
+        "text": "1. Follow one order confirmation"
+      },
+      {
+        "type": "text",
+        "text": "Order 81 is confirmed and Alice expects an email plus an app notification. The order must remain confirmed even if the email provider is down. “Accepted for sending”, “provider accepted”, “delivered” and “read” are different facts. We therefore record durable notification intent and process delivery asynchronously instead of holding checkout open while every provider responds."
+      },
+      {
+        "type": "heading",
+        "text": "2. Know which domains and credentials do what"
+      },
+      {
+        "type": "text",
+        "text": "The operator configures an HTTPS notification-management API with DNS/TLS. Its workers call approved provider APIs with server-managed credentials. Email also uses an owned sender domain with the provider’s required authentication records such as SPF/DKIM/DMARC configuration; those concern email sender verification, not HTTP user authorization. SMS and mobile push have their own provider credentials and registration rules."
+      },
+      {
+        "type": "heading",
+        "text": "3. Record the business event once"
+      },
+      {
+        "type": "text",
+        "text": "Checkout commits order confirmation and an outbox event together. A relay delivers event e81 to the notification service. The service authenticates the producing workload, checks allowed tenant/event types and records a stable event-recipient-channel identity. A random public caller must not be able to send arbitrary branded messages to arbitrary recipients. Templates and recipient selection belong to trusted business rules."
+      },
+      {
+        "type": "text",
+        "text": "The concrete API/data vocabulary used in this journey:"
+      },
+      {
+        "type": "code",
+        "text": "POST /notifications with stable event key. Intent(tenant, recipient, template, channel), Preference, DeliveryAttempt(provider ID/status), DedupKey."
+      },
+      {
+        "type": "text",
+        "text": "A concrete request and observable response for this journey (illustrative API contract):"
+      },
+      {
+        "type": "code",
+        "text": "POST /notifications\nAuthorization: Bearer <trusted-order-service-credential>\nContent-Type: application/json\n\n{\"eventId\":\"e81\",\"orderId\":81,\"recipientRef\":\"customer-alice\",\"template\":\"ORDER_CONFIRMED\"}\n\nHTTP/1.1 202 Accepted\n{\"intentId\":\"N81\",\"state\":\"ACCEPTED_FOR_PROCESSING\"}\n\nThe service resolves authorized tenant/customer contact data and preferences.\n202 acknowledges the stored intent; it does not claim the email was delivered.\nRepeated e81 for the same permitted recipient/channel resolves to the existing\nintent under the documented deduplication policy."
+      },
+      {
+        "type": "image",
+        "text": "Notification platform component overview",
+        "path": "docs/system-design/diagrams/notification-platform.svg"
+      },
+      {
+        "type": "text",
+        "text": "Use this diagram to locate the responsibilities just introduced. Arrows show selected requests/data; the paragraphs distinguish return responses, alternatives and transaction boundaries."
+      },
+      {
+        "type": "heading",
+        "text": "4. Choose channels from preferences"
+      },
+      {
+        "type": "text",
+        "text": "Resolve Alice’s verified contact destinations and current preferences, including necessary transactional versus optional promotional policy. Create channel work with the chosen template version and safe data fields. Do not place full secrets or unnecessary payment/customer details in message bodies or logs. A change of contact address needs verification; a request parameter must not silently redirect sensitive notifications to an attacker."
+      },
+      {
+        "type": "heading",
+        "text": "5. Send and track a delivery attempt"
+      },
+      {
+        "type": "text",
+        "text": "A worker consumes channel work, observes provider rate limits and creates an attempt record. It calls the provider with a stable idempotency key where supported, stores the returned provider reference and handles authenticated status callbacks. Provider accepted means the provider took responsibility under its contract, not proof Alice read the message. Push tokens identify device registrations and can expire."
+      },
+      {
+        "type": "heading",
+        "text": "6. Handle the lost-acknowledgement problem"
+      },
+      {
+        "type": "text",
+        "text": "If the provider accepted an SMS but the worker timed out, retrying may duplicate it. Prefer provider idempotency/status lookup; when unavailable, document the duplicate-versus-loss policy for that channel. Local deduplication cannot make a remote non-idempotent send exactly once. Retry transient errors with bounded backoff and jitter, quarantine permanent failures, and monitor oldest pending intent. A crash after send can cause reprocessing."
+      },
+      {
+        "type": "heading",
+        "text": "7. Expose only authorized status and controls"
+      },
+      {
+        "type": "text",
+        "text": "Alice can inspect her own notification preferences and permitted delivery history. Tenant operators can manage only their authorized templates/recipients; privileged overrides need audit. Unsubscribe/cancellation and queued work must have a defined interaction. If the preference service is unavailable for optional marketing, do not guess consent; apply a safe documented policy."
+      },
+      {
+        "type": "heading",
+        "text": "8. Prove correctness before promotion traffic"
+      },
+      {
+        "type": "text",
+        "text": "Test duplicate e81, a provider timeout, invalid contact, revoked push token, consent change and an unauthorized caller. Preserve order success while workers stop. Then estimate fan-out: one million notifications/hour is about 278/second before channels and retries, but scheduled campaigns produce much larger bursts. Separate channel queues and worker budgets so one failing SMS provider cannot starve all email."
+      },
+      {
+        "type": "heading",
+        "text": "Work the capacity assumption"
+      },
+      {
+        "type": "text",
+        "text": "One million notifications/hour is about 278/second before channel fan-out; a promotion can create a much larger short burst. These are illustrative assumptions; measure the chosen implementation and peak distribution before treating them as capacity."
+      },
+      {
+        "type": "heading",
+        "text": "Explain the journey back"
+      },
+      {
+        "type": "text",
+        "text": "If the provider accepted an SMS but the acknowledgement was lost, what duplicate risk remains? Then explain the hostname, caller identity, object-level permission, authoritative record, success acknowledgement and crash/retry behavior for this same action."
+      }
+    ],
+    "guidePath": "docs/system-design/notification-platform.md",
+    "learningTitle": "Design a notification system with fan-out and retries",
+    "walkthroughSteps": [
+      {
+        "title": "Record durable intent",
+        "explanation": "Authenticate the producer and persist authorized event/recipient intent."
+      },
+      {
+        "title": "Fan out permitted channels",
+        "explanation": "Apply current preferences and create channel-specific work with stable IDs."
+      },
+      {
+        "title": "Send and reconcile",
+        "explanation": "Workers respect provider quotas, retry bounded transient failures and track unknown outcomes."
+      },
+      {
+        "title": "Observe delivery separately",
+        "explanation": "Accepted intent, provider acceptance, delivery and read are different states."
+      }
+    ],
+    "knowledgeCheck": "Which acknowledgement is durable, which owner may decide, and what happens after a timeout?",
+    "diagram": "Record durable intent → Fan out permitted channels → Send and reconcile → Observe delivery separately",
+    "diagramImage": "docs/system-design/diagrams/notification-platform.svg"
+  },
+  {
+    "id": 374,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Two Sum and its variants?",
+    "priority": "High",
+    "answer": "Return indices of two numbers whose sum equals target. At least two integers; exactly one pair exists. Return zero-based indices in either order; never reuse an index.",
+    "explanation": "Return indices of two numbers whose sum equals target. At least two integers; exactly one pair exists. Return zero-based indices in either order; never reuse an index.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "nums=[2,7,11,15], target=9 → [0,1]",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Brute force",
+        "explanation": "Compare every pair of distinct indices. Time O(n²); space O(1)."
+      },
+      {
+        "title": "Improved solution and invariant",
+        "explanation": "Store previously seen values in a map and look up the complement. For [2,7,11,15], store 2 at index 0. At index 1 the complement is 2, so return [0,1]. Look up before inserting to avoid reusing the current index. Time O(n); space O(n)."
+      },
+      {
+        "title": "Boundary cases",
+        "explanation": "[3,3], target=6 → [0,1]; negative values; pair at the end."
+      },
+      {
+        "title": "Variants are different contracts",
+        "explanation": "One pair of indices uses a complement map; sorted input permits two pointers. For unique value pairs, sort a copy and skip duplicate endpoint values after a match. Counting index pairs instead accumulates prior complement frequency: [1,1,1,1] with target 2 has six index pairs but one unique value pair. Use widened arithmetic for sums/complements. The runnable MockCodingDemo implements all four; a request for all output pairs may require quadratic output size."
+      }
+    ],
+    "followups": [
+      "State the invariant without looking at code.",
+      "Give an adversarial input, not just the supplied sample."
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "import java.util.*;\nclass Solution {\n static int[] twoSum(int[] nums,int target){\n  Map<Long,Integer> seen=new HashMap<>();\n  for(int i=0;i<nums.length;i++){long need=(long)target-nums[i];Integer j=seen.get(need);if(j!=null)return new int[]{j,i};seen.put((long)nums[i],i);}return new int[0];\n }\n // Precondition: nums is sorted ascending; result uses zero-based indices.\n static int[] sortedTwoSum(int[] nums,int target){int l=0,r=nums.length-1;while(l<r){long sum=(long)nums[l]+nums[r];if(sum==target)return new int[]{l,r};if(sum<target)l++;else r--;}return new int[0];}\n static List<List<Integer>> uniqueValuePairs(int[] nums,int target){\n  int[] a=nums.clone();Arrays.sort(a);List<List<Integer>> out=new ArrayList<>();int l=0,r=a.length-1;\n  while(l<r){long sum=(long)a[l]+a[r];if(sum<target)l++;else if(sum>target)r--;else{\n   int x=a[l],y=a[r];out.add(List.of(x,y));while(l<r&&a[l]==x)l++;while(l<r&&a[r]==y)r--;\n  }}return out;\n }\n static long countIndexPairs(int[] nums,int target){Map<Long,Long> counts=new HashMap<>();long result=0;for(int x:nums){result+=counts.getOrDefault((long)target-x,0L);counts.merge((long)x,1L,Long::sum);}return result;}\n\n}",
+    "labPath": "examples/mock/MockCodingDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/mock/MockCodingDemo.java; java -cp .pattern-classes MockCodingDemo",
+    "mockBruteCode": "public int[] twoSum(int[] nums, int target) {\n for(int i=0;i<nums.length;i++) for(int j=i+1;j<nums.length;j++)\n  if((long)nums[i]+nums[j]==target) return new int[]{i,j};\n return new int[0];\n}"
+  },
+  {
+    "id": 375,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Merge overlapping intervals?",
+    "priority": "High",
+    "answer": "Merge all overlapping closed intervals. Each closed interval has start <= end. Touching endpoints overlap. Return disjoint merged intervals; empty input is allowed.",
+    "explanation": "Merge all overlapping closed intervals. Each closed interval has start <= end. Touching endpoints overlap. Return disjoint merged intervals; empty input is allowed.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "[[1,3],[2,6],[8,10]] → [[1,6],[8,10]]",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Brute force",
+        "explanation": "Repeatedly scan all interval pairs and merge any overlap until no pair overlaps. Time O(n³) upper bound; space O(n)."
+      },
+      {
+        "title": "Improved solution and invariant",
+        "explanation": "Sort by start and merge when the next interval overlaps. Sort by start. After [1,3] merges with [2,6], current becomes [1,6]. [8,10] cannot overlap it, so emit current. Sorting guarantees later starts cannot reconnect a finished interval. Time O(n log n); space O(n) output."
+      },
+      {
+        "title": "Boundary cases",
+        "explanation": "[[1,4],[4,5]] → [[1,5]]; nested intervals; optimized code sorts the input array."
+      }
+    ],
+    "followups": [
+      "State the invariant without looking at code.",
+      "Give an adversarial input, not just the supplied sample."
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "public int[][] merge(int[][] intervals) {\n    if (intervals.length==0) return new int[0][];\n    Arrays.sort(intervals, Comparator.comparingInt(a -> a[0]));\n    List<int[]> out=new ArrayList<>();\n    int[] cur=intervals[0].clone();\n    for (int i=1;i<intervals.length;i++) {\n        if (intervals[i][0]<=cur[1]) cur[1]=Math.max(cur[1],intervals[i][1]);\n        else { out.add(cur); cur=intervals[i].clone(); }\n    }\n    out.add(cur);\n    return out.toArray(new int[0][]);\n}",
+    "mockBruteCode": "public int[][] merge(int[][] intervals) {\n List<int[]> a=new ArrayList<>();for(int[] x:intervals) a.add(x.clone());\n boolean changed;\n do {changed=false;\n  outer:for(int i=0;i<a.size();i++) for(int j=i+1;j<a.size();j++) {\n   int[] x=a.get(i),y=a.get(j);\n   if(x[0]<=y[1] && y[0]<=x[1]){x[0]=Math.min(x[0],y[0]);x[1]=Math.max(x[1],y[1]);a.remove(j);changed=true;break outer;}\n  }\n }while(changed);\n return a.toArray(new int[0][]);\n}"
+  },
+  {
+    "id": 376,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Validate balanced parentheses?",
+    "priority": "High",
+    "answer": "Determine whether bracket characters are correctly nested and closed. Input contains only (), [] and {}. Every closer must match the most recent unmatched opener; empty input is valid.",
+    "explanation": "Determine whether bracket characters are correctly nested and closed. Input contains only (), [] and {}. Every closer must match the most recent unmatched opener; empty input is valid.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "\"([]){}\" → true",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Brute force",
+        "explanation": "Repeatedly remove adjacent matching bracket pairs until no change occurs. Time O(n²); space O(n)."
+      },
+      {
+        "title": "Improved solution and invariant",
+        "explanation": "Push expected closing brackets and match them on encounter. A stack stores expected closing characters. In ([]){}, ] must close [ before ) can close (. A nonempty stack at the end means missing closers. Time O(n); space O(n)."
+      },
+      {
+        "title": "Boundary cases",
+        "explanation": "\"([)]\" → false; \"(\" → false; \"\" → true."
+      }
+    ],
+    "followups": [
+      "State the invariant without looking at code.",
+      "Give an adversarial input, not just the supplied sample."
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "public boolean isValid(String s) {\n    Deque<Character> stack = new ArrayDeque<>();\n    for (char c : s.toCharArray()) {\n        if (c == '(') stack.push(')');\n        else if (c == '[') stack.push(']');\n        else if (c == '{') stack.push('}');\n        else if (stack.isEmpty() || stack.pop() != c) return false;\n    }\n    return stack.isEmpty();\n}",
+    "mockBruteCode": "public boolean isValid(String s) {\n while(true){String next=s.replace(\"()\", \"\").replace(\"[]\", \"\").replace(\"{}\", \"\");if(next.equals(s)) return s.isEmpty();s=next;}\n}"
+  },
+  {
+    "id": 377,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "LRU Cache from scratch?",
+    "priority": "High",
+    "answer": "Use HashMap<K,Node> plus a doubly linked recency list. Every real list node must have one map entry and matching forward/back links. Head is newest and tail is oldest; sentinels handle empty/single-entry boundaries.",
+    "explanation": "Use HashMap<K,Node> plus a doubly linked recency list. Every real list node must have one map entry and matching forward/back links. Head is newest and tail is oldest; sentinels handle empty/single-entry boundaries.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Capacity two: put(1,A), put(2,B), get(1), put(3,C). Key 2 must be evicted.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Operations",
+        "explanation": "get misses without mutation or detaches/moves the found node to newest. put updates and refreshes an existing node; a new entry beyond capacity evicts the tail node from both list and map. Define zero capacity and null behavior explicitly."
+      },
+      {
+        "title": "Complexity and safety",
+        "explanation": "List work is O(1); hash-table operations are expected/amortized O(1), not a deterministic guarantee under arbitrary collisions. Space is O(capacity). A successful get changes order, so synchronize it with writes for an exact shared local LRU."
+      },
+      {
+        "title": "Solution and tests",
+        "explanation": "The linked runnable LruCacheDemo includes explicit nodes rather than delegating the implementation to LinkedHashMap. It tests update recency, zero capacity, list/map invariants and 1,000 deterministic operations against an independent access-ordered reference model."
+      }
+    ],
+    "followups": [
+      "Why does get need synchronization?",
+      "What changes if values expire independently of recency?"
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "import java.util.*;\npublic class LruCacheDemo {\n static class Lru<K,V> {\n  private static class Node<K,V>{K key;V value;Node<K,V> prev,next;Node(K k,V v){key=k;value=v;}}\n  private final int capacity;private final Map<K,Node<K,V>> index=new HashMap<>();\n  private final Node<K,V> head=new Node<>(null,null),tail=new Node<>(null,null);\n  Lru(int capacity){if(capacity<0)throw new IllegalArgumentException();this.capacity=capacity;head.next=tail;tail.prev=head;}\n  private void detach(Node<K,V> n){n.prev.next=n.next;n.next.prev=n.prev;}\n  private void newest(Node<K,V> n){n.next=head.next;n.prev=head;head.next.prev=n;head.next=n;}\n  synchronized Optional<V> get(K key){Objects.requireNonNull(key);Node<K,V> n=index.get(key);if(n==null)return Optional.empty();detach(n);newest(n);return Optional.of(n.value);}\n  synchronized void put(K key,V value){Objects.requireNonNull(key);Objects.requireNonNull(value);\n   Node<K,V> n=index.get(key);if(n!=null){n.value=value;detach(n);newest(n);return;}\n   if(capacity==0)return;n=new Node<>(key,value);index.put(key,n);newest(n);\n   if(index.size()>capacity){Node<K,V> old=tail.prev;detach(old);index.remove(old.key);}\n  }\n  synchronized void verify(){\n   int count=0;Node<K,V> previous=head;\n   for(Node<K,V> n=head.next;n!=tail;n=n.next){if(n.prev!=previous||index.get(n.key)!=n)throw new AssertionError();previous=n;if(++count>index.size())throw new AssertionError(\"cycle\");}\n   if(tail.prev!=previous||count!=index.size()||count>capacity)throw new AssertionError();\n  }\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args){\n  Lru<Integer,String> cache=new Lru<>(2);cache.put(1,\"A\");cache.put(2,\"B\");cache.get(1);cache.put(3,\"C\");\n  check(cache.get(2).isEmpty());check(cache.get(1).orElseThrow().equals(\"A\"));cache.verify();\n  cache.put(1,\"A2\");cache.put(4,\"D\");check(cache.get(3).isEmpty());check(cache.get(1).orElseThrow().equals(\"A2\"));cache.verify();\n  Lru<Integer,String> zero=new Lru<>(0);zero.put(1,\"X\");check(zero.get(1).isEmpty());zero.verify();\n  Random random=new Random(81);Lru<Integer,Integer> actual=new Lru<>(5);\n  LinkedHashMap<Integer,Integer> model=new LinkedHashMap<>(16,.75f,true);\n  for(int i=0;i<1000;i++){\n   int key=random.nextInt(12);\n   if(random.nextBoolean()){int v=random.nextInt(100);actual.put(key,v);model.put(key,v);if(model.size()>5)model.remove(model.keySet().iterator().next());}\n   else check(actual.get(key).equals(Optional.ofNullable(model.get(key))));\n   actual.verify();\n  }\n  System.out.println(\"PASS: access/update recency, eviction, zero capacity, list invariants and reference-model comparison\");\n }\n}\n",
+    "labPath": "examples/lld/LruCacheDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/lld/LruCacheDemo.java; java -cp .pattern-classes LruCacheDemo"
+  },
+  {
+    "id": 378,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Top K frequent elements?",
+    "priority": "High",
+    "answer": "Return the k numbers with the highest occurrence counts. Nonempty integer array; 1 <= k <= distinct values. Assume the top-k set is unique; output order does not matter.",
+    "explanation": "Return the k numbers with the highest occurrence counts. Nonempty integer array; 1 <= k <= distinct values. Assume the top-k set is unique; output order does not matter.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "[1,1,1,2,2,3], k=2 → [1,2]",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Brute force",
+        "explanation": "For each distinct value, scan the entire input to count it, then repeatedly pick the largest remaining count. Time O(n²); space O(n)."
+      },
+      {
+        "title": "Improved solution and invariant",
+        "explanation": "Count frequencies and maintain a min-heap of size k. Counts are {1:3,2:2,3:1}. A heap capped at k removes the least frequent candidate, retaining 1 and 2 for k=2. Time O(n log k); space O(n)."
+      },
+      {
+        "title": "Boundary cases",
+        "explanation": "k=1; all values equal; k equals distinct count. Heap output is not necessarily sorted."
+      }
+    ],
+    "followups": [
+      "State the invariant without looking at code.",
+      "Give an adversarial input, not just the supplied sample."
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "public int[] topKFrequent(int[] nums, int k) {\n    Map<Integer, Integer> freq = new HashMap<>();\n    for (int n : nums) freq.merge(n, 1, Integer::sum);\n    PriorityQueue<Integer> heap = new PriorityQueue<>(Comparator.comparingInt(freq::get));\n    for (int n : freq.keySet()) {\n        heap.offer(n);\n        if (heap.size() > k) heap.poll();\n    }\n    int[] out = new int[k];\n    for (int i = 0; i < k; i++) out[i] = heap.poll();\n    return out;\n}",
+    "mockBruteCode": "public int[] topKFrequent(int[] nums,int k) {\n List<Integer> values=new ArrayList<>();\n for(int x:nums) if(!values.contains(x)) values.add(x);\n int[] counts=new int[values.size()];\n for(int i=0;i<values.size();i++) for(int x:nums) if(x==values.get(i)) counts[i]++;\n int[] out=new int[k];\n for(int j=0;j<k;j++) {\n  int best=0;for(int i=1;i<counts.length;i++) if(counts[i]>counts[best]) best=i;\n  out[j]=values.get(best); counts[best]=-1;\n } return out;\n}"
+  },
+  {
+    "id": 379,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Detect a cycle in a linked list?",
+    "priority": "High",
+    "answer": "Walk the nodes while storing object identities in a set. A repeated node reference reveals the cycle; null ends an acyclic list. Time O(n), extra space O(n). Use reference identity rather than value equality.",
+    "explanation": "Walk the nodes while storing object identities in a set. A repeated node reference reveals the cycle; null ends an acyclic list. Time O(n), extra space O(n). Use reference identity rather than value equality.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Nodes A → B → C → B have cycle entry B. Equal node values alone do not mean a cycle.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Floyd solution",
+        "explanation": "Advance slow by one and fast by two. In a finite cycle their relative distance moves by one modulo cycle length and eventually becomes zero. Stop only after checking fast and fast.next for null."
+      },
+      {
+        "title": "Find the entry",
+        "explanation": "After a meeting, start one pointer at head and advance both by one until they meet at the entry. If the prefix length is mu and cycle length lambda, the meeting-distance relation implies mu steps align their cycle positions. Detection plus entry recovery is O(n) time and O(1) extra space."
+      },
+      {
+        "title": "Adversarial tests",
+        "explanation": "Test null, one node with null next, self-loop, a cycle beginning at head, a nonempty prefix, and distinct nodes with equal values. Never modify next links merely to mark visited nodes."
+      }
+    ],
+    "followups": [
+      "Prove why the pointers meet inside a cycle.",
+      "How would you calculate the cycle length?"
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "static class Node {int value; Node next;}\nstatic Node cycleEntry(Node head) {\n Node slow=head, fast=head;\n while(fast!=null && fast.next!=null) {\n  slow=slow.next; fast=fast.next.next;\n  if(slow==fast) {\n   Node start=head;\n   while(start!=slow) {start=start.next; slow=slow.next;}\n   return start;\n  }\n }\n return null;\n}",
+    "labPath": "examples/mock/MockCodingDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/mock/MockCodingDemo.java; java -cp .pattern-classes MockCodingDemo"
+  },
+  {
+    "id": 380,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Number of islands?",
+    "priority": "High",
+    "answer": "Count connected groups of land cells in a 2D grid (4-directional adjacency). Rectangular grid contains only 0 water and 1 land. Count components joined horizontally or vertically; diagonal contact does not join islands.",
+    "explanation": "Count connected groups of land cells in a 2D grid (4-directional adjacency). Rectangular grid contains only 0 water and 1 land. Count components joined horizontally or vertically; diagonal contact does not join islands.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "[[\"1\",\"1\",\"0\"],[\"0\",\"1\",\"0\"],[\"0\",\"0\",\"1\"]] → 2",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Brute force",
+        "explanation": "For every unassigned land cell repeatedly rescan the grid to expand its component until no adjacent land can be added. Time O((rows·cols)²) upper bound; space O(rows·cols)."
+      },
+      {
+        "title": "Improved solution and invariant",
+        "explanation": "Flood-fill each unvisited land cell using an explicit stack. Flood-fill marks land when pushing it, so each cell enters the stack once. The sample has one three-cell component and one isolated cell. The optimized solution mutates land to water; copy the grid if needed. Time O(rows × cols); space O(rows × cols)."
+      },
+      {
+        "title": "Boundary cases",
+        "explanation": "Empty grid → 0; all water → 0; diagonal land → separate islands; a long narrow island."
+      }
+    ],
+    "followups": [
+      "State the invariant without looking at code.",
+      "Give an adversarial input, not just the supplied sample."
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "public int numIslands(char[][] grid) {\n    if (grid.length == 0) return 0;\n    int rows=grid.length, cols=grid[0].length, count=0;\n    int[][] dirs={{1,0},{-1,0},{0,1},{0,-1}};\n    for (int r=0;r<rows;r++) for (int c=0;c<cols;c++) {\n        if (grid[r][c]!='1') continue;\n        count++;\n        Deque<int[]> stack=new ArrayDeque<>();\n        stack.push(new int[]{r,c}); grid[r][c]='0';\n        while (!stack.isEmpty()) {\n            int[] p=stack.pop();\n            for (int[] d:dirs) {\n                int nr=p[0]+d[0], nc=p[1]+d[1];\n                if (nr>=0 && nr<rows && nc>=0 && nc<cols && grid[nr][nc]=='1') {\n                    grid[nr][nc]='0'; stack.push(new int[]{nr,nc});\n                }\n            }\n        }\n    }\n    return count;\n}",
+    "mockBruteCode": "public int numIslands(char[][] grid) {\n if(grid.length==0) return 0;\n int rows=grid.length,cols=grid[0].length,count=0;\n int[][] label=new int[rows][cols];int[][] dirs={{1,0},{-1,0},{0,1},{0,-1}};\n for(int r=0;r<rows;r++) for(int c=0;c<cols;c++) {\n  if(grid[r][c]!='1' || label[r][c]!=0) continue;\n  label[r][c]=++count;boolean changed;\n  do {changed=false;\n   for(int i=0;i<rows;i++) for(int j=0;j<cols;j++) {\n    if(grid[i][j]!='1' || label[i][j]!=0) continue;\n    for(int[] d:dirs){int a=i+d[0],b=j+d[1];\n     if(a>=0 && a<rows && b>=0 && b<cols && label[a][b]==count){label[i][j]=count;changed=true;break;}}\n   }\n  } while(changed);\n }return count;\n}"
+  },
+  {
+    "id": 381,
+    "category": "Mock Interview — DSA / Coding",
+    "question": "Best time to buy and sell stock?",
+    "priority": "High",
+    "answer": "Maximize profit from one buy followed by one sell. Non-null array of nonnegative daily prices. Choose at most one buy and a strictly later sell; return zero if no profit exists.",
+    "explanation": "Maximize profit from one buy followed by one sell. Non-null array of nonnegative daily prices. Choose at most one buy and a strictly later sell; return zero if no profit exists.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "[7,1,5,3,6,4] → 5",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Brute force",
+        "explanation": "Try all buy/sell day pairs. Time O(n²); space O(1)."
+      },
+      {
+        "title": "Improved solution and invariant",
+        "explanation": "Track the lowest price seen and best profit so far. With [7,1,5,3,6,4], the minimum becomes 1 and selling at 6 yields 5. Keeping only the minimum eliminates repeated earlier-day scans. Time O(n); space O(1)."
+      },
+      {
+        "title": "Boundary cases",
+        "explanation": "Descending prices → 0; empty or singleton → 0; equal prices."
+      }
+    ],
+    "followups": [
+      "State the invariant without looking at code.",
+      "Give an adversarial input, not just the supplied sample."
+    ],
+    "studyGuide": "docs/mock/dsa-coding.md",
+    "guidePath": "docs/mock/dsa-coding.md",
+    "code": "public int maxProfit(int[] prices) {\n    int min = Integer.MAX_VALUE, best = 0;\n    for (int p : prices) { min = Math.min(min, p); best = Math.max(best, p-min); }\n    return best;\n}",
+    "mockBruteCode": "public int maxProfit(int[] prices) {\n int best=0;for(int i=0;i<prices.length;i++) for(int j=i+1;j<prices.length;j++) best=Math.max(best,prices[j]-prices[i]);return best;\n}"
+  },
+  {
+    "id": 382,
+    "category": "Mock Interview — Low-Level Design",
+    "question": "Design an ATM?",
+    "priority": "High",
+    "answer": "Separate session authentication, account permission, cash inventory, withdrawal orchestration and hardware adapter. The ATM/controller verifies card/PIN through an appropriate secure banking integration; the lab does not handle real PINs or card data. Derive trusted identity at that boundary rather than treating a passed user string as proof.",
+    "explanation": "Separate session authentication, account permission, cash inventory, withdrawal orchestration and hardware adapter. The ATM/controller verifies card/PIN through an appropriate secure banking integration; the lab does not handle real PINs or card data. Derive trusted identity at that boundary rather than treating a passed user string as proof.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Alice withdraws 600 units from notes {500:1, 200:3}; greedy 500 first cannot finish, but three 200 notes can.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Domain and transitions",
+        "explanation": "Model Account/Balance, CashInventory, Withdrawal(requestKey, amount, state) and Dispenser. A real state machine can progress AUTHORIZED → CASH_RESERVED → DISPENSE_REQUESTED → DISPENSED or an explicit UNKNOWN/REVERSED path. Enforce positive amount, limits, funds and an exact feasible denomination plan before decrementing anything."
+      },
+      {
+        "title": "Implement the local decision",
+        "explanation": "The Java lab uses bounded-note backtracking because a greedy choice can fail for available denominations. Under one local lock it checks owner, idempotency key/payload and balance, finds a plan, then updates balance and inventory together. A duplicate key returns the prior result; a mismatched amount is rejected."
+      },
+      {
+        "title": "Do not confuse local atomicity with dispensing",
+        "explanation": "A physical dispense can succeed while its reply is lost. Persist a durable operation journal and reconcile device counters/sensor events; do not blindly debit again or instantly reverse while the cash outcome is unknown. A database transaction cannot atomically roll back cash already handed out. Network-bank authorization and local cash reservation need a recovery protocol."
+      },
+      {
+        "title": "Solution limits and tests",
+        "explanation": "AtmDemo simulates only the local logical decision; it does not operate hardware, persist a ledger or implement banking compliance. It tests non-greedy exact notes, replay, unauthorized subject, conflicting key and no-change failure. Backtracking is exponential in denomination/count choices; bound withdrawal sizes and select an appropriate bounded-change algorithm for a real configuration."
+      }
+    ],
+    "followups": [
+      "What if cash was dispensed but the confirmation was lost?",
+      "How do two ATMs coordinate one account’s available funds?"
+    ],
+    "studyGuide": "docs/mock/low-level-design.md",
+    "guidePath": "docs/mock/low-level-design.md",
+    "code": "import java.util.*;\npublic class AtmDemo {\n record Withdrawal(long id,int amount,Map<Integer,Integer> notes){Withdrawal{notes=Map.copyOf(notes);}}\n record Attempt(int amount,Withdrawal result){}\n static class Atm {\n  private final String owner;private int balance;private final Map<Integer,Integer> cash;private final Map<String,Attempt> done=new HashMap<>();private long sequence;\n  Atm(String owner,int balance,Map<Integer,Integer> cash){this.owner=owner;this.balance=balance;this.cash=new HashMap<>(cash);if(balance<0||cash.entrySet().stream().anyMatch(e->e.getKey()<=0||e.getValue()<0))throw new IllegalArgumentException();}\n  synchronized Withdrawal withdraw(String authenticatedSubject,String key,int amount){\n   if(!owner.equals(authenticatedSubject))throw new SecurityException(\"not account owner\");\n   if(key==null||key.isBlank()||amount<=0)throw new IllegalArgumentException();\n   Attempt old=done.get(key);if(old!=null){if(old.amount()!=amount)throw new IllegalArgumentException(\"key payload mismatch\");return old.result();}\n   if(amount>balance)throw new IllegalStateException(\"insufficient balance\");\n   var denominations=cash.keySet().stream().sorted(Comparator.reverseOrder()).toList();Map<Integer,Integer> plan=new HashMap<>();\n   if(!plan(denominations,0,amount,plan))throw new IllegalStateException(\"cannot dispense exact amount\");\n   balance-=amount;plan.forEach((d,n)->cash.put(d,cash.get(d)-n));\n   Withdrawal result=new Withdrawal(++sequence,amount,plan);done.put(key,new Attempt(amount,result));return result;\n  }\n  private boolean plan(List<Integer> denominations,int index,int remaining,Map<Integer,Integer> result){\n   if(remaining==0)return true;if(index==denominations.size())return false;int d=denominations.get(index);\n   for(int n=Math.min(cash.get(d),remaining/d);n>=0;n--){if(n==0)result.remove(d);else result.put(d,n);if(plan(denominations,index+1,remaining-n*d,result))return true;}\n   result.remove(d);return false;\n  }\n  synchronized int balance(){return balance;}\n }\n public static void main(String[] args){\n  Atm atm=new Atm(\"alice\",1000,Map.of(500,1,200,3));\n  Withdrawal w=atm.withdraw(\"alice\",\"w81\",600);if(!w.notes().equals(Map.of(200,3))||atm.balance()!=400)throw new AssertionError();\n  if(atm.withdraw(\"alice\",\"w81\",600)!=w||atm.balance()!=400)throw new AssertionError();\n  try{atm.withdraw(\"bob\",\"w82\",100);throw new AssertionError();}catch(SecurityException expected){}\n  try{atm.withdraw(\"alice\",\"w81\",200);throw new AssertionError();}catch(IllegalArgumentException expected){}\n  try{atm.withdraw(\"alice\",\"w83\",100);throw new AssertionError();}catch(IllegalStateException expected){}\n  if(atm.balance()!=400)throw new AssertionError();\n  System.out.println(\"PASS: bounded-note backtracking, owner check, replay, conflict and no-change failure\");\n }\n}\n",
+    "labPath": "examples/mock/AtmDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/mock/AtmDemo.java; java -cp .pattern-classes AtmDemo"
+  },
+  {
+    "id": 383,
+    "category": "Mock Interview — Low-Level Design",
+    "question": "Design a stock order book?",
+    "priority": "High",
+    "answer": "This exercise is one instrument, integer price ticks, positive quantities and limit orders with price-time priority. State whether matching uses maker price, how cancellation works and whether market orders/self-trade prevention/auctions exist. The lab deliberately omits those extra market rules.",
+    "explanation": "This exercise is one instrument, integer price ticks, positive quantities and limit orders with price-time priority. State whether matching uses maker price, how cancellation works and whether market orders/self-trade prevention/auctions exist. The lab deliberately omits those extra market rules.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "S1 sells five units at 100; S2 sells three at 100. B1 buys six with limit 101: fill S1 first for five and S2 for one, at maker price 100.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Data structures",
+        "explanation": "Maintain a buy priority queue ordered by highest price then server sequence and a sell queue ordered by lowest price then sequence. Orders carry stable IDs, immutable original request and mutable remaining quantity. An active-ID map supports cancellation; cancelled heap nodes are lazily skipped. A production price-level book may use ordered price maps plus FIFO queues."
+      },
+      {
+        "title": "Matching operation",
+        "explanation": "A sequenced submit repeatedly inspects the best opposite order, verifies crossing prices and trades min(takerRemaining,makerRemaining). Update both remaining quantities, remove a finished maker and rest the taker only if quantity remains. Do not reorder same-price makers by client timestamps. The lab serializes commands with synchronized and uses server sequence numbers."
+      },
+      {
+        "title": "Retries and cancellation",
+        "explanation": "Retain request/result identity so retrying the exact original order ID returns its original submission result without rematching. Reusing the ID with changed parameters conflicts. A cancel applies to the currently resting remainder once; it cannot erase an executed trade. In a real service authenticate clients, bind order ownership and authorize cancellation."
+      },
+      {
+        "title": "Recovery and cost",
+        "explanation": "The runnable lab tests maker price, same-price FIFO, partial fills, replay, cancellation and payload conflict. It is in-memory, uses lazy tombstones and keeps deduplication history indefinitely, so it is not a production exchange. Journal accepted commands with deterministic sequencing, snapshots/replay and retention in a real design. For t matches, heap work is roughly O((t+1) log n), plus lazy cleanup; cancellation marks O(1) but memory cleanup is deferred."
+      }
+    ],
+    "followups": [
+      "Which state wins when cancel and execution race?",
+      "Why can a retry not simply submit a new order ID?"
+    ],
+    "studyGuide": "docs/mock/low-level-design.md",
+    "guidePath": "docs/mock/low-level-design.md",
+    "code": "import java.util.*;\npublic class OrderBookDemo {\n enum Side{BUY,SELL}\n record Request(String id,Side side,long price,long quantity){}\n record Trade(String buyer,String seller,long price,long quantity){}\n static class Order{final Request request;final long sequence;long remaining;Order(Request r,long s){request=r;remaining=r.quantity();sequence=s;}}\n static class Book{\n  private final PriorityQueue<Order> buys=new PriorityQueue<>(Comparator.<Order>comparingLong(o->o.request.price()).reversed().thenComparingLong(o->o.sequence));\n  private final PriorityQueue<Order> sells=new PriorityQueue<>(Comparator.<Order>comparingLong(o->o.request.price()).thenComparingLong(o->o.sequence));\n  private final Map<String,Order> active=new HashMap<>();private final Map<String,Request> requests=new HashMap<>();private final Map<String,List<Trade>> results=new HashMap<>();private long sequence;\n  synchronized List<Trade> submit(Request request){\n   if(request.id()==null||request.id().isBlank()||request.side()==null||request.price()<=0||request.quantity()<=0)throw new IllegalArgumentException();\n   if(requests.containsKey(request.id())){if(!requests.get(request.id()).equals(request))throw new IllegalArgumentException(\"id payload mismatch\");return results.get(request.id());}\n   Order taker=new Order(request,++sequence);var opposing=request.side()==Side.BUY?sells:buys;List<Trade> trades=new ArrayList<>();\n   while(taker.remaining>0){\n    while(!opposing.isEmpty()&&opposing.peek().remaining==0)opposing.poll();if(opposing.isEmpty())break;\n    Order maker=opposing.peek();boolean crosses=request.side()==Side.BUY?request.price()>=maker.request.price():request.price()<=maker.request.price();if(!crosses)break;\n    long quantity=Math.min(taker.remaining,maker.remaining);\n    trades.add(new Trade(request.side()==Side.BUY?request.id():maker.request.id(),request.side()==Side.SELL?request.id():maker.request.id(),maker.request.price(),quantity));\n    taker.remaining-=quantity;maker.remaining-=quantity;if(maker.remaining==0){opposing.poll();active.remove(maker.request.id());}\n   }\n   if(taker.remaining>0){(request.side()==Side.BUY?buys:sells).offer(taker);active.put(request.id(),taker);}\n   requests.put(request.id(),request);var result=List.copyOf(trades);results.put(request.id(),result);return result;\n  }\n  synchronized boolean cancel(String id){Order order=active.remove(id);if(order==null)return false;order.remaining=0;return true;}\n }\n public static void main(String[] args){\n  Book b=new Book();b.submit(new Request(\"S1\",Side.SELL,100,5));b.submit(new Request(\"S2\",Side.SELL,100,3));\n  Request buy=new Request(\"B1\",Side.BUY,101,6);var trades=b.submit(buy);\n  if(!trades.equals(List.of(new Trade(\"B1\",\"S1\",100,5),new Trade(\"B1\",\"S2\",100,1))))throw new AssertionError();\n  if(!b.submit(buy).equals(trades))throw new AssertionError();b.submit(new Request(\"B2\",Side.BUY,99,1));if(!b.cancel(\"B2\")||b.cancel(\"B2\"))throw new AssertionError();\n  if(!b.submit(new Request(\"B3\",Side.BUY,100,2)).equals(List.of(new Trade(\"B3\",\"S2\",100,2))))throw new AssertionError();\n  try{b.submit(new Request(\"B1\",Side.BUY,101,7));throw new AssertionError();}catch(IllegalArgumentException expected){}\n  System.out.println(\"PASS: price-time priority, maker price, partial fill, replay, cancel and payload conflict\");\n }\n}\n",
+    "labPath": "examples/mock/OrderBookDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/mock/OrderBookDemo.java; java -cp .pattern-classes OrderBookDemo"
+  },
+  {
+    "id": 384,
+    "category": "Mock Interview — Low-Level Design",
+    "question": "Design a parking lot?",
+    "priority": "High",
+    "answer": "Define immutable Vehicle/Slot/Gate/Ticket values and one authoritative lot allocator. Select a documented compatibility/nearest-level policy, then assign slot and record active ticket atomically. Exit validates an active ticket and exit gate before freeing the exact slot once.",
+    "explanation": "Define immutable Vehicle/Slot/Gate/Ticket values and one authoritative lot allocator. Select a documented compatibility/nearest-level policy, then assign slot and record active ticket atomically. Exit validates an active ticket and exit gate before freeing the exact slot once.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Two entry gates compete for one free car slot.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Concurrency and recovery",
+        "explanation": "A synchronized local allocator is enough only for one process. Multiple replicas need a transaction/constraint or a single assignment owner. Persist admissions and reconcile sensors for restart recovery. Keep payment/hardware I/O outside a coarse slot lock."
+      },
+      {
+        "title": "Worked solution",
+        "explanation": "The full ParkingLotDemo and tutorial cover levels, entry/exit directions, duplicate plates, closed tickets and two concurrent entry attempts. State which errors leave occupancy unchanged and which operations are intentionally outside the demo."
+      }
+    ],
+    "followups": [
+      "How would you change the slot-selection policy without changing ticket lifecycle?"
+    ],
+    "studyGuide": "docs/mock/low-level-design.md",
+    "guidePath": "docs/mock/low-level-design.md",
+    "code": "import java.util.*;\nimport java.util.concurrent.*;\n\npublic class ParkingLotDemo {\n enum Kind {BIKE,CAR,TRUCK}\n enum Direction {ENTRY,EXIT}\n record Gate(String id,int level,Direction direction){}\n record Slot(String id,int level,Kind kind){}\n record Vehicle(String plate,Kind kind){}\n record Ticket(long id,Vehicle vehicle,Slot slot,String entryGate){}\n static class Lot {\n  private final Map<String,Gate> gates=new HashMap<>();\n  private final Map<String,Slot> free=new HashMap<>();\n  private final Map<Long,Ticket> active=new HashMap<>();\n  private final Set<String> parked=new HashSet<>();\n  private long nextId=1;\n  Lot(List<Gate> gates,List<Slot> slots){\n   for(Gate g:gates)if(this.gates.putIfAbsent(g.id(),g)!=null)throw new IllegalArgumentException(\"duplicate gate\");\n   for(Slot s:slots)if(free.putIfAbsent(s.id(),s)!=null)throw new IllegalArgumentException(\"duplicate slot\");\n  }\n  private Gate gate(String id,Direction direction){\n   Gate g=gates.get(id);if(g==null||g.direction()!=direction)throw new IllegalArgumentException(\"invalid gate\");return g;\n  }\n  synchronized Optional<Ticket> enter(String gateId,Vehicle vehicle){\n   Gate entry=gate(gateId,Direction.ENTRY);Objects.requireNonNull(vehicle);\n   if(vehicle.plate()==null||vehicle.plate().isBlank()||vehicle.kind()==null)throw new IllegalArgumentException(\"vehicle required\");\n   if(parked.contains(vehicle.plate()))throw new IllegalStateException(\"already parked\");\n   // Explicit policy: exact kind, nearest level to gate, then stable slot ID.\n   Optional<Slot> candidate=free.values().stream().filter(s->s.kind()==vehicle.kind())\n    .min(Comparator.<Slot>comparingLong(s->Math.abs((long)s.level()-entry.level())).thenComparing(Slot::id));\n   if(candidate.isEmpty())return Optional.empty();\n   Slot slot=candidate.get();Ticket ticket=new Ticket(nextId++,vehicle,slot,gateId);\n   free.remove(slot.id());parked.add(vehicle.plate());active.put(ticket.id(),ticket);return Optional.of(ticket);\n  }\n  synchronized Ticket exit(String gateId,long ticketId){\n   gate(gateId,Direction.EXIT);Ticket ticket=active.get(ticketId);\n   if(ticket==null)throw new IllegalArgumentException(\"unknown or closed ticket\");\n   active.remove(ticketId);parked.remove(ticket.vehicle().plate());free.put(ticket.slot().id(),ticket.slot());return ticket;\n  }\n }\n static void check(boolean value){if(!value)throw new AssertionError();}\n public static void main(String[] args)throws Exception{\n  var gates=List.of(new Gate(\"E0\",0,Direction.ENTRY),new Gate(\"E1\",1,Direction.ENTRY),new Gate(\"X0\",0,Direction.EXIT));\n  Lot lot=new Lot(gates,List.of(new Slot(\"L0-C1\",0,Kind.CAR),new Slot(\"L1-C1\",1,Kind.CAR),new Slot(\"L0-B1\",0,Kind.BIKE)));\n  Ticket ticket=lot.enter(\"E1\",new Vehicle(\"CAR-81\",Kind.CAR)).orElseThrow();check(ticket.slot().level()==1);\n  try{lot.enter(\"E0\",ticket.vehicle());throw new AssertionError();}catch(IllegalStateException expected){}\n  try{lot.exit(\"E0\",ticket.id());throw new AssertionError();}catch(IllegalArgumentException expected){}\n  check(lot.exit(\"X0\",ticket.id()).equals(ticket));\n  try{lot.exit(\"X0\",ticket.id());throw new AssertionError();}catch(IllegalArgumentException expected){}\n  Lot one=new Lot(gates,List.of(new Slot(\"only\",0,Kind.CAR)));\n  try(var pool=Executors.newFixedThreadPool(2)){\n   var a=pool.submit(()->one.enter(\"E0\",new Vehicle(\"A\",Kind.CAR)).isPresent());\n   var b=pool.submit(()->one.enter(\"E1\",new Vehicle(\"B\",Kind.CAR)).isPresent());\n   check((a.get()?1:0)+(b.get()?1:0)==1);\n  }\n  System.out.println(\"PASS: levels, gate validation, exact-kind policy, closed tickets and competing entries\");\n }\n}\n",
+    "labPath": "examples/lld/ParkingLotDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/lld/ParkingLotDemo.java; java -cp .pattern-classes ParkingLotDemo"
+  },
+  {
+    "id": 385,
+    "category": "Mock Interview — Low-Level Design",
+    "question": "Design a rate limiter class?",
+    "priority": "High",
+    "answer": "Bucket owns capacity, fractional tokens, refill rate, last time and injected monotonic clock. Refill, compare and consume must happen inside one atomic boundary. Limiter selects a configured bucket using trusted caller/tenant identity.",
+    "explanation": "Bucket owns capacity, fractional tokens, refill rate, last time and injected monotonic clock. Refill, compare and consume must happen inside one atomic boundary. Limiter selects a configured bucket using trusted caller/tenant identity.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "One tenant has one token left and two request threads arrive together.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Error behavior and scale",
+        "explanation": "Reject invalid cost/unknown tenant; deny without enough tokens. A controller translates deny to 429 with retry guidance. Independent process-local buckets multiply the effective global limit; use one key owner/shared atomic operation or explicitly allocated local budgets across servers."
+      },
+      {
+        "title": "Worked solution",
+        "explanation": "TokenBucketDemo tests refill with an injected clock instead of sleeps, burst capacity and 50 competing calls for ten tokens. It explains outage policy, tenant memory bounds and why rate limiting does not replace in-flight backpressure."
+      }
+    ],
+    "followups": [
+      "What happens to quota when an idle bucket is evicted and recreated?"
+    ],
+    "studyGuide": "docs/mock/low-level-design.md",
+    "guidePath": "docs/mock/low-level-design.md",
+    "code": "import java.util.*;\nimport java.util.concurrent.*;\nimport java.util.concurrent.atomic.*;\nimport java.util.function.LongSupplier;\npublic class TokenBucketDemo {\n static class Bucket {\n  private final double capacity,perSecond;private final LongSupplier clock;private double tokens;private long last;\n  Bucket(int capacity,double perSecond,LongSupplier clock){\n   if(capacity<1||!Double.isFinite(perSecond)||perSecond<=0)throw new IllegalArgumentException();\n   this.capacity=capacity;this.perSecond=perSecond;this.clock=Objects.requireNonNull(clock);tokens=capacity;last=clock.getAsLong();\n  }\n  synchronized boolean allow(int cost){\n   if(cost<1)throw new IllegalArgumentException(\"positive cost required\");long now=clock.getAsLong();long elapsed=now-last;\n   if(elapsed>0){tokens=Math.min(capacity,tokens+elapsed/1_000_000_000.0*perSecond);last=now;}\n   if(tokens<cost)return false;tokens-=cost;return true;\n  }\n }\n // A fixed authenticated-tenant registry avoids unbounded attacker-created keys in this demo.\n record Limiter(Map<String,Bucket> configured){\n  Limiter{configured=Map.copyOf(configured);}\n  boolean allow(String trustedTenant,int cost){Bucket b=configured.get(trustedTenant);if(b==null)throw new IllegalArgumentException(\"unknown tenant\");return b.allow(cost);}\n }\n static void check(boolean ok){if(!ok)throw new AssertionError();}\n public static void main(String[] args)throws Exception{\n  AtomicLong time=new AtomicLong();Bucket b=new Bucket(2,1,time::get);check(b.allow(1));check(b.allow(1));check(!b.allow(1));\n  time.addAndGet(500_000_000);check(!b.allow(1));time.addAndGet(500_000_000);check(b.allow(1));check(!b.allow(1));\n  Bucket racing=new Bucket(10,1,time::get);AtomicInteger accepted=new AtomicInteger();\n  try(var pool=Executors.newFixedThreadPool(8)){\n   List<Future<?>> work=new ArrayList<>();for(int i=0;i<50;i++)work.add(pool.submit(()->{if(racing.allow(1))accepted.incrementAndGet();}));for(var f:work)f.get();\n  }\n  check(accepted.get()==10);\n  Limiter limiter=new Limiter(Map.of(\"A\",new Bucket(1,1,time::get),\"B\",new Bucket(1,1,time::get)));\n  check(limiter.allow(\"A\",1));check(!limiter.allow(\"A\",1));check(limiter.allow(\"B\",1));\n  try{b.allow(0);throw new AssertionError();}catch(IllegalArgumentException expected){}\n  System.out.println(\"PASS: burst/refill without sleeps, final-token concurrency, independent tenants and invalid cost\");\n }\n}\n",
+    "labPath": "examples/lld/TokenBucketDemo.java",
+    "runCommand": "javac -d .pattern-classes examples/lld/TokenBucketDemo.java; java -cp .pattern-classes TokenBucketDemo"
+  },
+  {
+    "id": 386,
+    "category": "Mock Interview — System Design",
+    "question": "Design payment processing with idempotent transfers?",
+    "priority": "High",
+    "answer": "Clarify whether this is an internal same-ledger transfer or an external rail. For a same-currency internal transfer, accepted postings must balance, the caller may debit only authorized accounts, and one logical request must not create duplicate postings. Represent currency explicitly and use bounded integer minor units or an appropriate decimal money type, never binary floating-point for ledger amounts.",
+    "explanation": "Clarify whether this is an internal same-ledger transfer or an external rail. For a same-currency internal transfer, accepted postings must balance, the caller may debit only authorized accounts, and one logical request must not create duplicate postings. Represent currency explicitly and use bounded integer minor units or an appropriate decimal money type, never binary floating-point for ledger amounts.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Alice requests transfer T81 of 5,000 paise from authorized account A to account B; the client loses the response after commit.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "API and data contract",
+        "explanation": "POST /transfers carries source, destination, amount, currency and a stable idempotency key. Derive actor/tenant from verified credentials, verify debit permission and limits, and bind the key to the operation’s payload fingerprint. Store Transfer, immutable balanced Posting records, account concurrency state and an outbox event. Retain idempotency results under a documented policy."
+      },
+      {
+        "title": "Follow the local transaction",
+        "explanation": "Claim the scoped key under a unique constraint. Lock/serialize affected account state in a consistent order or use an equivalent guarded transactional design, validate available funds, write balanced postings and update the chosen balance projection with the transfer/result/outbox in one transaction. Retry serialization/deadlock failures within bounds using the same logical identity. A pre-transaction balance read is not sufficient."
+      },
+      {
+        "title": "Handle the lost response",
+        "explanation": "If commit succeeded, retrying T81 returns the recorded result. Concurrent same-key calls must not both execute the transfer. A different payload with the same key conflicts. If outcome is unknown after timeout, query by operation identity; do not create a fresh key and assume failure."
+      },
+      {
+        "title": "External rails need another protocol",
+        "explanation": "A remote bank/provider cannot share an ordinary local database commit. Record a pending instruction, deliver through a recoverable outbox/worker, use a stable provider reference and reconcile authenticated confirmations and statement data. Model PENDING/UNKNOWN/CONFIRMED/FAILED explicitly; reversals are new recorded postings, not deletion of history. A webhook or browser return URL alone is not sufficient evidence without its authenticity/state checks."
+      },
+      {
+        "title": "Observe and test",
+        "explanation": "Test simultaneous retries, competing debits, insufficient funds, crash before/after commit, lost provider acknowledgement and duplicate/out-of-order confirmations. Reconcile ledger versus balance projections and external statements. Monitor unbalanced journals, pending age, duplicate conflicts and reconciliation breaks. Scaling the service must preserve one authoritative account/transfer decision boundary; sharding adds cross-boundary coordination, not free atomicity."
+      }
+    ],
+    "followups": [
+      "What does successful mean for an internal versus external transfer?",
+      "How do you avoid deadlock when two transfers involve the same accounts in reverse order?"
+    ],
+    "studyGuide": "docs/mock/system-design.md",
+    "guidePath": "docs/mock/system-design.md"
+  },
+  {
+    "id": 387,
+    "category": "Mock Interview — System Design",
+    "question": "Design a real-time fraud detection pipeline?",
+    "priority": "High",
+    "answer": "Separate fast authorization-time risk decision from asynchronous investigation/retraining. Decide which events require block, step-up, hold or a documented fallback; availability of a model is not permission to approve every unknown transfer. A risk score is evidence for a policy decision, not an authenticated instruction to move money.",
+    "explanation": "Separate fast authorization-time risk decision from asynchronous investigation/retraining. Decide which events require block, step-up, hold or a documented fallback; availability of a model is not permission to approve every unknown transfer. A risk score is evidence for a policy decision, not an authenticated instruction to move money.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Transfer T81 reaches authorization while device and velocity signals may be stale; a decision must arrive within a bounded deadline.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Ingest trusted events",
+        "explanation": "Record stable event ID, tenant/account scope, event and ingestion times, schema version and relevant verified signals. Authenticate producer workloads and minimize sensitive data. Stream ingestion must tolerate retries and out-of-order delivery. A transactional source outbox prevents a fraud event representing a transfer that never committed where the flow requires committed events."
+      },
+      {
+        "title": "Build and read features",
+        "explanation": "A stream processor updates windowed velocity/device/account features with explicit late-event and deduplication rules. The decision service reads a versioned feature snapshot, records feature freshness and calls a bounded rules/model evaluation. Keep event-time versus processing-time semantics visible; replaying an event must not double the velocity count."
+      },
+      {
+        "title": "Make a bounded, auditable decision",
+        "explanation": "Within the endpoint deadline, combine deterministic rules, model/version, available features and policy version into an allow/block/step-up/hold result. Store reason codes and input evidence references that explain the actual decision; do not fabricate a human-readable justification after the fact. Human review and customer-facing messaging have separate access and privacy requirements."
+      },
+      {
+        "title": "Failures, safety and drift",
+        "explanation": "If model/feature access times out, choose a preapproved conservative rules path, hold/step-up or unavailable result depending on transaction risk. Mark missing/stale features rather than substituting zero silently. Monitor false-positive rates, confirmed fraud, feature lag, model calibration and cohort performance. Delayed labels and adversarial behavior complicate evaluation; raw approval rate alone is insufficient."
+      },
+      {
+        "title": "Validation and scale",
+        "explanation": "Replay fixed historical/test event sequences with deduplication, late data and stale features. Test endpoint deadlines, tenant isolation, replay determinism for recorded versions and malformed producer events. Partition feature updates by a key appropriate to the rule, recognizing that cross-account/device aggregation may require another stage. Keep an asynchronous investigation/retraining pipeline from becoming a synchronous dependency for every transfer."
+      }
+    ],
+    "followups": [
+      "What happens if a velocity feature is ten minutes stale?",
+      "Which decision artifacts let an investigator reproduce the applied policy?"
+    ],
+    "studyGuide": "docs/mock/system-design.md",
+    "guidePath": "docs/mock/system-design.md"
+  },
+  {
+    "id": 388,
+    "category": "Mock Interview — System Design",
+    "question": "Design trade settlement and reconciliation?",
+    "priority": "High",
+    "answer": "An order-book fill is not proof assets and cash have settled. Record executed trade identity and contractual obligations, relevant parties, instrument/currency, amounts, lifecycle and business-date/calendar semantics. Settlement timing and rules vary by market; clarify them rather than assume one global schedule.",
+    "explanation": "An order-book fill is not proof assets and cash have settled. Record executed trade identity and contractual obligations, relevant parties, instrument/currency, amounts, lifecycle and business-date/calendar semantics. Settlement timing and rules vary by market; clarify them rather than assume one global schedule.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "An executed trade requires cash/securities obligations; one settlement confirmation arrives twice and a statement arrives late.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Create durable obligations",
+        "explanation": "Consume authenticated execution events with stable trade IDs; deduplicate and validate them, create versioned obligations and outbox instructions transactionally. Apply reference data and configured calendars/cutoffs using explicit time zones. Keep amendments/cancellations as versioned events with allowed transitions instead of overwriting the original evidence."
+      },
+      {
+        "title": "Process external instructions",
+        "explanation": "Workers submit instructions to the chosen custodian/clearing/settlement infrastructure with stable references. Authenticate and deduplicate confirmations. Model pending, matched, settled, failed and unknown states according to that rail’s contract. A timeout is not proof of rejection; reconcile before resending in a way that could duplicate settlement."
+      },
+      {
+        "title": "Reconcile three views",
+        "explanation": "Compare internal trade/obligation/ledger state, external confirmations and authoritative statements/positions using declared identifiers, amounts, currency, value date and version. Classify missing, duplicate, quantity/amount and timing breaks. Do not fuzzy-match ambiguous records into an automatic clean status merely to make totals agree."
+      },
+      {
+        "title": "Resolve breaks with controls",
+        "explanation": "Create a durable case with evidence and assigned owner. Automated safe retries and authorized manual repair require explicit policy, audit and appropriate separation of duties. Use adjustment/reversal records rather than deleting history. Late statements should update reconciliation state idempotently and may reopen a previously provisional comparison."
+      },
+      {
+        "title": "Test recovery and reporting",
+        "explanation": "Test duplicate instructions/confirmations, partial settlement where supported, calendar boundaries, late files, mismatched currency, ambiguous matches and restart during a batch. Version input files and reconciliation rules; checkpoint progress with sink idempotency. Report pending age, unreconciled exposure and break counts without labeling a matched instruction as finally settled unless the evidence supports it."
+      }
+    ],
+    "followups": [
+      "How is a trade marked settled if one confirmation is missing?",
+      "Why can two matching aggregate totals still conceal individual reconciliation breaks?"
+    ],
+    "studyGuide": "docs/mock/system-design.md",
+    "guidePath": "docs/mock/system-design.md"
+  },
+  {
+    "id": 389,
+    "category": "Mock Interview — System Design",
+    "question": "Design an audit log that cannot be tampered with?",
+    "priority": "High",
+    "answer": "Define the attacker and trust boundaries. No ordinary application table is absolutely tamper-proof against every administrator and compromised key. Aim for append-only access controls, independently verifiable tamper evidence, protected retention and monitored custody. Explain exactly which principals and failure modes the design resists.",
+    "explanation": "Define the attacker and trust boundaries. No ordinary application table is absolutely tamper-proof against every administrator and compromised key. Aim for append-only access controls, independently verifiable tamper evidence, protected retention and monitored custody. Explain exactly which principals and failure modes the design resists.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "A privileged operator tries to modify or delete an earlier payment event and conceal that change.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Record structured facts",
+        "explanation": "Capture stable event ID, actor/workload identity, tenant, action, target, before/after references where appropriate, outcome, correlation ID, timestamp and schema/version. Avoid copying secrets or unnecessary personal data. Bind business-state changes and audit intent using a transactional outbox where possible; audit omissions also matter."
+      },
+      {
+        "title": "Make modification detectable",
+        "explanation": "An ordered stream can hash each canonically encoded event with the prior hash and sequence. Sign/anchor checkpoints in an independently controlled destination so rewriting an entire local chain or truncating its tail is detectable. Protect signing keys, rotate with verification metadata and define clock/ordering semantics. A hash chain alone does not stop an attacker who can rewrite all records and all anchors."
+      },
+      {
+        "title": "Protect retention and access",
+        "explanation": "Write protected object versions to an appropriate WORM/retention store with separate writer, reader and retention-administration privileges. Choose retention/hold rules with the responsible compliance team. For example, object-lock protections apply to specified object versions; a new object version/delete marker does not mean the protected version changed. Governance versus stricter retention modes have different bypass behavior."
+      },
+      {
+        "title": "Verify and investigate",
+        "explanation": "Run independent sequence/checkpoint/hash/signature verification, alert on gaps and failed writes, and keep redundant custody/backups. Auditors query an authorized index while verifying evidence against the protected source; rebuilding a search index must not rewrite original history. Access to the audit service itself is audited through a separate appropriate boundary."
+      },
+      {
+        "title": "Failure and acceptance tests",
+        "explanation": "Test attempted overwrite/delete, missing sequence, altered payload, chain rewrite without anchor authority, truncated tail, key rotation, clock anomalies and an unavailable archive. Decide which sensitive business operations must fail or durably buffer if required audit capture cannot be guaranteed. Do not return compliance assurances based solely on using a named storage product."
+      }
+    ],
+    "followups": [
+      "How would you detect an attacker deleting the newest 100 events?",
+      "What if the application and its signing key are both compromised?"
+    ],
+    "studyGuide": "docs/mock/system-design.md",
+    "guidePath": "docs/mock/system-design.md"
+  },
+  {
+    "id": 390,
+    "category": "Mock Interview — Java / Spring",
+    "question": "HashMap internals and what changed in Java 8?",
+    "priority": "High",
+    "answer": "A HashMap uses hash spreading to choose a bucket, then checks hash and equals among entries. Equal keys must have equal hashCode; unequal keys may collide. Power-of-two table capacity allows a bit-mask index. Resizing redistributes bins as capacity grows; default load factor is a sizing policy, not a guarantee of constant latency.",
+    "explanation": "A HashMap uses hash spreading to choose a bucket, then checks hash and equals among entries. Equal keys must have equal hashCode; unequal keys may collide. Power-of-two table capacity allows a bit-mask index. Resizing redistributes bins as capacity grows; default load factor is a sizing policy, not a guarantee of constant latency.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Many distinct keys collide in one bucket, and a mutable key is changed after insertion.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Java 8 change",
+        "explanation": "OpenJDK HashMap can convert a heavily populated collision bin into a balanced tree when thresholds and minimum table capacity permit. Common OpenJDK constants are treeify threshold 8 and minimum table capacity 64; below that it may resize rather than treeify. These are implementation details, not a universal Map contract. Tree-bin tie breaking/comparability details matter; do not promise identical asymptotic guarantees for every pathological key type."
+      },
+      {
+        "title": "Practical mistakes",
+        "explanation": "Changing fields used by equals/hashCode after insertion can make lookup fail even though iteration still shows the entry. HashMap is not thread-safe; fail-fast iteration is best effort, not a concurrency control. Null handling differs from ConcurrentHashMap. To safely accumulate concurrently, use documented atomic concurrent-map operations rather than synchronized-looking combinations of get and put."
+      },
+      {
+        "title": "Explain and test",
+        "explanation": "Demonstrate two equal key instances retrieving one mapping, distinct colliding keys retaining separate values, resizing with stable keys and a mutable-key lookup failure. Explain expected/amortized behavior and why poorly distributed hashes and unnecessary resizing hurt. The LLD striped-map lab makes collisions, MIN_VALUE hashing and atomic updates explicit without pretending to be OpenJDK internals."
+      }
+    ],
+    "followups": [
+      "When does a bin resize rather than treeify?",
+      "Why does a mutable hash key break lookup even without removal?"
+    ],
+    "studyGuide": "docs/mock/java-spring.md",
+    "guidePath": "docs/mock/java-spring.md"
+  },
+  {
+    "id": 391,
+    "category": "Mock Interview — Java / Spring",
+    "question": "How does @Transactional work, and when does it silently fail??",
+    "priority": "High",
+    "answer": "In Spring’s typical proxy mode, a call entering through a configured transactional proxy is intercepted. The selected transaction manager starts or joins the resource transaction according to propagation/isolation settings, invokes the method and completes commit/rollback according to outcome and rules. The annotation itself is metadata; it is not a Java keyword that wraps every call.",
+    "explanation": "In Spring’s typical proxy mode, a call entering through a configured transactional proxy is intercepted. The selected transaction manager starts or joins the resource transaction according to propagation/isolation settings, invokes the method and completes commit/rollback according to outcome and rules. The annotation itself is metadata; it is not a Java keyword that wraps every call.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "A service calls this.transfer() internally and expects the annotation on transfer to start a transaction.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Common no-advice boundaries",
+        "explanation": "Self-invocation through this bypasses proxy advice in the usual proxy mode. Manually constructed objects are not automatically managed/advised. Private methods cannot be advised through ordinary proxy interception, and final/class/method and visibility rules depend on the proxy mechanism and framework setup. State the actual configuration rather than claiming every non-public method always behaves identically."
+      },
+      {
+        "title": "Rollback surprises",
+        "explanation": "Default Spring rollback rules normally roll back on unchecked exceptions/Error, while checked exceptions require appropriate configuration unless configured defaults differ. Swallowing an exception may make the interceptor see normal completion, though a participating operation may already have marked rollback-only. An outer transaction can then fail at commit rather than silently succeed. readOnly is not a universal write prohibition."
+      },
+      {
+        "title": "Resource/thread limits",
+        "explanation": "Thread-bound imperative transactions do not automatically propagate to a new executor thread. Reactive transactions have different context rules. A local database transaction does not include an HTTP payment call or another unrelated transaction manager. Holding database locks while waiting on remote I/O increases risk and does not make the remote effect atomic."
+      },
+      {
+        "title": "Fix and verify",
+        "explanation": "Move the transactional use case to an injected service entered through its proxy, or use an appropriate programmatic boundary when justified. Define propagation/rollback deliberately. Use integration tests against the real database and failure path, checking final committed rows from outside the test’s own transaction so a test rollback cannot hide an error."
+      }
+    ],
+    "followups": [
+      "How can a caught exception still result in UnexpectedRollbackException?",
+      "Why does a test annotated @Transactional sometimes hide a missing production boundary?"
+    ],
+    "studyGuide": "docs/mock/java-spring.md",
+    "guidePath": "docs/mock/java-spring.md"
+  },
+  {
+    "id": 392,
+    "category": "Mock Interview — Java / Spring",
+    "question": "synchronized vs ReentrantLock?",
+    "priority": "High",
+    "answer": "Both provide mutual exclusion and the required visibility/ordering relationship for properly protected shared state. Both are reentrant for the owning thread. Neither fixes lock-order deadlock or a workflow that reads state outside the protected boundary; neither coordinates separate JVMs.",
+    "explanation": "Both provide mutual exclusion and the required visibility/ordering relationship for properly protected shared state. Both are reentrant for the owning thread. Neither fixes lock-order deadlock or a workflow that reads state outside the protected boundary; neither coordinates separate JVMs.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Two threads update a shared local invariant; another operation needs a timed wait for a lock.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Choose deliberately",
+        "explanation": "synchronized offers structured intrinsic-monitor acquisition/release when entering/leaving a block, including exceptional exits. ReentrantLock adds tryLock, timed/interruptible acquisition, optional fairness and multiple Condition queues. Explicit locks must be released in finally, and unlock only after acquisition succeeded."
+      },
+      {
+        "title": "Wait and signal correctly",
+        "explanation": "wait/notify belong to an owned intrinsic monitor; Condition await/signal belong to the matching held Lock. Recheck predicates in a loop because wakeups do not guarantee the desired state still holds. Fairness can trade throughput for an ordering policy and does not guarantee arbitrary application progress."
+      },
+      {
+        "title": "Virtual-thread version caveat",
+        "explanation": "On Java 21, blocking while holding synchronized can pin a carrier. JDK 24 changed monitor-related pinning through JEP 491. Do not replace every synchronized block based on an outdated universal warning; state the target runtime, keep critical sections short and measure contention. Native/foreign behavior and other resource limits still require analysis."
+      }
+    ],
+    "followups": [
+      "When would timed tryLock be a business requirement?",
+      "Why is a lock around only put insufficient for a multi-step reservation?"
+    ],
+    "studyGuide": "docs/mock/java-spring.md",
+    "guidePath": "docs/mock/java-spring.md"
+  },
+  {
+    "id": 393,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Use an AI assistant in a coding round, then explain every line it wrote?",
+    "priority": "High",
+    "answer": "First clarify capacity, null/miss behavior, recency rules, concurrency and complexity. Write invariants yourself before prompting. Ask for a small implementation against that contract rather than accepting an unexplained large solution. Treat generated code as an untrusted proposal.",
+    "explanation": "First clarify capacity, null/miss behavior, recency rules, concurrency and complexity. Write invariants yourself before prompting. Ask for a small implementation against that contract rather than accepting an unexplained large solution. Treat generated code as an untrusted proposal.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "The interviewer permits AI for an LRU implementation but asks you to defend the algorithm and every state change.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Explain line by line",
+        "explanation": "For every field, method and pointer assignment, state its role in the invariant. Explain why map lookup avoids list search, why detaching changes both neighboring links, why a successful get mutates order, and why eviction removes both indexes. If you cannot explain a line or dependency, simplify, investigate or remove it before claiming ownership."
+      },
+      {
+        "title": "Verify independently",
+        "explanation": "Compile, run sample and boundary cases, then compare deterministic generated operations against an independent access-ordered reference model. Test capacity zero/one, repeated updates and concurrent access if promised. Report which checks actually ran and their limits; a model’s assertion that tests passed is not evidence."
+      },
+      {
+        "title": "Interview evidence",
+        "explanation": "Show the final code, a short before/after correction, the tests that caught it, complexity reasoning and a limitation. Do not paste secrets or proprietary production code into an unapproved tool. The evaluation is your reasoning and verified result, not the model’s fluency."
+      }
+    ],
+    "followups": [
+      "Explain why detach must update both next and prev.",
+      "What evidence would convince you the implementation is wrong?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 394,
+    "category": "Mock Interview — AI Rounds",
+    "question": "The AI solution passes samples: find an input that breaks it?",
+    "priority": "High",
+    "answer": "The map must contain only earlier indices when testing the current index. Inserting first lets the same element satisfy its own complement. Construct a valid problem instance where this produces an invalid answer before the legitimate pair is reached.",
+    "explanation": "The map must contain only earlier indices when testing the current index. Inserting first lets the same element satisfy its own complement. Construct a valid problem instance where this produces an invalid answer before the legitimate pair is reached.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "A generated Two Sum implementation inserts the current value into seen before looking up its complement.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Minimal useful counterexample",
+        "explanation": "nums=[3,2,4], target=6 has the legitimate answer [1,2]. The broken insert-before-check code sees current 3 in the map at i=0 and returns [0,0]. This is within the usual exactly-one-solution contract and does not rely on a forbidden singleton input."
+      },
+      {
+        "title": "Fix and broaden",
+        "explanation": "Look up the complement before inserting. Then test [3,3] target 6, negatives, a pair at the end and integer-overflow boundaries with widened complement arithmetic. Compare small random inputs to a brute-force oracle under the same input assumptions; validate returned indices and sums rather than requiring one arbitrary ordering."
+      },
+      {
+        "title": "Generalize the method",
+        "explanation": "List assumptions, derive an invariant, target each boundary and minimize a failure. For distributed code, include crash windows and concurrent retries; for authorization, test another tenant’s valid ID. Passing samples proves only those samples, not the contract."
+      }
+    ],
+    "followups": [
+      "Why is [3,2,4] more convincing than an input outside the stated constraints?",
+      "Which property should a valid returned pair satisfy?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 395,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Walk through how you use AI day to day?",
+    "priority": "High",
+    "answer": "State the input, goal and constraints: for example reviewing an unfamiliar module or drafting boundary tests for a parser. Explain what information you were permitted to share, how you narrowed scope and what success would look like. Do not invent a project or production outcome.",
+    "explanation": "State the input, goal and constraints: for example reviewing an unfamiliar module or drafting boundary tests for a parser. Explain what information you were permitted to share, how you narrowed scope and what success would look like. Do not invent a project or production outcome.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Answer with a real engineering task, not a list of tool names. Adapt this structure to your actual experience.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Describe the division of work",
+        "explanation": "Explain what you decided yourself, what the assistant proposed and which parts you rejected or changed. A useful example is asking for candidate edge cases, independently identifying the invariant, then checking which suggestions are valid against the contract."
+      },
+      {
+        "title": "Give evidence and limitations",
+        "explanation": "Show a diff/test or other permitted artifact, the verification performed, the actual result and a case where AI was wrong. Mention review, sensitive-data handling and dependency/version verification when relevant. If you measured time or defect reduction, give the actual measurement method rather than an invented percentage."
+      },
+      {
+        "title": "Answer shape",
+        "explanation": "Use: task → constraints → AI contribution → my reasoning/correction → independent verification → observed outcome → limitation/lesson. Tool names can be context but cannot replace those facts."
+      }
+    ],
+    "followups": [
+      "What was the last incorrect suggestion you caught?",
+      "Which artifact demonstrates your own judgment?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 396,
+    "category": "Mock Interview — AI Rounds",
+    "question": "What would you never let AI write in a banking codebase, and why??",
+    "priority": "High",
+    "answer": "I would not allow an AI agent to independently decide or deploy money movement, authorization rules, cryptographic/key management, destructive data repair or retention policy. These operations require accountable owners, explicit invariants, threat analysis and approved operational controls. This is a model policy answer; adapt it to your organization’s actual process.",
+    "explanation": "I would not allow an AI agent to independently decide or deploy money movement, authorization rules, cryptographic/key management, destructive data repair or retention policy. These operations require accountable owners, explicit invariants, threat analysis and approved operational controls. This is a model policy answer; adapt it to your organization’s actual process.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Distinguish drafting assistance from authority to approve or execute a change.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Allow bounded assistance",
+        "explanation": "AI may help draft tests, documentation or candidate implementations in approved environments, but generated critical code is reviewed and verified to the same or stricter standard as human code. No copied secrets/customer records, unapproved dependencies, bypassed review or production credentials. A blanket claim that AI can never draft any financial-code line misses the authority/verification distinction."
+      },
+      {
+        "title": "Explain the risk concretely",
+        "explanation": "A plausible retry wrapper can double-charge after a timeout; a missing tenant condition can leak accounts; a fabricated crypto construction can destroy confidentiality. Evidence must cover concurrency, failure/recovery and access boundaries, not just unit-test coverage or a convincing explanation."
+      },
+      {
+        "title": "Operational control",
+        "explanation": "Separate read-only assistance from tool execution. Require authorized human approval for sensitive actions, auditable changes, staged rollout and a tested recovery plan. The assistant cannot self-authorize because it wrote a reassuring comment."
+      }
+    ],
+    "followups": [
+      "Could AI draft a ledger unit test? What additional review would you require?",
+      "Why is removing production credentials from the agent important even with a strong system prompt?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 397,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Review a 500-line AI-generated PR touching payments?",
+    "priority": "High",
+    "answer": "Ask for the business trigger, before/after behavior, changed invariants and a decomposition into reviewable commits if needed. Read the diff and entry points yourself. A 500-line change is neither safe nor unsafe merely because of its author; complexity and money-effect boundaries determine the review depth.",
+    "explanation": "Ask for the business trigger, before/after behavior, changed invariants and a decomposition into reviewable commits if needed. Read the diff and entry points yourself. A 500-line change is neither safe nor unsafe merely because of its author; complexity and money-effect boundaries determine the review depth.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "A teammate proposes a broad payments refactor with green sample tests and a confident generated description.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Trace effects and failure windows",
+        "explanation": "Follow request identity, actor/tenant checks, amount/currency representation, ledger balance, concurrency and external provider calls. Look for changed idempotency scope/retention, new retries, swallowed exceptions, lock/transaction changes, migration/backfill effects and callback ordering. Treat a timeout as potentially committed until proved otherwise."
+      },
+      {
+        "title": "Demand targeted evidence",
+        "explanation": "Run meaningful tests for simultaneous retries, lost responses after commit, duplicate callbacks, conflicting payloads, insufficient funds and unauthorized account IDs. Compare expected postings and actual durable state. Inspect dependencies/migrations and ensure tests do not mock away the boundary at risk."
+      },
+      {
+        "title": "Decide and release deliberately",
+        "explanation": "Block unexplained or unverified critical behavior; give actionable findings rather than accusing the author. Approve only the understood change with appropriate owners, rollout observability, reconciliation and rollback/compensation plan. Record what was verified and what remains uncertain. A model-written PR summary is not independent review evidence."
+      }
+    ],
+    "followups": [
+      "What would make you split or reject the PR?",
+      "Which new retry can create a duplicate charge despite all existing tests passing?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 398,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Design an account assistant without leaking another customer’s data?",
+    "priority": "High",
+    "answer": "Authenticate Alice at the API and bind a server-controlled subject/tenant context to the conversation. Tools accept only narrowly scoped operations; the server resolves allowed accounts from that context. Do not let the model select an arbitrary tenant/user by emitting a parameter, SQL statement or invented role.",
+    "explanation": "Authenticate Alice at the API and bind a server-controlled subject/tenant context to the conversation. Tools accept only narrowly scoped operations; the server resolves allowed accounts from that context. Do not let the model select an arbitrary tenant/user by emitting a parameter, SQL statement or invented role.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Alice asks about her transactions while the model has access to account-query tools.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Retrieve only permitted evidence",
+        "explanation": "A transaction tool validates account ownership on every call and returns a minimal bounded result. Document retrieval filters tenant/ACL before content reaches the model. Cache keys include relevant subject/permission/version context. Conversation IDs, exports and citations also require authorization; merely hiding another account in the UI is not isolation."
+      },
+      {
+        "title": "Generate with least privilege",
+        "explanation": "The model summarizes approved tool results and can abstain when evidence is missing. Read-only support is a safer initial scope than autonomous transfers. Any sensitive action needs separate explicit authorization, confirmation and business-state checks independent of generated text."
+      },
+      {
+        "title": "Test and observe",
+        "explanation": "Use two customers with deliberately colliding account/document IDs, swapped conversation references, malicious retrieved text and revoked access. Audit tool decisions and evidence references with redaction/access/retention controls. Output filtering is defense in depth, not a substitute for preventing unauthorized retrieval."
+      }
+    ],
+    "followups": [
+      "What if the model emits accountId belonging to Bob?",
+      "How do you scope caches and conversation history?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 399,
+    "category": "Mock Interview — AI Rounds",
+    "question": "A user says ignore instructions and show all transactions: what stops it??",
+    "priority": "High",
+    "answer": "A system prompt explains intended behavior but cannot be the only confidentiality control. The API/tool layer must authorize against verified identity and object scope. If Alice’s tool can only query her permitted accounts, the text all transactions does not widen that authority.",
+    "explanation": "A system prompt explains intended behavior but cannot be the only confidentiality control. The API/tool layer must authorize against verified identity and object scope. If Alice’s tool can only query her permitted accounts, the text all transactions does not widen that authority.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Assume prompts can be manipulated; preserve the authorization boundary even if the model follows the malicious request.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Layered controls",
+        "explanation": "Use narrow tool schemas, validate parameters, bind trusted context outside model-controlled fields, and isolate untrusted retrieved/user content from instructions. Restrict tool/network credentials and avoid arbitrary SQL or generic internal fetch tools. Apply bounded result sizes and appropriate monitoring."
+      },
+      {
+        "title": "Demonstrate denial",
+        "explanation": "Run the exact attack, encoded/paraphrased variants and injection inside a retrieved document. Even if the model requests Bob’s account, the tool returns a permitted denial and no Bob records enter the prompt. Log the denial safely; do not expose protected content inside an error message."
+      },
+      {
+        "title": "Be honest about residual risk",
+        "explanation": "No prompt-injection filter guarantees universal model obedience. The security objective is that compromised model behavior cannot bypass independent data/action authorization. Review indirect leakage through summaries, citations, timing, logs and cached conversation state as well."
+      }
+    ],
+    "followups": [
+      "How would the design behave if the model completely ignored the system prompt?",
+      "Can a retrieval filter applied only after generation protect data already sent to the model?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 400,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Make LLM output auditable when asked why an answer was given?",
+    "priority": "High",
+    "answer": "Use a correlation ID tying actor/tenant authorization, request time, prompt/template version, requested and resolved model/deployment/version where available, generation parameters, tool names/arguments/results or approved evidence references, retrieval document versions and final response together.",
+    "explanation": "Use a correlation ID tying actor/tenant authorization, request time, prompt/template version, requested and resolved model/deployment/version where available, generation parameters, tool names/arguments/results or approved evidence references, retrieval document versions and final response together.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "An authorized reviewer needs to trace a specific account-assistant response without exposing unrelated customer data.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Preserve evidence safely",
+        "explanation": "Store necessary audit artifacts with encryption, role-based access, retention/redaction and integrity controls. Hashes can help verify evidence identity but cannot reconstruct deleted content; decide which permitted source snapshots/references must remain available for the audit purpose. Do not indiscriminately log secrets or full account data."
+      },
+      {
+        "title": "Explain evidence, not private reasoning",
+        "explanation": "Provide permitted source citations, tool outputs and policy/authorization decisions that support the final answer. Do not promise access to hidden model chain-of-thought or fabricate a post-hoc rationale as historical truth. An audit trail is evidence of the pipeline, not proof the model internally reasoned exactly as a generated explanation says."
+      },
+      {
+        "title": "Account for reproducibility limits",
+        "explanation": "Model nondeterminism, provider aliases and unavailable historical versions can prevent bit-for-bit regeneration. Pin/version what you can, retain actual output and evidence, and distinguish replaying recorded decisions from re-querying today’s model. Test retrieval/version continuity and evidence access for an auditor."
+      }
+    ],
+    "followups": [
+      "What must be retained if the source policy later changes?",
+      "Why is a model-generated explanation not sufficient historical evidence?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 401,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Your LLM provider times out at peak: what is the fallback??",
+    "priority": "High",
+    "answer": "Apply an end-to-end deadline, bounded concurrency/queue, circuit breaker and tightly bounded retries with jitter where appropriate. Do not let every layer multiply retries. Cancellation may not stop provider-side work, so also track cost and orphaned requests.",
+    "explanation": "Apply an end-to-end deadline, bounded concurrency/queue, circuit breaker and tightly bounded retries with jitter where appropriate. Do not let every layer multiply retries. Cancellation may not stop provider-side work, so also track cost and orphaned requests.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "A customer asks for an account balance while the model endpoint is slow.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Choose a safe product fallback",
+        "explanation": "For account facts, use a deterministic authorized account-service response or a clearly unavailable/try-again path; do not invent a balance. For general FAQs, use a versioned approved static answer when appropriate. Financial actions remain unavailable unless their independent authorized workflow can safely proceed without the model."
+      },
+      {
+        "title": "Treat a second provider as a separate deployment decision",
+        "explanation": "Fallback to another model/provider requires approved data handling, credential scope, residency/retention and quality evaluation, not an ad-hoc endpoint swap. Revalidate output behavior and tool constraints. A stale cached answer must be identity-scoped and permitted by a freshness policy; yesterday’s balance may be unacceptable."
+      },
+      {
+        "title": "Test overload behavior",
+        "explanation": "Simulate slow responses, partial tool success, reconnect/retry and failover. Monitor user-visible latency, errors, fallback usage, queue age and correctness separately. Explain what the user sees and which operations are deliberately refused."
+      }
+    ],
+    "followups": [
+      "Why is a cached previous balance an unsafe universal fallback?",
+      "How do you stop a retry storm from making the outage worse?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 402,
+    "category": "Mock Interview — AI Rounds",
+    "question": "Answer quality dropped with zero code changes: what changed??",
+    "priority": "High",
+    "answer": "Confirm the regression using a fixed, versioned evaluation set and real authorized cohorts. Separate retrieval failures, tool/data failures, generation errors and evaluation changes. A changed customer mix or label pipeline can look like a model regression.",
+    "explanation": "Confirm the regression using a fixed, versioned evaluation set and real authorized cohorts. Separate retrieval failures, tool/data failures, generation errors and evaluation changes. A changed customer mix or label pipeline can look like a model regression.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "A stable application release suddenly gives worse answers on the same product area.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Inspect non-code dependencies",
+        "explanation": "Check resolved model/deployment versions and moving aliases, prompt/config/feature-flag changes, retrieval corpus/index/chunking/embedding versions, ACL/tenant filtering, source freshness, tool schemas and API data. Check token/truncation budgets, provider routing/parameters and load-induced timeout/fallback rates. These are hypotheses to investigate, not assumed causes."
+      },
+      {
+        "title": "Compare controlled snapshots",
+        "explanation": "Compare last-good and current evidence under the same inputs; replay recorded tool/retrieval results to isolate generation and independently test retrieval recall. Track citations/faithfulness and refusal/error rates, not only a single average score. Redact/protect customer examples in the investigation."
+      },
+      {
+        "title": "Recover and prevent recurrence",
+        "explanation": "Roll back the identified version/config/index where safe, or use an approved fallback. Pin/version dependencies when possible and record resolved versions when not. Add canary evals and change alerts across the whole pipeline. Communicate the observed cause, scope and evidence instead of saying the model got moody."
+      }
+    ],
+    "followups": [
+      "What artifact lets you distinguish a corpus change from a model change?",
+      "Why can a permission fix reduce recall without being a regression?"
+    ],
+    "studyGuide": "docs/mock/ai-rounds.md",
+    "guidePath": "docs/mock/ai-rounds.md"
+  },
+  {
+    "id": 403,
+    "category": "Mock Interview — Behavioral",
+    "question": "Tell me about a time you pushed back on a risky change?",
+    "priority": "High",
+    "answer": "Describe the actual change, your responsibility and the specific customer/business invariant at risk. State what you knew then and what was uncertain. Avoid disclosing confidential customer details.",
+    "explanation": "Describe the actual change, your responsibility and the specific customer/business invariant at risk. State what you knew then and what was uncertain. Avoid disclosing confidential customer details.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Use a real event from your work; the structure below is a template, not a fabricated personal story.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Action with evidence",
+        "explanation": "Explain how you tested or demonstrated the risk, who you involved and the concrete alternative you proposed. For example, an actual retry/idempotency concern should be supported by the real failure experiment or review finding, not a hypothetical claim presented as history."
+      },
+      {
+        "title": "Decision and outcome",
+        "explanation": "Describe how the decision was made, what shipped or changed, and the observed result. Use only real measurements; if an incident was avoided, do not pretend you can measure a counterfactual loss precisely. Credit collaborators and own any mistake in your own analysis."
+      },
+      {
+        "title": "Reflection",
+        "explanation": "Explain what you would repeat or improve: earlier invariants, smaller rollout, better failure tests or escalation timing. A strong answer shows constructive disagreement and accountability, not that you always won the argument."
+      }
+    ],
+    "followups": [
+      "What evidence changed someone’s mind?",
+      "What would you do if the owner accepted the risk anyway?"
+    ],
+    "studyGuide": "docs/mock/behavioral.md",
+    "guidePath": "docs/mock/behavioral.md"
+  },
+  {
+    "id": 404,
+    "category": "Mock Interview — Behavioral",
+    "question": "Describe a production incident you owned end to end?",
+    "priority": "High",
+    "answer": "Give the observed customer impact, detection signal and your role. Explain what was known at each stage rather than narrating with hindsight. State actual duration/scope only if you can substantiate it.",
+    "explanation": "Give the observed customer impact, detection signal and your role. Explain what was known at each stage rather than narrating with hindsight. State actual duration/scope only if you can substantiate it.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Choose an incident you actually handled and clearly distinguish your work from the team’s.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Contain before speculating",
+        "explanation": "Describe triage, ownership, communications and the reversible containment/rollback decision. Explain how you preserved evidence and avoided risky fixes while uncertain. Customer updates should separate confirmed facts from hypotheses."
+      },
+      {
+        "title": "Recover and verify",
+        "explanation": "Explain the fix or rollback, data reconciliation if applicable and how you verified the real user journey recovered. A green dashboard or restarted process alone may not prove correctness. Mention follow-up on stuck/duplicate operations if that happened in your real incident."
+      },
+      {
+        "title": "Learn and close",
+        "explanation": "Summarize contributing causes without blame, concrete owners/actions, and how their effectiveness was checked. Be candid about decisions you would change and avoid claiming sole credit for a coordinated response."
+      }
+    ],
+    "followups": [
+      "How did you know recovery was correct, not merely available?",
+      "Which follow-up action actually changed the next incident outcome?"
+    ],
+    "studyGuide": "docs/mock/behavioral.md",
+    "guidePath": "docs/mock/behavioral.md"
+  },
+  {
+    "id": 405,
+    "category": "Mock Interview — Behavioral",
+    "question": "How do you balance speed with compliance requirements??",
+    "priority": "High",
+    "answer": "Identify the actual delivery goal, data/action risk, mandatory controls and accountable policy owners. Separate hard requirements from a process habit that can be improved. Do not give legal interpretations beyond your role.",
+    "explanation": "Identify the actual delivery goal, data/action risk, mandatory controls and accountable policy owners. Separate hard requirements from a process habit that can be improved. Do not give legal interpretations beyond your role.",
+    "why": "Attempt the question before reading the model answer. Explain assumptions, invariants, trade-offs and evidence in your own words.",
+    "example": "Answer through a real delivery decision and your organization’s actual controls, not a promise to bypass requirements.",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Move fast within safe boundaries",
+        "explanation": "Offer a smaller scope, staged rollout, read-only release, synthetic-data prototype or automated evidence/test path that preserves required controls. Involve security/compliance reviewers early enough to change the design rather than ask for a rubber stamp at the end."
+      },
+      {
+        "title": "Make the decision reviewable",
+        "explanation": "Record the control mapping, test evidence, residual risk, approvals required by policy and rollback/operating plan. A deadline or an AI recommendation does not itself authorize an exception. Escalate a genuine unresolved conflict to the accountable owner."
+      },
+      {
+        "title": "Use an honest outcome",
+        "explanation": "Describe what your real team delivered, what was deferred, the actual customer/control result and what process improvement carried forward. The lesson should show proportionate rigor and good judgment, not speed versus safety as a false binary."
+      }
+    ],
+    "followups": [
+      "Which part of the process did you automate without weakening the control?",
+      "What would you refuse to trade away for the deadline?"
+    ],
+    "studyGuide": "docs/mock/behavioral.md",
+    "guidePath": "docs/mock/behavioral.md"
   }
 ]

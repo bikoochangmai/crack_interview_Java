@@ -12,3 +12,7 @@
 - [Distributed Rate Limiter](distributed-rate-limiter.md)
 - [Multi-tenant SaaS](multi-tenant-saas.md)
 - [Real-time Analytics](real-time-analytics.md)
+
+- [Distributed Key-Value Store](distributed-key-value-store.md)
+
+[LLD / HLD learning paths](../lld-hld-learning-path.md) · [Mock Interviews](../mock/README.md)

@@ -2,7 +2,7 @@
 
 **Live portal:** https://bikoochangmai.github.io/crack_interview_Java/
 
-A free, static GitHub Pages preparation portal for Java Full-Stack / Senior Engineer / Solution Architect interviews. **366 interview questions + 20 Java coding exercises = 386 trackable items**. No backend or login needed.
+A free, static GitHub Pages preparation portal for Java Full-Stack / Senior Engineer / Solution Architect interviews. **405 interview and mock questions + 20 Java coding exercises = 425 trackable items**. No backend or login needed.
 
 
 ## Terraform, GitHub Actions, virtual threads and coding expansion
@@ -48,6 +48,11 @@ Questions support concept, why/how, real-world example, trade-offs, follow-up an
 ### AI tools in the supplied reference image
 
 The AI guide groups OpenAI, Claude, Gemini, Llama, Ollama, vLLM, LangGraph, LangChain, LlamaIndex, MCP servers, vector databases, evaluation and security tools by use case. Product capabilities may change.
+
+## LLD, HLD and mock interviews
+
+- [LLD / HLD study paths](docs/lld-hld-learning-path.md): all ten requested problems, five runnable Java LLD labs, and a distributed key-value-store tutorial. Existing Short URL, Chat, Ride Matching and Notification tutorials are linked in one learning order.
+- [Mock Interviews: 32 questions with model answers](docs/mock/README.md): DSA, OOD, banking-system design, Java/Spring, AI-assisted rounds and behavioral practice. Includes new ATM, order-book and linked-list-cycle/Two-Sum-variant labs.
 
 ## Design patterns explained
 

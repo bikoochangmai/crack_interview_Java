@@ -99,3 +99,5 @@ body:has(.mobile-audio-player:not([hidden])){padding-bottom:115px}
 .design-walkthrough{border:1px solid #64748b;border-radius:10px;padding:1rem;margin:1rem 0}.design-step-buttons{display:flex;gap:.5rem;flex-wrap:wrap}.design-step-buttons button{padding:.65rem .8rem;min-height:44px;cursor:pointer;border:1px solid #64748b;border-radius:6px;background:#f1f5f9;color:#0f172a}.design-step-buttons button[aria-pressed="true"]{background:#075985;color:white;border-color:#38bdf8}.design-step-buttons button:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}.design-walkthrough h4{margin-bottom:.5rem}
 
 .tutorial-figure{margin:1rem 0;max-width:960px}.tutorial-figure img{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px}.tutorial-figure figcaption{font-size:.9rem;margin-top:.5rem}.tutorial-text{white-space:pre-line}
+
+.tree-guide{display:block;font-size:12px;margin:4px 0 10px;padding:4px 2px}
