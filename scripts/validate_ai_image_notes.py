@@ -4,6 +4,9 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree
 import json
 import re
+import subprocess
+import sys
+from ai_notes_enrichment import SOURCES
 
 ROOT=Path(__file__).resolve().parents[1]
 GUIDE=ROOT/'docs/generative-ai/index.html'
@@ -26,7 +29,8 @@ def main():
     assert [p['page'] for p in pages]==list(range(1,21))
     assert len({p['sourceFile'] for p in pages})==20
     expected=[0,6,8,7,8,8,8,8,8,10,8,8,8,8,10,9,9,9,10,10]
-    assert [sum(b['type']=='heading' for b in p['blocks']) for p in pages]==expected
+    assert [sum(b['type']=='heading' and not b.get('added') for b in p['blocks']) for p in pages]==expected
+    assert all(any(b.get('added') for b in p['blocks']) for p in pages[1:])
     text=GUIDE.read_text(encoding='utf-8'); doc=Document();doc.feed(text)
     assert len(doc.ids)==len(set(doc.ids)), 'Duplicate HTML IDs'
     assert all(f'page-{i:02}' in doc.ids for i in range(1,21))
@@ -42,19 +46,22 @@ def main():
                 for row in b['rows']:
                     assert len(row)==len(b['headers']),(page['page'],row)
                     for cell in row:assert normal(cell) in rendered
-            elif b['type'] in ('diagram','scatter'):
+            elif b['type'] in ('diagram','scatter','diffusion'):
                 file=ROOT/b['path']; diagrams.append(file)
                 svg=ElementTree.parse(file).getroot();assert svg.tag.endswith('svg')
                 assert svg.get('role')=='img' and svg.get('aria-labelledby')
                 assert '<script' not in file.read_text(encoding='utf-8')
-    assert len(diagrams)==39 and len(set(diagrams))==39
+    assert len(diagrams)==35 and len(set(diagrams))==35
+    assert len(list((ROOT/'docs/generative-ai/diagrams').glob('*.svg')))==35
     assert doc.tables==tables
     assert len([b for b in pages[-1]['blocks'] if b['type']=='table'])==8
     assert sum(len(b['rows']) for b in pages[-1]['blocks'] if b['type']=='table')==40
     for link in doc.links:
         if link.startswith('#'):assert link[1:] in doc.ids,link
         else:
-            assert not link.startswith(('http:','https:')), 'Study page must be self-contained'
+            if link.startswith('https:'):
+                assert link in {source[1] for source in SOURCES.values()};continue
+            assert not link.startswith('http:'), 'External references must use HTTPS'
             assert (GUIDE.parent/link).resolve().is_file(),link
     published=[GUIDE,ROOT/'data/ai-study-notes.json',*diagrams]
     for path in published:
@@ -66,9 +73,10 @@ def main():
     assert item['category'].startswith('AI Engineering') and 'lessonSections' not in item
     assert len([b for b in item['contentBlocks'] if b['type']=='chapter'])==20
     assert len([b for b in item['contentBlocks'] if b['type']=='table'])==tables
-    assert len([b for b in item['contentBlocks'] if b['type']=='image'])==39
+    assert len([b for b in item['contentBlocks'] if b['type']=='image'])==35
     assert 'source page' not in text.lower()
     assert 'Open the single-page illustrated guide and select this subsection' not in json.dumps(item)
-    print(f'PASS: one HTML page, 20 source pages, {tables} complete tables, 39 SVG diagrams, 40 interview prompts, all local links, no removed name or embedded source photos.')
+    subprocess.run([sys.executable,str(ROOT/'examples/ai/notes_worked_examples.py')],check=True)
+    print(f'PASS: one HTML page, 20 topics with reviewed additions, {tables} tables, 35 nonduplicate SVG diagrams, 40 interview prompts, local assets, primary-source links and worked arithmetic.')
 
 if __name__=='__main__':main()

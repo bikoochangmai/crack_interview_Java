@@ -19,13 +19,17 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.locator('#navTree a[href="docs/generative-ai/index.html"]').count(),1);
   await page.selectOption('#category','AI Engineering — Illustrated Generative AI Notes');
   await page.locator('#questions details summary').click();
+  const source=JSON.parse(fs.readFileSync(path.join(root,'data/ai-study-notes.json'),'utf8'));
   const answer=page.locator('#questions .answer');
   assert.equal(await answer.locator('.ai-topic-heading').count(),20);
-  assert.equal(await answer.locator('table').count(),55);
-  assert.equal(await answer.locator('.tutorial-figure img').count(),39);
+  assert.equal(await answer.locator('table').count(),source.flatMap(p=>p.blocks).filter(b=>b.type==='table').length);
+  assert.equal(await answer.locator('.tutorial-figure img').count(),35);
   const inline=await answer.innerText();
   assert(inline.includes('Self-attention allows the model to look at tokens'));
   assert(inline.includes('BitsAndBytes'));
+  assert(inline.includes('7.9 Worked attention calculation'));
+  assert(inline.includes('3.8 Prefill, decoding and the KV cache'));
+  assert.equal(await answer.locator('a[href="https://arxiv.org/abs/2006.11239"]').count(),1);
   assert(!inline.includes('Open the single-page illustrated guide and select this subsection'));
   assert(!inline.includes('Source page'));
   assert(!inline.includes('What is it? — Concept'));
@@ -38,8 +42,7 @@ const root=path.resolve(__dirname,'..');
   await page.waitForURL('**/docs/generative-ai/index.html');
   assert.equal(await page.locator('.note-section').count(),20);
   assert(!(await page.locator('main').innerText()).toLowerCase().includes('source page'));
-  assert.equal(await page.locator('figure img').count(),39);
-  const source=JSON.parse(fs.readFileSync(path.join(root,'data/ai-study-notes.json'),'utf8'));
+  assert.equal(await page.locator('figure img').count(),35);
   assert.equal(await page.locator('table').count(),source.flatMap(p=>p.blocks).filter(b=>b.type==='table').length);
   assert(!(await page.locator('body').textContent()).toLowerCase().includes('rahul yadav'));
   for(const img of await page.locator('figure img').all()){
@@ -70,6 +73,6 @@ const root=path.resolve(__dirname,'..');
    assert.deepEqual(overflow,[],block.path+' clipped SVG text');
   }
   assert.deepEqual(errors,[]);
-  console.log('PASS: AI navigation, all 20 subsections, tables, 39 loaded SVGs, search/reset, hash navigation, persistent checkboxes, print visibility, mobile width and SVG text bounds.');
+  console.log('PASS: AI navigation, all 20 subsections, tables, 35 loaded SVGs, search/reset, hash navigation, persistent checkboxes, print visibility, mobile width and SVG text bounds.');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -7,6 +7,7 @@ from pathlib import Path
 from html import escape
 import json
 import textwrap
+from ai_notes_enrichment import enrich, diffusion_svg
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs/generative-ai'
@@ -531,9 +532,12 @@ h('19.10 Final Revision Checklist')
 b.append({'type':'checklist','items':['Understand LLM architecture and key concepts.', 'Practice prompt engineering with different techniques.', 'Revise RAG, embeddings and vector databases.', 'Go through LangChain and LlamaIndex workflows.', 'Understand fine-tuning: PEFT, LoRA, QLoRA.', 'Revise evaluation metrics, RAGAS and hallucination control.', 'Practice system design for real-world use cases.', 'Be familiar with deployment, scaling and monitoring.', 'Understand security, cost control and performance.', 'Go through common interview questions and coding examples.', 'Prepare real-world projects and explain your experience clearly.']})
 note('These are the sample interview prompts and answer cues present in the image, not full worked solutions. The separate Mock Interviews section contains the previously added solved interview questions. Explain only tools and projects you have actually used; use the other examples for practice.')
 
+enrich(PAGES)
+
 PALETTE = [('#dbeafe','#1d4ed8'),('#d1fae5','#047857'),('#fef3c7','#92400e'),('#ede9fe','#6d28d9'),('#ffe4e6','#be123c'),('#cffafe','#0e7490')]
 
 def svg_diagram(block, ident):
+    if block['type'] == 'diffusion': return diffusion_svg()
     if block['type'] == 'scatter':
         return '''<svg xmlns="http://www.w3.org/2000/svg" width="960" height="460" viewBox="0 0 960 460" role="img" aria-labelledby="title desc">
 <title id="title">Illustrative embedding space</title><desc id="desc">A conceptual three-dimensional space with King, Man, Woman and Queen. These are not measured vectors.</desc>
@@ -590,8 +594,10 @@ def render_block(block, index, n):
     if kind=='code': return f'<pre tabindex="0" aria-label="{escape(block["language"])} example"><code>{escape(block["text"])}</code></pre>'
     if kind=='table':
         return '<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable comparison table"><table><thead><tr>'+''.join('<th scope="col">'+escape(x)+'</th>' for x in block['headers'])+'</tr></thead><tbody>'+''.join('<tr>'+''.join(('<th scope="row">' if i==0 else '<td>')+escape(x)+('</th>' if i==0 else '</td>') for i,x in enumerate(row))+'</tr>' for row in block['rows'])+'</tbody></table></div>'
-    if kind in ('diagram','scatter'):
-        name=f'page-{n:02}-{index:02}.svg'; (OUT/'diagrams'/name).write_text(svg_diagram(block,name),encoding='utf-8')
+    if kind=='references':
+        return '<p class="further-reading">Further reading: '+', '.join(f'<a href="{escape(link["url"])}" target="_blank" rel="noopener">{escape(link["label"])}</a>' for link in block['links'])+'</p>'
+    if kind in ('diagram','scatter','diffusion'):
+        name=f"page-{n:02}-{block.get('assetId',index):02}.svg"; (OUT/'diagrams'/name).write_text(svg_diagram(block,name),encoding='utf-8')
         block['path']='docs/generative-ai/diagrams/'+name
         transcript=' → '.join(' / '.join(layer) for layer in block.get('layers',[])) or 'A conceptual 3D space: King, Man, Woman, Queen. King − Man ≈ Queen − Woman; illustrative, not measured vectors.'
         mobile=''
@@ -611,6 +617,9 @@ def main():
         following=f'<a href="#page-{n+1:02}">Next section →</a>' if n<20 else '<a href="#contents">Back to contents ↑</a>'
         articles.append(f'<article id="page-{n:02}" class="note-section" aria-labelledby="title-{n}"><h2 id="title-{n}">{escape(item["title"])}</h2><label class="section-read"><input type="checkbox" data-check="page-{n}"> Mark this section studied</label>{blocks}<nav class="section-navigation" aria-label="Section {n} navigation">{previous}{following}</nav></article>')
     html='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Twenty illustrated Generative AI study-note sections: LLMs, prompts, attention, training, agents, RAG, evaluation and system design."><title>Generative AI — Complete Developer Study Notes</title><link rel="stylesheet" href="../../css/ai-notes.css"><script src="../../js/ai-notes.js" defer></script></head><body><a class="skip-link" href="#notes">Skip to study notes</a><header class="notes-hero"><div class="shell"><a class="back-link" href="../../index.html">← Learning hub · AI Engineering</a><div class="eyebrow">AI LEARNING / ILLUSTRATED STUDY NOTES</div><h1>Generative AI<span>Complete Developer Study Notes</span></h1><p>A complete Generative AI tutorial in one place. Concepts, practical examples, colorful diagrams, comparison tables, formulas and interview preparation.</p><div class="hero-tags"><span>20 subsections</span><span>Selectable text</span><span>Colorful SVG charts</span><span>Print friendly</span></div><div class="notes-tools"><label>Find in these notes<input id="notes-search" type="search" placeholder="Try: LoRA, causal mask, RAG…"></label><button id="print-notes" type="button">Print / Save PDF</button><button id="show-all" type="button">Show all sections</button><a href="#contents">Browse contents ↓</a></div><p id="notes-status" role="status" aria-live="polite">20 sections · Progress is stored in this browser.</p><noscript><p>All notes and charts are available without JavaScript. Use your browser’s Find and Print commands.</p></noscript></div></header><div class="shell notes-layout"><aside class="contents" id="contents"><h2>On this page</h2><ol>'''+toc+'''</ol><p>Study progress is local to this browser. Original photographs remain on your device.</p></aside><main id="notes">'''+''.join(articles)+'''</main></div><footer class="shell notes-footer"><a href="../../index.html">Return to the learning hub</a><p>Recreated from the supplied study-note images. Illustrative values and model/tool examples are labeled; clarifications are separate from the source notes.</p></footer></body></html>'''
+    expected={Path(block['path']).name for page in PAGES for block in page['blocks'] if block.get('path')}
+    for asset in (OUT/'diagrams').glob('page-*.svg'):
+        if asset.name not in expected: asset.unlink()
     (OUT/'index.html').write_text(html,encoding='utf-8')
     (ROOT/'data/ai-study-notes.json').write_text(json.dumps(PAGES,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     path=ROOT/'data/questions.json'; questions=json.loads(path.read_text(encoding='utf-8'))
@@ -619,7 +628,7 @@ def main():
         content.append({'type':'chapter','text':topic['title']})
         for block in topic['blocks']:
             entry=dict(block)
-            if block['type'] in ('diagram','scatter'):
+            if block['type'] in ('diagram','scatter','diffusion'):
                 entry['type']='image';entry['text']=block['title']
             elif block['type'] in ('list','checklist'):
                 entry['text']=' '.join(block['items'])
@@ -631,6 +640,6 @@ def main():
     if existing: assert existing.get('notesPath')==item['notesPath']; existing.clear(); existing.update(item)
     else: questions.append(item)
     path.write_text(json.dumps(questions,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    print(f'Built one HTML page with {len(PAGES)} subsections and {sum(x["type"] in ("diagram","scatter") for p in PAGES for x in p["blocks"])} colorful SVG diagrams.')
+    print(f'Built one HTML page with {len(PAGES)} subsections and {sum(x["type"] in ("diagram","scatter","diffusion") for p in PAGES for x in p["blocks"])} colorful SVG diagrams.')
 
 if __name__ == '__main__': main()
