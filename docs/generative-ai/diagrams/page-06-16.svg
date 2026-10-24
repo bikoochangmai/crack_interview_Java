@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="460" viewBox="0 0 960 460" role="img" aria-labelledby="title desc">
+<title id="title">Illustrative embedding space</title><desc id="desc">A conceptual three-dimensional space with King, Man, Woman and Queen. These are not measured vectors.</desc>
+<rect width="960" height="460" rx="20" fill="#f8fafc"/>
+<g stroke="#64748b" stroke-width="3"><path d="M240 320 L530 390 M240 320 L80 410 M240 320 L240 60"/></g>
+<g font-family="system-ui,sans-serif" font-size="24" fill="#334155"><text x="540" y="405">x</text><text x="55" y="427">y</text><text x="230" y="45">z</text></g>
+<g font-family="system-ui,sans-serif" font-size="25"><circle cx="170" cy="220" r="9" fill="#2563eb"/><text x="85" y="200" fill="#1d4ed8">King</text><circle cx="330" cy="150" r="9" fill="#059669"/><text x="350" y="145" fill="#047857">Man</text><circle cx="350" cy="255" r="9" fill="#7c3aed"/><text x="370" y="260" fill="#6d28d9">Woman</text><circle cx="280" cy="380" r="9" fill="#e11d48"/><text x="305" y="390" fill="#be123c">Queen</text></g>
+<rect x="555" y="130" width="370" height="175" rx="16" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<g font-family="system-ui,sans-serif" font-size="22" fill="#78350f"><text x="580" y="175">King − Man ≈ Queen − Woman</text><text x="580" y="220">Semantic relationships:</text><text x="580" y="255">conceptual illustration only</text></g></svg>

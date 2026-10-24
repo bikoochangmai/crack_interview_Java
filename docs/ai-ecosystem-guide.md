@@ -52,3 +52,7 @@ Angular UI → Spring Boot API (Entra ID / RBAC)
 ## Suggested hands-on project
 
 Build a compliance audit assistant using Spring Boot + Angular + PostgreSQL/pgvector + Python ingestion + an approved LLM. Start with document upload and cited read-only Q&A. Add structured findings and human approval later. Benchmark a local Ollama model against a managed endpoint with the same evaluation set.
+
+## Illustrated study companion
+
+[Generative AI — Complete Developer Study Notes](generative-ai/index.html) recreates all 20 supplied image pages in one HTML page with subsections, colorful diagrams, comparison tables, formulas, code, search and revision checkboxes.

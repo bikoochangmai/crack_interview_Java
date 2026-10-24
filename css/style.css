@@ -101,3 +101,4 @@ body:has(.mobile-audio-player:not([hidden])){padding-bottom:115px}
 .tutorial-figure{margin:1rem 0;max-width:960px}.tutorial-figure img{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px}.tutorial-figure figcaption{font-size:.9rem;margin-top:.5rem}.tutorial-text{white-space:pre-line}
 
 .tree-guide{display:block;font-size:12px;margin:4px 0 10px;padding:4px 2px}
+.notes-guide-link{display:block;background:#183f68;color:#d7efff;border:1px solid #60a5fa;border-radius:8px;padding:14px 16px;margin:0 0 20px;font-weight:700}

@@ -49,7 +49,8 @@ const root=path.resolve(__dirname,'..');
    if(q.mockBruteCode)assert((await card.innerText()).includes('Brute-force Java baseline'));
    await card.locator('summary').click();
   }
-  assert((await page.locator('#count').innerText()).includes('425'));
+  const exercises=JSON.parse(fs.readFileSync(path.join(root,'data/leetcode.json'),'utf8'));
+  assert((await page.locator('#count').innerText()).includes(String(questions.length+exercises.length)));
   // Inspect every diagram's text bounds; catch clipped labels without network dependencies.
   const diagrams=['docs/system-design/diagrams','docs/design-patterns/diagrams','docs/lld/diagrams'].flatMap(dir=>fs.readdirSync(path.join(root,dir)).filter(f=>f.endsWith('.svg')).map(f=>dir+'/'+f));
   for(const file of diagrams){

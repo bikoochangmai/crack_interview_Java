@@ -1,0 +1,5605 @@
+[
+  {
+    "page": 1,
+    "title": "Generative AI — Complete Developer Study Notes",
+    "sourceFile": "1792805787192.jpeg",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": "Concepts • Practical Examples • Projects • Interview Preparation"
+      },
+      {
+        "type": "paragraph",
+        "text": "20 pages, recreated as one HTML learning page with 20 subsections."
+      },
+      {
+        "type": "note",
+        "text": "Reading guide: the photographed notes are organized in their printed page order. Text, comparison tables, formulas, code and diagram labels are recreated below. Blue clarification boxes distinguish editorial corrections from the supplied notes. Model names, tools, dimensions, scores and outputs in the notes are study examples, not a current product catalogue or measured results. The original photos are not embedded."
+      },
+      {
+        "type": "diagram",
+        "title": "Complete developer learning path",
+        "layers": [
+          [
+            "Foundations and model types"
+          ],
+          [
+            "Prompts, tokens and embeddings"
+          ],
+          [
+            "Transformers, attention and training"
+          ],
+          [
+            "Agents, retrieval and evaluation"
+          ],
+          [
+            "Security, adaptation and system design"
+          ],
+          [
+            "Interview questions and final revision"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-01-03.svg"
+      }
+    ]
+  },
+  {
+    "page": 2,
+    "title": "Introduction to Generative AI",
+    "sourceFile": "1792805788662.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "1.1 What is Generative AI?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Generative AI refers to a class of AI models that can generate new content such as text, images, audio, video and code based on patterns learned from existing data.",
+          "Instead of just predicting a label or class, it learns the underlying distribution of data and generates new, similar but original outputs.",
+          "It can understand context, follow instructions and create human-like content."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "1.2 Examples of Generated Content"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Content",
+          "Examples"
+        ],
+        "rows": [
+          [
+            "Text",
+            "Articles, summaries, chat responses"
+          ],
+          [
+            "Images",
+            "Realistic images, artwork, design"
+          ],
+          [
+            "Audio",
+            "Speech, music, voice cloning"
+          ],
+          [
+            "Video",
+            "Video generation, animation"
+          ],
+          [
+            "Code",
+            "Complete programs, documentation"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "1.3 How Does Generative AI Work?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "It learns the patterns and structure from a large amount of data.",
+          "It models the probability distribution of data.",
+          "During inference, it samples from this distribution to generate new content.",
+          "Modern models such as Transformers are trained on massive datasets using self-supervised learning."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "1.4 Key Characteristics"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Learns from large and diverse datasets.",
+          "Generates new and original content.",
+          "Can follow natural language instructions.",
+          "Works across multiple modalities: text, image, audio, video and code.",
+          "Shows emergent capabilities with scale.",
+          "Can be fine-tuned for specific use cases."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "1.5 Generative AI vs Traditional AI"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "Traditional AI (Discriminative)",
+          "Generative AI (Generative)"
+        ],
+        "rows": [
+          [
+            "Goal",
+            "Predict a label or category",
+            "Generate new content"
+          ],
+          [
+            "Output",
+            "Fixed set of labels (classification)",
+            "Open-ended, creative output"
+          ],
+          [
+            "Learning",
+            "Learns decision boundary",
+            "Learns data distribution"
+          ],
+          [
+            "Examples",
+            "Spam detection, image classification",
+            "Text generation, image generation"
+          ],
+          [
+            "Typical Models",
+            "Logistic Regression, SVM, CNN",
+            "Transformers, Diffusion Models, GANs, VAEs"
+          ],
+          [
+            "Use Cases",
+            "Analysis, prediction, detection",
+            "Content creation, design, automation"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "1.6 High-Level Architecture of Generative AI"
+      },
+      {
+        "type": "diagram",
+        "title": "From prompt to generated content",
+        "layers": [
+          [
+            "Input (Prompt)"
+          ],
+          [
+            "Tokenizer\nConvert text to tokens"
+          ],
+          [
+            "Embedding Layer\nToken representations"
+          ],
+          [
+            "Generative Model\nTransformer / Diffusion / GAN"
+          ],
+          [
+            "Output (Generated Content)\nText / Image / Audio / Video / Code"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-02-11.svg"
+      },
+      {
+        "type": "note",
+        "text": "The source repeats the label 1.1 for Key Characteristics; it is numbered 1.4 here. The tokenizer/embedding pipeline is a text-model illustration: image, audio, diffusion and GAN pipelines do not all share this exact sequence. Generated content can reproduce training material and must still be checked."
+      }
+    ]
+  },
+  {
+    "page": 3,
+    "title": "Types of Generative AI Models",
+    "sourceFile": "1792805788708.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "2.1 Major Types of Generative AI Models"
+      },
+      {
+        "type": "paragraph",
+        "text": "Generative AI models can be broadly classified based on their architecture and learning approach. Each type has its own strengths, use cases and applications."
+      },
+      {
+        "type": "list",
+        "items": [
+          "Large Language Models (LLMs)",
+          "Diffusion Models",
+          "Generative Adversarial Networks (GANs)",
+          "Variational Autoencoders (VAEs)",
+          "Autoregressive Models",
+          "Multimodal Models"
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "2.2 Comparison of Model Types"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Model Type",
+          "Key Idea",
+          "Common Use Cases"
+        ],
+        "rows": [
+          [
+            "LLMs",
+            "Predict next token based on context",
+            "Text generation, chatbots, summarization"
+          ],
+          [
+            "Diffusion Models",
+            "Denoise data step by step",
+            "Image, video, audio generation"
+          ],
+          [
+            "GANs",
+            "Generator vs Discriminator",
+            "Realistic image generation, data synthesis"
+          ],
+          [
+            "VAEs",
+            "Learn latent representation",
+            "Image generation, anomaly detection"
+          ],
+          [
+            "Autoregressive Models",
+            "Model sequential distribution",
+            "Text, speech, time series"
+          ],
+          [
+            "Multimodal Models",
+            "Work with multiple input modalities",
+            "Text + Image, Text + Audio, Text + Video"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "2.3 Large Language Models (LLMs)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Based on Transformer architecture.",
+          "Trained on massive text data using self-supervised learning.",
+          "Learn to predict the next token in a sequence.",
+          "Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Language-model generation",
+        "layers": [
+          [
+            "Input Prompt"
+          ],
+          [
+            "Tokenizer\nText → Tokens"
+          ],
+          [
+            "Transformer Model\nProcess using attention layers"
+          ],
+          [
+            "Next Token Prediction\nGenerate next token"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-03-07.svg"
+      },
+      {
+        "type": "heading",
+        "text": "2.4 Diffusion Models"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Learn to generate data by gradually removing noise from a random input.",
+          "Work in two processes: forward (add noise) and reverse (denoise).",
+          "Excellent for high-quality image and video generation.",
+          "Examples in the notes: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Diffusion: denoising progression",
+        "layers": [
+          [
+            "Random Noise"
+          ],
+          [
+            "Step 1 (denoise)"
+          ],
+          [
+            "Step 2 (denoise)"
+          ],
+          [
+            "Step n (Generated Image)"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-03-10.svg"
+      },
+      {
+        "type": "heading",
+        "text": "2.5 Generative Adversarial Networks (GANs)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Consist of two neural networks: Generator creates fake data; Discriminator distinguishes real vs fake data.",
+          "Both networks are trained together in a competitive manner: adversarial training.",
+          "Widely used for realistic image generation.",
+          "Examples: DCGAN, StyleGAN, BigGAN."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "GAN: real and generated samples",
+        "layers": [
+          [
+            "Random Noise (z)",
+            "Real Data (x)"
+          ],
+          [
+            "Generator (G)\nGenerate Fake Samples"
+          ],
+          [
+            "Fake Data G(z)"
+          ],
+          [
+            "Discriminator (D)\nReal or Fake?"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              1
+            ],
+            [
+              3,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-03-13.svg"
+      },
+      {
+        "type": "heading",
+        "text": "2.6 Variational Autoencoders (VAEs)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Learn a compressed latent representation of data.",
+          "Consist of an Encoder and a Decoder.",
+          "Encoder maps input to a probability distribution: mean and variance.",
+          "Decoder generates data by sampling from latent space.",
+          "Useful for image generation, anomaly detection and data compression.",
+          "Examples: VAE, β-VAE, VQ-VAE."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "VAE: encode, sample and reconstruct",
+        "layers": [
+          [
+            "Input (x)"
+          ],
+          [
+            "Encoder q(z|x)\nMean (μ), Variance (σ²)"
+          ],
+          [
+            "z (Latent space)"
+          ],
+          [
+            "Decoder p(x|z)"
+          ],
+          [
+            "Reconstructed Output (x̂)"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-03-16.svg"
+      },
+      {
+        "type": "heading",
+        "text": "2.7 Autoregressive Models"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Model the joint probability of data as a product of conditional probabilities.",
+          "Generate data token by token in a sequential manner.",
+          "Widely used in text, speech and time-series generation.",
+          "Examples: GPT (autoregressive), PixelRNN, WaveNet."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "2.8 Multimodal Generative AI Models"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Work with multiple input and output modalities: text, image, audio, video.",
+          "Can understand and generate content across different formats.",
+          "Examples in the notes: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal)."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "These groups overlap: an LLM can be autoregressive and multimodal. The named model versions are examples from the source. Denoising is shown as labeled stages rather than the tiny cat photographs. VQ-VAE uses a discrete codebook; it is not identical to a Gaussian-latent VAE."
+      }
+    ]
+  },
+  {
+    "page": 4,
+    "title": "LLM Fundamentals",
+    "sourceFile": "1792805788229.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "3.1 What is a Large Language Model (LLM)?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "An LLM is a type of generative AI model trained on massive text data to understand, generate and manipulate human language.",
+          "It learns the probability distribution of the next token given the previous tokens.",
+          "LLMs are based on the Transformer architecture and use a self-attention mechanism.",
+          "Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "3.2 How LLMs Generate Text"
+      },
+      {
+        "type": "list",
+        "items": [
+          "LLMs generate text token by token.",
+          "Given an input prompt, the model predicts the next token using learned patterns from training data.",
+          "This process repeats until an end condition is met.",
+          "Decoding strategies such as greedy search, beam search or sampling select the next token."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Repeated next-token generation",
+        "layers": [
+          [
+            "Input Prompt\n“Explain Generative AI”"
+          ],
+          [
+            "LLM (Transformer)\nGenerate next token repeatedly"
+          ],
+          [
+            "Output\n“Generative AI is a type of …”"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-04-04.svg"
+      },
+      {
+        "type": "heading",
+        "text": "3.3 Tokenization"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Tokenization converts text into smaller units called tokens: words, subwords or characters.",
+          "LLMs use subword tokenization techniques to handle rare words and reduce vocabulary size.",
+          "Common tokenizers: BPE (Byte Pair Encoding), SentencePiece, WordPiece."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Text: “Generative AI is amazing”\nTokens (illustrative): [“Gener”, “ative”, “AI”, “is”, “amaz”, “ing”]"
+      },
+      {
+        "type": "heading",
+        "text": "3.4 Tokenization Example (BPE)"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Step",
+          "Text",
+          "Tokens (Example)"
+        ],
+        "rows": [
+          [
+            "1",
+            "Generative",
+            "[Gener, ative]"
+          ],
+          [
+            "2",
+            "AI",
+            "[AI]"
+          ],
+          [
+            "3",
+            "is",
+            "[is]"
+          ],
+          [
+            "4",
+            "amazing",
+            "[amaz, ing]"
+          ],
+          [
+            "Final",
+            "Generative AI is amazing",
+            "[Gener, ative, AI, is, amaz, ing]"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "3.5 Transformer Architecture (Overview)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "LLMs are based on Transformer architecture, which uses self-attention instead of RNNs.",
+          "The model consists of multiple decoder layers for GPT-like models, or encoder-decoder layers for models such as T5.",
+          "Each layer contains self-attention and feed-forward neural networks."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Transformer: decoder-only overview (e.g. GPT)",
+        "layers": [
+          [
+            "Input Text"
+          ],
+          [
+            "Tokenization"
+          ],
+          [
+            "Token Embedding"
+          ],
+          [
+            "Positional Encoding"
+          ],
+          [
+            "Decoder Layer (N×)\nMasked Self-Attention"
+          ],
+          [
+            "Add & Layer Norm"
+          ],
+          [
+            "Feed Forward Network"
+          ],
+          [
+            "Add & Layer Norm"
+          ],
+          [
+            "Linear + Softmax"
+          ],
+          [
+            "Next Token Probabilities"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-04-12.svg"
+      },
+      {
+        "type": "heading",
+        "text": "3.6 Key Components of an LLM"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Component",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Tokenizer",
+            "Convert text to tokens"
+          ],
+          [
+            "Embedding Layer",
+            "Convert tokens to dense vectors"
+          ],
+          [
+            "Positional Encoding",
+            "Add position information to tokens"
+          ],
+          [
+            "Transformer Layers",
+            "Learn context using self-attention"
+          ],
+          [
+            "Feed Forward Network",
+            "Non-linear transformation of features"
+          ],
+          [
+            "Layer Normalization",
+            "Stabilize training and improve performance"
+          ],
+          [
+            "Output Layer",
+            "Convert hidden states to token probabilities"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "3.7 Next Token Prediction (Mathematical View)"
+      },
+      {
+        "type": "paragraph",
+        "text": "LLMs model the conditional probability of a sequence. During inference, the model predicts the next token xₜ₊₁ based on previous tokens x₁, x₂, …, xₜ. A linear layer produces vocabulary logits and softmax produces probabilities."
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "P(x₁, x₂, …, xₙ) = ∏ᵢ₌₁ⁿ P(xᵢ | x₁, x₂, …, xᵢ₋₁)\n\nP(xₜ₊₁ = w) = exp(z_w) / Σᵥ∈V exp(z_v)"
+      },
+      {
+        "type": "note",
+        "text": "z_w is the logit for vocabulary token w, not the hidden state itself as the source shorthand suggests. Greedy decoding selects the highest-probability token; sampling need not. The layer diagram shows the source’s simplified post-normalization layout; exact layouts vary by architecture."
+      }
+    ]
+  },
+  {
+    "page": 5,
+    "title": "Prompt Engineering",
+    "sourceFile": "1792805788525.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "4.1 What is Prompt Engineering?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Prompt engineering is the process of designing effective input prompts to get the desired, high-quality output from a generative AI model such as ChatGPT, Claude or Gemini.",
+          "It helps in controlling the model’s behavior, style, format and level of detail.",
+          "A well-crafted prompt can improve accuracy, relevance and consistency of responses.",
+          "It is an important skill for developers, product builders and AI engineers."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "4.2 Anatomy of a Good Prompt"
+      },
+      {
+        "type": "diagram",
+        "title": "Good Prompt = Instruction + Context + Input + Output Format",
+        "layers": [
+          [
+            "Good Prompt"
+          ],
+          [
+            "Instruction\nWhat to do? (Clear task)",
+            "Context\nBackground (domain, role)",
+            "Input\nData or specific details",
+            "Output Format\nList, table, code, explanation"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-05-03.svg"
+      },
+      {
+        "type": "heading",
+        "text": "4.3 Prompting Techniques"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Technique",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Zero-Shot Prompting",
+            "Give only a task instruction."
+          ],
+          [
+            "Few-Shot Prompting",
+            "Provide a few examples in the prompt."
+          ],
+          [
+            "Chain-of-Thought (CoT) Prompting",
+            "The source suggests asking the model to think step by step."
+          ],
+          [
+            "Role Prompting",
+            "Assign a specific role to the model."
+          ],
+          [
+            "Instruction Prompting",
+            "Clearly specify the task and format."
+          ],
+          [
+            "Self-Consistency",
+            "Generate multiple answers and pick the best one."
+          ],
+          [
+            "Tree of Thoughts (ToT)",
+            "Explore multiple reasoning paths (advanced)."
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "4.4 Examples of Prompts"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Type",
+          "Prompt",
+          "Use Case"
+        ],
+        "rows": [
+          [
+            "Zero-Shot",
+            "Explain quantum computing in simple words.",
+            "Basic question"
+          ],
+          [
+            "Few-Shot",
+            "Classify the sentiment: “I love this!” → Positive; “This is bad” → Negative; “Amazing experience” → ?",
+            "Classification tasks"
+          ],
+          [
+            "Chain-of-Thought",
+            "Solve this step by step: If a car travels 120 km in 2 hours, what is the speed?",
+            "Reasoning and math"
+          ],
+          [
+            "Role Prompting",
+            "You are a Java expert. Explain microservices architecture in simple terms.",
+            "Domain-specific questions"
+          ],
+          [
+            "Instruction",
+            "Summarize the following text in 5 bullet points: [paste text]",
+            "Summarization"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "4.5 Prompting Styles and Use Cases"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Style",
+          "Description",
+          "Example Use Cases"
+        ],
+        "rows": [
+          [
+            "Direct",
+            "Simple and clear instruction",
+            "Quick answers, definitions"
+          ],
+          [
+            "Detailed",
+            "Provide context, constraints and format",
+            "Complex explanation, code generation"
+          ],
+          [
+            "Comparative",
+            "Ask to compare multiple options",
+            "Pros and cons, decision making"
+          ],
+          [
+            "Creative",
+            "Generate imaginative and original content",
+            "Stories, marketing content, ideas"
+          ],
+          [
+            "Technical",
+            "Use domain-specific instructions",
+            "Code, system design, debugging"
+          ],
+          [
+            "Structured",
+            "Ask for output in a specific format",
+            "JSON, table, bullet points"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "4.6 Prompt Template (Reusable)"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "You are a {role}.\nYour task is to {instruction}.\nContext:\n{provide background information}\nInput:\n{provide input data or question}\nPlease provide the output in {format}.\nConstraints:\n- {constraint 1}\n- {constraint 2}\n- {constraint 3}"
+      },
+      {
+        "type": "heading",
+        "text": "4.7 Real Example (Code Generation)"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "You are a senior Java developer.\nWrite a Spring Boot REST API to create a user with name, email and mobile number.\nUse proper validation and return a meaningful response.\nProvide complete code with controller, service and model classes."
+      },
+      {
+        "type": "diagram",
+        "title": "Prompt → LLM → generated code",
+        "layers": [
+          [
+            "Prompt: Spring Boot user API"
+          ],
+          [
+            "LLM\nChatGPT, Claude, etc."
+          ],
+          [
+            "Output\nUser entity class; Repository interface\nService class; Controller class\nSample request and response; Validation logic"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-05-14.svg"
+      },
+      {
+        "type": "heading",
+        "text": "4.8 Best Practices"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Be clear and specific.",
+          "Provide necessary context.",
+          "Use examples when needed.",
+          "Specify the desired output format.",
+          "Iterate and refine the prompt.",
+          "Use role and constraints.",
+          "Break complex tasks into smaller steps."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "Ask for a concise explanation, assumptions, calculations and checks that can be inspected; private internal reasoning is not a dependable interface. Self-consistency requires a selection or voting criterion and independent validation; agreement alone does not prove correctness. A role prompt does not grant authority or expertise."
+      }
+    ]
+  },
+  {
+    "page": 6,
+    "title": "Tokenization and Embeddings",
+    "sourceFile": "1792805788835.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "5.1 What is Tokenization?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Tokenization converts text into smaller units called tokens: words, subwords or characters.",
+          "It helps the model process text data.",
+          "Modern LLMs use subword tokenization techniques to handle rare words and reduce vocabulary size.",
+          "The same text can be tokenized differently depending on the tokenizer and model."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "5.2 Types of Tokenization"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Type",
+          "Description",
+          "Example"
+        ],
+        "rows": [
+          [
+            "Word Tokenization",
+            "Split text into words",
+            "“AI is amazing” → [AI, is, amazing]"
+          ],
+          [
+            "Character Tokenization",
+            "Split into characters",
+            "“AI” → [A, I]"
+          ],
+          [
+            "Subword Tokenization",
+            "Split into subwords (common in LLMs)",
+            "“unbelievable” → [un, believable]"
+          ],
+          [
+            "Byte Pair Encoding (BPE)",
+            "Merges frequent subword units",
+            "“low” + “er” → “lower”"
+          ],
+          [
+            "SentencePiece",
+            "Unsupervised, language-agnostic tokenizer tooling",
+            "Used in models such as LLaMA, T5, Gemini in the notes"
+          ],
+          [
+            "WordPiece",
+            "Used in BERT models",
+            "“playing” → [play, ##ing]"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "5.3 Byte Pair Encoding (BPE) — How It Works"
+      },
+      {
+        "type": "list",
+        "items": [
+          "1. Start with character-level tokens.",
+          "2. Find the most frequent pair of tokens.",
+          "3. Merge the pair into a new token.",
+          "4. Repeat until the desired vocabulary size is reached."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Example: build a vocabulary for “lowest”.\nStep 1: l o w e s t  (characters)\nStep 2: illustrative intermediate state: lo we st\nStep 3: merge again: low est\nFinal tokens: [low, est]"
+      },
+      {
+        "type": "heading",
+        "text": "5.4 Tokenization Example (Python)"
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "text": "from transformers import AutoTokenizer\n\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\ntext = \"Generative AI is amazing!\"\ntokens = tokenizer.tokenize(text)\ntoken_ids = tokenizer.convert_tokens_to_ids(tokens)\nprint(tokens)\nprint(token_ids)\n# Example printed in the source (illustrative, not a verified run):\n# ['Generative', 'ĠAI', 'Ġis', 'Ġamazing', '!']\n# [34390, 2277, 318, 19801, 0]"
+      },
+      {
+        "type": "heading",
+        "text": "5.5 What are Embeddings?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Embeddings are dense vector representations of tokens in a high-dimensional space.",
+          "They capture semantic meaning and context of words.",
+          "Tokens with similar meaning can have similar embeddings.",
+          "Embeddings are learned during model training.",
+          "Embeddings help the model understand relationships between words."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "5.6 Embedding Layer"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Converts token IDs into dense vectors of fixed size: embedding dimension.",
+          "Each token ID maps to a trainable vector.",
+          "The embedding layer is a lookup table of size vocabulary size × embedding dimension.",
+          "These vectors are later used as input to the Transformer model."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Embedding lookup",
+        "layers": [
+          [
+            "Token IDs\n[101, 2054, 2003]"
+          ],
+          [
+            "Embedding Layer\nV × D\nV = vocabulary size; D = embedding dimension"
+          ],
+          [
+            "Embedding Vectors\nShape: [3, D]\n[0.12, −0.03, …]\n[0.45, 0.22, …]\n[−0.11, 0.09, …]"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-06-13.svg"
+      },
+      {
+        "type": "heading",
+        "text": "5.7 Example of Embeddings"
+      },
+      {
+        "type": "paragraph",
+        "text": "Word embeddings in 3D space for visualization. Example relation from the notes: King − Man ≈ Queen − Woman. This illustrates semantic relationships; it is not guaranteed for every model."
+      },
+      {
+        "type": "scatter",
+        "title": "Illustrative embedding space: King, Man, Woman and Queen",
+        "path": "docs/generative-ai/diagrams/page-06-16.svg"
+      },
+      {
+        "type": "heading",
+        "text": "5.8 Embedding vs One-Hot Encoding"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "One-Hot Encoding",
+          "Embeddings"
+        ],
+        "rows": [
+          [
+            "Representation",
+            "Sparse vector (0/1)",
+            "Dense vector (real numbers)"
+          ],
+          [
+            "Dimension",
+            "Very high (vocabulary size)",
+            "Lower (e.g. 768, 1536)"
+          ],
+          [
+            "Sparsity",
+            "Very sparse",
+            "Dense"
+          ],
+          [
+            "Semantic meaning",
+            "Does not capture similarity directly",
+            "Captures semantic relationships"
+          ],
+          [
+            "Memory usage",
+            "High in a dense representation",
+            "Lower per vector"
+          ],
+          [
+            "Performance",
+            "Not efficient as a dense vector",
+            "Efficient and widely used in LLMs"
+          ]
+        ]
+      },
+      {
+        "type": "note",
+        "text": "BPE learns pair frequencies over a training corpus, not by choosing convenient merges in a single word. The “lowest” stages are schematic. Token IDs and exact output depend on the tokenizer vocabulary; run the example to inspect actual output. SentencePiece is tooling that can train BPE or unigram tokenizers. Static token embeddings become contextual representations after Transformer layers. Sparse one-hot vectors need not be stored densely."
+      }
+    ]
+  },
+  {
+    "page": 7,
+    "title": "Transformer Architecture for Generative AI",
+    "sourceFile": "1792805788783.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "6.1 Why Transformers?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "RNNs and LSTMs process data sequentially, which is slow and inefficient for long sequences.",
+          "Transformers use self-attention to process tokens in parallel.",
+          "They can capture long-range dependencies.",
+          "Transformers have become a foundation of modern generative AI models such as GPT, LLaMA and BERT."
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "Key idea: self-attention instead of recurrence."
+      },
+      {
+        "type": "heading",
+        "text": "6.2 Overall Transformer Architecture"
+      },
+      {
+        "type": "diagram",
+        "title": "Encoder (e.g. BERT) vs Decoder (e.g. GPT)",
+        "layers": [
+          [
+            "Encoder input\nToken embeddings",
+            "Decoder input\nShifted right"
+          ],
+          [
+            "Multi-Head Attention",
+            "Masked Multi-Head\nSelf-Attention"
+          ],
+          [
+            "Add & Layer Norm",
+            "Add & Layer Norm"
+          ],
+          [
+            "Feed Forward Network",
+            "Feed Forward Network"
+          ],
+          [
+            "Add & Layer Norm\nRepeat N×",
+            "Add & Layer Norm\nRepeat N×"
+          ],
+          [
+            "Encoded Representations",
+            "Next Token Probabilities"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              1
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              1
+            ],
+            [
+              5,
+              1
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-07-04.svg"
+      },
+      {
+        "type": "heading",
+        "text": "6.3 Transformer vs RNN/LSTM"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "RNN / LSTM",
+          "Transformer"
+        ],
+        "rows": [
+          [
+            "Processing",
+            "Sequential",
+            "Parallel during training"
+          ],
+          [
+            "Memory",
+            "Hidden state",
+            "Self-attention"
+          ],
+          [
+            "Long-range dependencies",
+            "Difficult",
+            "Handles well"
+          ],
+          [
+            "Training speed",
+            "Slower",
+            "Faster parallel execution"
+          ],
+          [
+            "Architecture",
+            "Recurrent",
+            "Attention based"
+          ],
+          [
+            "Used in",
+            "Earlier models",
+            "Modern LLMs"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "6.4 Encoder vs Decoder (for Generative AI)"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Encoder (used in BERT, T5)",
+          "Decoder (used in GPT, LLaMA)"
+        ],
+        "rows": [
+          [
+            "Reads the entire input sequence",
+            "Generates text token by token"
+          ],
+          [
+            "Uses self-attention",
+            "Uses masked self-attention (causal attention)"
+          ],
+          [
+            "Generates contextual representations (embeddings)",
+            "Looks only at previous tokens and itself"
+          ],
+          [
+            "Used for understanding text: classification, QA, etc.",
+            "Outputs probability distribution for next token"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "6.5 Transformer Decoder Block (Detailed)"
+      },
+      {
+        "type": "diagram",
+        "title": "Decoder block with residual connections",
+        "layers": [
+          [
+            "Input (X)"
+          ],
+          [
+            "Masked Multi-Head Self-Attention\nLooks at previous tokens and itself"
+          ],
+          [
+            "Residual Add + Layer Norm"
+          ],
+          [
+            "Feed Forward Network\nLinear d_model → d_ff\nReLU / GELU\nLinear d_ff → d_model"
+          ],
+          [
+            "Residual Add + Layer Norm"
+          ],
+          [
+            "Output (X′)"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-07-10.svg"
+      },
+      {
+        "type": "heading",
+        "text": "6.6 Causal Masking (Important for Generation)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "In a decoder, each token can only attend to previous tokens and itself, not future tokens.",
+          "This is achieved with a causal mask: an upper-triangular matrix containing −∞ above the diagonal.",
+          "It prevents the model from seeing future tokens during training and inference."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Attention mask (length = 5)\n[ 0  −∞  −∞  −∞  −∞ ]\n[ 0   0  −∞  −∞  −∞ ]\n[ 0   0   0  −∞  −∞ ]\n[ 0   0   0   0  −∞ ]\n[ 0   0   0   0   0 ]"
+      },
+      {
+        "type": "heading",
+        "text": "6.7 Complete Forward Pass (High Level)"
+      },
+      {
+        "type": "diagram",
+        "title": "Text to next-token probabilities",
+        "layers": [
+          [
+            "Input Text"
+          ],
+          [
+            "Tokenization"
+          ],
+          [
+            "Token Embeddings + Positional Encoding"
+          ],
+          [
+            "N × Decoder Blocks"
+          ],
+          [
+            "Linear + Softmax"
+          ],
+          [
+            "Next Token Probabilities"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-07-15.svg"
+      },
+      {
+        "type": "heading",
+        "text": "6.8 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Transformers use self-attention to capture context.",
+          "A decoder uses causal masking for text generation.",
+          "Multi-head attention helps learn multiple patterns.",
+          "Residual connections and layer normalization stabilize training.",
+          "Transformer architecture is a foundation of modern generative AI models."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "Parallel training does not make autoregressive generation parallel across all output tokens. T5 has both an encoder and a decoder; its decoder also attends to encoder outputs. BERT is primarily an encoder model, not an autoregressive text generator. Modern decoder normalization and positional methods may differ from the simplified diagram."
+      }
+    ]
+  },
+  {
+    "page": 8,
+    "title": "Self-Attention Mechanism",
+    "sourceFile": "1792805788749.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "7.1 What is Self-Attention?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Self-attention allows the model to look at tokens in the input sequence and identify which tokens are important for each token.",
+          "It helps capture long-range dependencies in a single layer.",
+          "It computes attention scores between tokens using Query (Q), Key (K) and Value (V) vectors.",
+          "Self-attention is a core building block of Transformers and is used in encoders and decoders."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "7.2 Intuition"
+      },
+      {
+        "type": "list",
+        "items": [
+          "For each token, compute how much it should attend to each permitted token in the sequence.",
+          "Tokens that are more relevant get higher attention scores.",
+          "The output is a weighted sum of value vectors based on attention weights."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "7.3 Self-Attention Workflow"
+      },
+      {
+        "type": "diagram",
+        "title": "Scaled dot-product self-attention",
+        "layers": [
+          [
+            "Input Tokens (X)\n[n, d_model]"
+          ],
+          [
+            "Linear Projections\nQ = XW^Q; K = XW^K; V = XW^V"
+          ],
+          [
+            "Compute Attention Scores\nQKᵀ"
+          ],
+          [
+            "Scale the Scores\nQKᵀ / √d_k"
+          ],
+          [
+            "Apply Softmax\nAttention Weights (A)"
+          ],
+          [
+            "Weighted Sum of Values\nOutput = AV"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-08-05.svg"
+      },
+      {
+        "type": "heading",
+        "text": "7.4 Dimensions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Matrix",
+          "Shape",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Input X",
+            "[n, d_model]",
+            "Input token embeddings"
+          ],
+          [
+            "Query Q",
+            "[n, d_k]",
+            "Query vectors"
+          ],
+          [
+            "Key K",
+            "[n, d_k]",
+            "Key vectors"
+          ],
+          [
+            "Value V",
+            "[n, d_v]",
+            "Value vectors"
+          ],
+          [
+            "Attention Scores QKᵀ",
+            "[n, n]",
+            "Similarity between tokens"
+          ],
+          [
+            "Attention Weights A",
+            "[n, n]",
+            "After softmax"
+          ],
+          [
+            "Output AV",
+            "[n, d_v]",
+            "Contextualized token vectors"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "7.5 Mathematical Formulation"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Q = XW^Q       K = XW^K       V = XW^V\nScores = QKᵀ\nScaled scores = QKᵀ / √d_k\nA = softmax(QKᵀ / √d_k)       # row-wise\nOutput = AV"
+      },
+      {
+        "type": "paragraph",
+        "text": "Scaling by √d_k prevents very large dot products from pushing softmax into extreme saturation. Apply any causal/padding mask before softmax."
+      },
+      {
+        "type": "heading",
+        "text": "7.6 Self-Attention Diagram"
+      },
+      {
+        "type": "diagram",
+        "title": "Queries and keys determine weights; values carry content",
+        "layers": [
+          [
+            "Input X [n, d_model]"
+          ],
+          [
+            "Linear W^Q\nQ [n, d_k]",
+            "Linear W^K\nK [n, d_k]",
+            "Linear W^V\nV [n, d_v]"
+          ],
+          [
+            "QKᵀ → Scale 1/√d_k → Softmax\nA [n, n]"
+          ],
+          [
+            "MatMul: A × V"
+          ],
+          [
+            "Output [n, d_v]"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-08-12.svg"
+      },
+      {
+        "type": "heading",
+        "text": "7.7 Example (Simple Sentence)"
+      },
+      {
+        "type": "paragraph",
+        "text": "Input: “The cat sat on the mat”. Tokens: [The, cat, sat, on, the, mat]."
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Token",
+          "Important Tokens it Attends To (Illustrative)"
+        ],
+        "rows": [
+          [
+            "The",
+            "cat, mat"
+          ],
+          [
+            "cat",
+            "The, sat"
+          ],
+          [
+            "sat",
+            "cat, on"
+          ],
+          [
+            "on",
+            "sat, the, mat"
+          ],
+          [
+            "the",
+            "The, mat"
+          ],
+          [
+            "mat",
+            "The, on"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "7.8 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Self-attention allows tokens to attend to one another in parallel.",
+          "It captures long-range dependencies.",
+          "It uses Query, Key and Value vectors.",
+          "It uses scaled dot-product attention with softmax.",
+          "Output is a weighted sum of value vectors.",
+          "It is a core component of models such as GPT, LLaMA and BERT."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The example attention relationships are illustrative, not measured attention weights. In a causal decoder, future-token edges in this unmasked example are forbidden. The source workflow labels the final shape [n, d_k]; the general correct shape is [n, d_v], which only equals it when d_v = d_k."
+      }
+    ]
+  },
+  {
+    "page": 9,
+    "title": "Multi-Head Attention",
+    "sourceFile": "1792805788745.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "8.1 What is Multi-Head Attention?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Multi-head attention runs multiple attention mechanisms, or heads, in parallel.",
+          "Each head learns different relationships between tokens.",
+          "It allows the model to capture diverse patterns such as syntactic, semantic and positional information.",
+          "Outputs from all heads are concatenated and projected to a single output.",
+          "It improves the model’s ability to represent complex context."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "8.2 Intuition"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Instead of a single attention head, multiple heads view input from different perspectives.",
+          "Some heads may capture grammatical relationships, some coreference, and some long-range dependencies.",
+          "Finally, all heads are combined into a richer representation."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "8.3 Multi-Head Attention Architecture"
+      },
+      {
+        "type": "diagram",
+        "title": "Parallel heads and final projection",
+        "layers": [
+          [
+            "Input X\n[n, d_model]"
+          ],
+          [
+            "Head 1 Attention",
+            "Head 2 Attention",
+            "… Head h Attention"
+          ],
+          [
+            "Concatenate\n[n, h × d_v]"
+          ],
+          [
+            "Linear Projection W^O\n[n, d_model]"
+          ],
+          [
+            "Output\n[n, d_model]"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-09-05.svg"
+      },
+      {
+        "type": "heading",
+        "text": "8.4 Computation Steps"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "1. Project input to Query, Key and Value for each head:\n   Qᵢ = XWᵢ^Q    Kᵢ = XWᵢ^K    Vᵢ = XWᵢ^V\n2. Compute attention for each head:\n   headᵢ = Attention(Qᵢ, Kᵢ, Vᵢ)\n3. Concatenate all heads:\n   MultiHead = Concat(head₁, head₂, …, head_h)\n4. Apply output linear projection:\n   Output = MultiHead W^O"
+      },
+      {
+        "type": "heading",
+        "text": "8.5 Detailed Diagram with Dimensions"
+      },
+      {
+        "type": "diagram",
+        "title": "Multi-head projections with tensor dimensions",
+        "layers": [
+          [
+            "Input X\n[n, d_model]"
+          ],
+          [
+            "Linear W^Q\n[n, h × d_k]",
+            "Linear W^K\n[n, h × d_k]",
+            "Linear W^V\n[n, h × d_v]"
+          ],
+          [
+            "Split Q into h heads\n[n, h, d_k]",
+            "Split K into h heads\n[n, h, d_k]",
+            "Split V into h heads\n[n, h, d_v]"
+          ],
+          [
+            "Scaled Dot-Product Attention (each head)\n[n, h, d_v]"
+          ],
+          [
+            "Concatenate Heads\n[n, h × d_v]"
+          ],
+          [
+            "Linear W^O\n[n, h × d_v] → [n, d_model]"
+          ],
+          [
+            "Output\n[n, d_model]"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ],
+          [
+            [
+              5,
+              0
+            ],
+            [
+              6,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-09-09.svg"
+      },
+      {
+        "type": "heading",
+        "text": "8.6 Example with Dimensions"
+      },
+      {
+        "type": "paragraph",
+        "text": "Assume n = 10 (sequence length), d_model = 512, h = 8 (number of heads). Then d_k = d_v = d_model / h = 512 / 8 = 64."
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Step",
+          "Shape",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Input X",
+            "[10, 512]",
+            "Input token embeddings"
+          ],
+          [
+            "Q, K, V after linear",
+            "[10, 512]",
+            "Projected representations"
+          ],
+          [
+            "Split into heads",
+            "[10, 8, 64]",
+            "8 heads with dimension 64"
+          ],
+          [
+            "Attention output",
+            "[10, 8, 64]",
+            "Output for all heads; one head is [10, 64]"
+          ],
+          [
+            "Concatenate heads",
+            "[10, 512]",
+            "Concatenate 8 heads: 8 × 64"
+          ],
+          [
+            "Final linear projection",
+            "[10, 512]",
+            "Project back to d_model"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "8.7 Why Multiple Heads?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Different heads can focus on different parts of the sequence.",
+          "Capture multiple types of relationships: local, global, syntactic and semantic.",
+          "Improve model performance.",
+          "Help represent complex language structures."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "8.8 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Multi-head attention runs multiple attention heads in parallel.",
+          "Each head learns a different representation.",
+          "Outputs are concatenated and projected.",
+          "It helps capture richer and more diverse context.",
+          "It is a key component of Transformer architecture."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "Dimensions omit the batch axis. Implementations often arrange tensors as [batch, heads, sequence, dimension]. The notes use d_k for concatenated output; d_v is the general value dimension. The common example sets them equal. Head specialization is possible, not a guaranteed human-interpretable role for every head."
+      }
+    ]
+  },
+  {
+    "page": 10,
+    "title": "Positional Encoding",
+    "sourceFile": "1792805788725.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "9.1 Why Positional Encoding?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Self-attention without position information cannot distinguish word order by itself.",
+          "Without positional information, the model cannot understand token order in a sequence.",
+          "Positional encoding adds information about each token’s position to its embedding vector.",
+          "It helps the model distinguish token positions and capture meaning based on word order."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "9.2 Intuition"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Each token is assigned a positional vector based on its position in the sequence.",
+          "This vector is added to the token embedding in the original Transformer formulation.",
+          "The resulting input contains token meaning from the embedding and position information."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "9.3 Overall Flow"
+      },
+      {
+        "type": "diagram",
+        "title": "Add position to token meaning",
+        "layers": [
+          [
+            "Input Tokens\n[“The”, “cat”, “sat”]"
+          ],
+          [
+            "Token Embeddings\n[n, d_model]"
+          ],
+          [
+            "Positional Encoding\n[n, d_model]"
+          ],
+          [
+            "Add (Element-wise)\nToken Embedding + Positional Encoding"
+          ],
+          [
+            "Input to Transformer\n[n, d_model]"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-10-05.svg"
+      },
+      {
+        "type": "heading",
+        "text": "9.4 Formula (Sinusoidal Positional Encoding)"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "PE(pos, 2i)   = sin(pos / 10000^(2i / d_model))\nPE(pos, 2i+1) = cos(pos / 10000^(2i / d_model))\n\npos = token position: 0, 1, 2, …\ni = frequency-pair index: 0, 1, 2, …\nd_model = embedding dimension, e.g. 512"
+      },
+      {
+        "type": "heading",
+        "text": "9.5 Example Calculation"
+      },
+      {
+        "type": "paragraph",
+        "text": "Assume d_model = 4 and a sequence of 3 tokens at positions 0, 1 and 2."
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Position",
+          "PE(pos, 0)",
+          "PE(pos, 1)",
+          "PE(pos, 2)",
+          "PE(pos, 3)"
+        ],
+        "rows": [
+          [
+            "0",
+            "sin(0) = 0",
+            "cos(0) = 1",
+            "sin(0) = 0",
+            "cos(0) = 1"
+          ],
+          [
+            "1",
+            "sin(1)",
+            "cos(1)",
+            "sin(1/100)",
+            "cos(1/100)"
+          ],
+          [
+            "2",
+            "sin(2)",
+            "cos(2)",
+            "sin(2/100)",
+            "cos(2/100)"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "9.6 Positional Encoding Matrix"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "For n = 3 and d_model = 4:\nPE = [ 0        1        0             1            ]\n     [ sin(1)   cos(1)   sin(1/100)    cos(1/100)   ]\n     [ sin(2)   cos(2)   sin(2/100)    cos(2/100)   ]"
+      },
+      {
+        "type": "heading",
+        "text": "9.7 Adding to Token Embeddings"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Final input to the model = Token Embedding + Positional Encoding\nX = E + PE\nE:  [n, d_model] token embeddings\nPE: [n, d_model] positional encoding\nX:  [n, d_model] input to Transformer"
+      },
+      {
+        "type": "heading",
+        "text": "9.8 Visual Representation"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Token Embeddings (E)       Positional Encoding (PE)       Transformer Input (X)\n[e₁₁ e₁₂ e₁₃ e₁₄]       [p₁₁ p₁₂ p₁₃ p₁₄]          [x₁₁ x₁₂ x₁₃ x₁₄]\n[e₂₁ e₂₂ e₂₃ e₂₄]   +   [p₂₁ p₂₂ p₂₃ p₂₄]    =     [x₂₁ x₂₂ x₂₃ x₂₄]\n[e₃₁ e₃₂ e₃₃ e₃₄]       [p₃₁ p₃₂ p₃₃ p₃₄]          [x₃₁ x₃₂ x₃₃ x₃₄]\nEach matrix has shape [n, d_model]."
+      },
+      {
+        "type": "heading",
+        "text": "9.9 Learnable vs Sinusoidal Positional Encoding"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "Sinusoidal (Original)",
+          "Learnable (Alternative)"
+        ],
+        "rows": [
+          [
+            "Type",
+            "Fixed (not trainable)",
+            "Trainable parameters"
+          ],
+          [
+            "Formula",
+            "Sine and cosine",
+            "Learned embeddings"
+          ],
+          [
+            "Generalization",
+            "Can compute positions beyond training length",
+            "May not generalize to longer sequences"
+          ],
+          [
+            "Usage",
+            "Original Transformer",
+            "Used in models such as BERT and GPT variants"
+          ],
+          [
+            "Performance",
+            "Works well",
+            "Sometimes better; task dependent"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "9.10 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Positional encoding provides token-position information.",
+          "It is added to token embeddings in this formulation.",
+          "Sinusoidal encoding uses sine and cosine functions.",
+          "It helps the model represent token order.",
+          "Position information is a crucial component of Transformer models."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "More precisely, unmasked self-attention without position signals is permutation-equivariant, not permutation-invariant. Modern models may use rotary or relative position methods instead of adding absolute position vectors. Being able to compute a longer sinusoidal sequence does not guarantee reliable extrapolation."
+      }
+    ]
+  },
+  {
+    "page": 11,
+    "title": "Model Training and Fine-Tuning",
+    "sourceFile": "1792805788825.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "10.1 Pre-training vs Fine-tuning"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "Pre-training",
+          "Fine-tuning"
+        ],
+        "rows": [
+          [
+            "Purpose",
+            "Learn general language understanding",
+            "Adapt to a specific task or domain"
+          ],
+          [
+            "Data",
+            "Large and diverse text data, e.g. web",
+            "Smaller, task-specific dataset"
+          ],
+          [
+            "Objective",
+            "Next-token prediction for causal LMs; self-supervised learning",
+            "Task-specific objective, e.g. classification or summarization"
+          ],
+          [
+            "Model",
+            "Base model, e.g. GPT, LLaMA, BERT",
+            "Pre-trained model further trained"
+          ],
+          [
+            "Compute",
+            "Very high",
+            "Relatively lower"
+          ],
+          [
+            "Output",
+            "General-purpose model",
+            "Domain/task-specialized model"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "10.2 Pre-training Process"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Use large-scale unlabeled text data.",
+          "Convert text into tokens and embeddings.",
+          "Train using next-token prediction for causal language modeling.",
+          "Learn general patterns, grammar, reasoning patterns and world knowledge."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Pre-training with backpropagation",
+        "layers": [
+          [
+            "Large Text Corpus\nBooks, web, wiki"
+          ],
+          [
+            "Tokenization + Embeddings"
+          ],
+          [
+            "Transformer Model"
+          ],
+          [
+            "Next Token Prediction (Loss)"
+          ],
+          [
+            "Update Model Parameters\nBackpropagation"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-11-04.svg"
+      },
+      {
+        "type": "heading",
+        "text": "10.3 Next Token Prediction Objective"
+      },
+      {
+        "type": "paragraph",
+        "text": "Given a sequence of tokens x₁, x₂, …, xₙ, the model learns to maximize the probability of the next token."
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "L = −(1/n) Σᵢ₌₁ⁿ log P(xᵢ | x₁, x₂, …, xᵢ₋₁)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "The probability is computed using a softmax over the vocabulary.",
+          "The model is trained to minimize the loss: negative log likelihood."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "10.4 Training Steps"
+      },
+      {
+        "type": "list",
+        "items": [
+          "1. Prepare and clean a large text dataset.",
+          "2. Tokenize the text.",
+          "3. Convert tokens to embeddings with positional information.",
+          "4. Pass through the Transformer model.",
+          "5. Compute loss using next-token prediction.",
+          "6. Update parameters using an optimizer such as AdamW.",
+          "7. Repeat over the training data for the planned training budget."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "10.5 Fine-tuning Process"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Start with a pre-trained model.",
+          "Use a smaller, task-specific dataset.",
+          "Continue training on new data, often for a few epochs.",
+          "The model adapts to the task while aiming to retain general knowledge.",
+          "Fine-tune all parameters or only a subset, e.g. LoRA."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Fine-tuning a pre-trained model",
+        "layers": [
+          [
+            "Pre-trained Model\nLLaMA, GPT",
+            "Task-Specific Dataset\nQA, summarization"
+          ],
+          [
+            "Fine-tuning\nContinue Training"
+          ],
+          [
+            "Adapted Model"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-11-13.svg"
+      },
+      {
+        "type": "heading",
+        "text": "10.6 Fine-tuning Techniques"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Technique",
+          "Description",
+          "Parameters Updated",
+          "Use Case"
+        ],
+        "rows": [
+          [
+            "Full Fine-tuning",
+            "Update all model parameters",
+            "All",
+            "High-quality results, more compute"
+          ],
+          [
+            "Parameter-Efficient Fine-tuning (PEFT)",
+            "Update a small set of parameters",
+            "Adapters, prefixes, etc.",
+            "Efficient fine-tuning"
+          ],
+          [
+            "LoRA",
+            "Low-Rank Adaptation; adds small matrices",
+            "Only LoRA parameters",
+            "Popular and efficient"
+          ],
+          [
+            "QLoRA",
+            "LoRA with 4-bit quantization",
+            "Only LoRA parameters",
+            "Memory-efficient adaptation of large models"
+          ],
+          [
+            "Prompt Tuning",
+            "Learn soft prompts instead of full model",
+            "Only prompt embeddings",
+            "Very efficient"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "10.7 LoRA (Low-Rank Adaptation)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Instead of updating the full weight matrix W, LoRA adds small low-rank matrices.",
+          "Only the low-rank factors are trained; they contain far fewer parameters."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Original weight: W ∈ ℝ^(d×k)\nLoRA update: W′ = W + ΔW = W + ABᵀ\nA ∈ ℝ^(d×r), B ∈ ℝ^(k×r), r ≪ min(d, k)\nEquivalent factor notation: ΔW = A B_factor, B_factor ∈ ℝ^(r×k)."
+      },
+      {
+        "type": "diagram",
+        "title": "Frozen weights plus a trainable low-rank update",
+        "layers": [
+          [
+            "Input X"
+          ],
+          [
+            "Pre-trained Weight W\nFrozen",
+            "LoRA Update\nA (d × r) · Bᵀ (r × k)"
+          ],
+          [
+            "Add: W + ΔW"
+          ],
+          [
+            "Output"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-11-19.svg"
+      },
+      {
+        "type": "heading",
+        "text": "10.8 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Pre-training teaches general language patterns.",
+          "Fine-tuning adapts a model to a task or domain.",
+          "Next-token prediction is the causal-LM training objective.",
+          "Parameter-efficient methods such as LoRA and QLoRA are widely used.",
+          "Fine-tuning usually requires less data and compute than pre-training.",
+          "It can improve performance for real-world applications."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The source mixes ABᵀ with dimensions for AB. The factors above make both notations dimensionally consistent. BERT uses masked language modeling rather than causal next-token prediction. More epochs are not automatically better: monitor held-out quality and forgetting; multiple passes over a huge corpus are not required in every pre-training run."
+      }
+    ]
+  },
+  {
+    "page": 12,
+    "title": "Tokenization Methods and Vocabulary",
+    "sourceFile": "1792805788803.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "11.1 What is Tokenization?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Tokenization converts raw text into smaller units called tokens.",
+          "Tokens can be words, subwords, characters or byte-based units.",
+          "Tokens map to unique integer IDs using a vocabulary.",
+          "This helps the model process text efficiently."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "11.2 Why Tokenization is Needed"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Computers and models operate on numeric representations of text.",
+          "Converts text into numeric form.",
+          "Handles unseen words using subword techniques.",
+          "Reduces vocabulary size compared with storing every possible word.",
+          "Helps handle different languages, typos and new words."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "11.3 Types of Tokenization"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Type",
+          "Example",
+          "Pros",
+          "Cons"
+        ],
+        "rows": [
+          [
+            "Word level",
+            "“The cat” → [The, cat]",
+            "Simple, interpretable",
+            "Large vocabulary, unknown words"
+          ],
+          [
+            "Character level",
+            "“cat” → [c, a, t]",
+            "Handles any covered character",
+            "Very long sequences"
+          ],
+          [
+            "Subword level: BPE, WordPiece, Unigram",
+            "“playing” → [play, ing]",
+            "Good balance; handles new words",
+            "More complex than word level"
+          ],
+          [
+            "Byte level",
+            "“cat” → [99, 97, 116]",
+            "Works for any encoded text, including emojis",
+            "Longer sequences before merges"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "11.4 Word-Level Tokenization Example"
+      },
+      {
+        "type": "paragraph",
+        "text": "Sentence: “The cat sat on the mat”. Split by space → [The, cat, sat, on, the, mat]. Map to IDs using a vocabulary."
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Token",
+          "ID (Example from Source)"
+        ],
+        "rows": [
+          [
+            "The",
+            "10"
+          ],
+          [
+            "cat",
+            "25"
+          ],
+          [
+            "sat",
+            "30"
+          ],
+          [
+            "on",
+            "18"
+          ],
+          [
+            "the",
+            "10"
+          ],
+          [
+            "mat",
+            "45"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "11.5 Subword Tokenization (Byte Pair Encoding — BPE)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Start with characters as the initial vocabulary.",
+          "Find the most frequent pair of tokens.",
+          "Merge the pair into a new token.",
+          "Repeat for a fixed number of merges.",
+          "This creates subword units that can handle new words."
+        ]
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Training words: [lower, lowest, newer, wider]\n1. Start with characters: [l, o, w, e, r, s, t, n, i, d]\n2. Example frequent pair: (l, o) → lo\n3. Next example merge: (lo, w) → low\n4. Continue …\nIllustrative final splits printed in the source:\n“lower”  → [low, er]\n“newer”  → [new, er]\n“widest” → [wide, st]"
+      },
+      {
+        "type": "heading",
+        "text": "11.6 Vocabulary and Token IDs"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Each vocabulary token has a fixed integer ID.",
+          "The collection of tokens is called a vocabulary.",
+          "Example vocabulary size: 8."
+        ]
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Token",
+          "ID"
+        ],
+        "rows": [
+          [
+            "<pad>",
+            "0"
+          ],
+          [
+            "<unk>",
+            "1"
+          ],
+          [
+            "The",
+            "2"
+          ],
+          [
+            "cat",
+            "3"
+          ],
+          [
+            "sat",
+            "4"
+          ],
+          [
+            "on",
+            "5"
+          ],
+          [
+            "mat",
+            "6"
+          ],
+          [
+            ".",
+            "7"
+          ]
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Vocabulary lookup",
+        "layers": [
+          [
+            "Tokenized Sequence\n“The cat sat .”"
+          ],
+          [
+            "Map tokens to vocabulary IDs"
+          ],
+          [
+            "[2, 3, 4, 7]"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-12-15.svg"
+      },
+      {
+        "type": "heading",
+        "text": "11.7 Special Tokens"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Token",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "<pad>",
+            "Padding to equal sequence lengths"
+          ],
+          [
+            "<unk>",
+            "Unknown token, not in vocabulary"
+          ],
+          [
+            "<bos>",
+            "Beginning of sequence"
+          ],
+          [
+            "<eos>",
+            "End of sequence"
+          ],
+          [
+            "<sep>",
+            "Separator between sentences in some models"
+          ],
+          [
+            "<mask>",
+            "Masked language modeling, e.g. BERT"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "11.8 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Tokenization converts text into tokens.",
+          "Subword tokenization such as BPE, WordPiece and Unigram is common in modern LLMs.",
+          "A vocabulary maps each token to a unique ID.",
+          "Special tokens help model training and inference.",
+          "Tokenization is crucial for handling diverse and unseen words."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The source assigns both “The” and “the” to ID 10 in its first table. That requires normalization such as lowercasing; a case-sensitive tokenizer normally treats them separately. The BPE merges and final splits are schematic, not a learned vocabulary verified from the four listed words. Special-token names and presence vary by tokenizer."
+      }
+    ]
+  },
+  {
+    "page": 13,
+    "title": "AI Agents and Tool Use",
+    "sourceFile": "1792805788846.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "12.1 What are AI Agents?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "AI agents use LLMs to interpret a goal, plan steps, use tools and take actions to complete tasks.",
+          "Unlike a simple LLM chat, an agent can interact with external tools, APIs, databases and files.",
+          "Agents can plan, take multiple steps and adapt based on results.",
+          "Agents are useful for automation, research, data analysis and other multi-step tasks."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "12.2 Key Components of an AI Agent"
+      },
+      {
+        "type": "diagram",
+        "title": "Agent components",
+        "layers": [
+          [
+            "User Goal / Query"
+          ],
+          [
+            "Agent\nLLM + Orchestration",
+            "Tools\nAPIs, DB, Files, Internet, Code"
+          ],
+          [
+            "Planner\nSteps and task plan"
+          ],
+          [
+            "Memory\nConversation, Context, Past Results"
+          ],
+          [
+            "Final Output\nAnswer / Action Taken"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-13-03.svg"
+      },
+      {
+        "type": "heading",
+        "text": "12.3 Types of AI Agents"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Type",
+          "Description",
+          "Example Use Case"
+        ],
+        "rows": [
+          [
+            "Simple Agent",
+            "Single-step action",
+            "Use a calculator for a math query"
+          ],
+          [
+            "ReAct Agent",
+            "Reason and act iteratively",
+            "Search internet, read results, answer"
+          ],
+          [
+            "Tool-Using Agent",
+            "Use external tools/APIs",
+            "Call weather API, fetch data from DB"
+          ],
+          [
+            "Planning Agent",
+            "Break task into steps and execute",
+            "Plan a travel itinerary"
+          ],
+          [
+            "Autonomous Agent",
+            "Works with minimal human input",
+            "Research, analyze data, create report"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "12.4 How an Agent Works (Flow)"
+      },
+      {
+        "type": "diagram",
+        "title": "Bounded agent workflow",
+        "layers": [
+          [
+            "1. Understand User Goal\nLLM interprets intent"
+          ],
+          [
+            "2. Plan Steps\nBreak down into small tasks"
+          ],
+          [
+            "3. Select and Use Tools\nCall APIs, search, read files, run code"
+          ],
+          [
+            "4. Observe Results\nGet output from tools"
+          ],
+          [
+            "5. Iterate\nIf needed, refine steps and repeat"
+          ],
+          [
+            "6. Final Answer\nReturn response to user"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-13-07.svg"
+      },
+      {
+        "type": "heading",
+        "text": "12.5 Example: Agent for Travel Planning"
+      },
+      {
+        "type": "paragraph",
+        "text": "User query: “Plan a 3-day trip to Goa from Delhi including flights, hotels and places to visit.”"
+      },
+      {
+        "type": "diagram",
+        "title": "Travel-planning agent",
+        "layers": [
+          [
+            "User Query"
+          ],
+          [
+            "Agent (LLM)",
+            "Tools\nFlight API; Hotel API\nSearch (Places); Maps API"
+          ],
+          [
+            "Plan\n1. Search Flights\n2. Search Hotels\n3. Find Places to Visit"
+          ],
+          [
+            "Call Tools and Get Results"
+          ],
+          [
+            "Combine Information and Generate Itinerary"
+          ],
+          [
+            "Final Output\n3-day Plan"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-13-10.svg"
+      },
+      {
+        "type": "heading",
+        "text": "12.6 Common Tools Used by Agents"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Tool Type",
+          "Examples",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Web Search",
+            "Google Search, Tavily",
+            "Get latest information"
+          ],
+          [
+            "APIs",
+            "Weather API, Flight API",
+            "Fetch real-time data"
+          ],
+          [
+            "Databases",
+            "MySQL, MongoDB",
+            "Read/write data"
+          ],
+          [
+            "File System",
+            "Read/write files",
+            "Work with local files"
+          ],
+          [
+            "Code Execution",
+            "Python REPL",
+            "Run code, calculations"
+          ],
+          [
+            "Knowledge Base",
+            "Vector DB, e.g. Qdrant",
+            "Retrieve domain knowledge"
+          ],
+          [
+            "Custom Tools",
+            "Any business API",
+            "Domain-specific actions"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "12.7 Example: ReAct-Style Agent (Pseudocode)"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "User: “What is the current weather in Delhi?”\nPlan summary: A weather API is needed for live data.\nAction: get_weather_api(city=\"Delhi\")\nObservation (illustrative): {\"city\":\"Delhi\", \"temp\":28, \"condition\":\"Clear\"}\nResult summary: Use the observed API response to answer.\nFinal Answer: “The current weather in Delhi is 28°C with clear skies.”"
+      },
+      {
+        "type": "heading",
+        "text": "12.8 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "AI agents use LLMs to plan and take actions.",
+          "They can use external tools such as APIs, databases and files.",
+          "A ReAct-style loop alternates planning, action and observation.",
+          "Different agents fit different use cases.",
+          "Tools and memory make agents more capable.",
+          "Examples include travel planning, automation, research and data analysis."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The source’s “Thought” lines are rendered as inspectable plan/result summaries; they are not private model reasoning or proof of correctness. The weather is example data, not a live report. Tool permissions, input validation, iteration limits and approval for sensitive actions must be enforced by application code."
+      }
+    ]
+  },
+  {
+    "page": 14,
+    "title": "RAG — Retrieval-Augmented Generation",
+    "sourceFile": "1792805788697.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "13.1 What is RAG?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "RAG combines information retrieval with text generation.",
+          "It fetches relevant information from external knowledge sources such as documents and databases and provides it to the LLM as context.",
+          "This can help generate more accurate, up-to-date and domain-specific answers.",
+          "RAG can reduce hallucinations and allow use of private or organizational data."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "13.2 Why RAG is Needed"
+      },
+      {
+        "type": "list",
+        "items": [
+          "LLMs have limited training knowledge and a bounded context window.",
+          "They may generate incorrect or hallucinated answers.",
+          "RAG uses information from external sources.",
+          "Useful for enterprise data, documentation, Q&A systems and customer support."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "13.3 RAG Architecture (High Level)"
+      },
+      {
+        "type": "diagram",
+        "title": "High-level retrieval-augmented generation",
+        "layers": [
+          [
+            "User Query"
+          ],
+          [
+            "Query Embedding"
+          ],
+          [
+            "Vector Search (Retrieval)"
+          ],
+          [
+            "Relevant Documents (Top K)"
+          ],
+          [
+            "Combine Context\nPrompt Engineering"
+          ],
+          [
+            "LLM (Generation)"
+          ],
+          [
+            "Final Output\nAnswer with Sources"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-14-05.svg"
+      },
+      {
+        "type": "heading",
+        "text": "13.4 RAG Workflow (Detailed Steps)"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Step",
+          "Stage",
+          "What Happens"
+        ],
+        "rows": [
+          [
+            "1",
+            "Load Data",
+            "Ingest PDF, docs, web and database documents."
+          ],
+          [
+            "2",
+            "Chunking",
+            "Split documents into smaller chunks, e.g. 500 tokens with overlap."
+          ],
+          [
+            "3",
+            "Create Embeddings",
+            "Convert each chunk into a vector using an embedding model."
+          ],
+          [
+            "4",
+            "Store in Vector DB",
+            "Save embeddings and metadata, e.g. Qdrant or Pinecone."
+          ],
+          [
+            "5",
+            "Retrieve",
+            "Embed a user query and find top-K similar chunks."
+          ],
+          [
+            "6",
+            "Augment Prompt",
+            "Combine retrieved chunks with the query using a prompt template."
+          ],
+          [
+            "7",
+            "Generate Answer",
+            "Send augmented prompt to LLM; return the answer with sources."
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "13.5 Data Ingestion and Chunking"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Load data from sources such as PDF, web and database.",
+          "Split documents into smaller chunks for retrieval.",
+          "Use overlap between chunks to maintain context."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Chunking with 50-token overlap",
+        "layers": [
+          [
+            "Original Text\nLarge Document"
+          ],
+          [
+            "Split into Chunks\nchunk_size = 500 tokens\noverlap = 50 tokens"
+          ],
+          [
+            "Chunk 1\nTokens 1–500",
+            "Chunk 2\nTokens 451–950",
+            "Chunk 3\nTokens 901–1400"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-14-10.svg"
+      },
+      {
+        "type": "heading",
+        "text": "13.6 Embeddings and Vector Database"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Convert each chunk into a high-dimensional embedding vector using an embedding model.",
+          "Similar chunks can have similar vector representations.",
+          "Store vectors in a vector database for similarity search."
+        ]
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Component",
+          "Description",
+          "Examples from Notes"
+        ],
+        "rows": [
+          [
+            "Embedding Model",
+            "Converts text to vector",
+            "all-MiniLM-L6-v2, OpenAI, BGE"
+          ],
+          [
+            "Vector Database",
+            "Stores and searches vectors",
+            "Qdrant, Pinecone, Weaviate, FAISS"
+          ],
+          [
+            "Similarity Search",
+            "Finds relevant chunks using vector similarity",
+            "Cosine Similarity, Dot Product"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "13.7 Retrieval and Generation"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Convert the user query into an embedding vector.",
+          "Retrieve top-K relevant chunks using similarity search.",
+          "Add retrieved context to the prompt.",
+          "Send the augmented prompt to the LLM to generate the answer."
+        ]
+      },
+      {
+        "type": "diagram",
+        "title": "Retrieval and generation path",
+        "layers": [
+          [
+            "User Query"
+          ],
+          [
+            "Query Embedding"
+          ],
+          [
+            "Vector DB\nSimilarity Search"
+          ],
+          [
+            "Top K Chunks"
+          ],
+          [
+            "Augmented Prompt\nQuery + Retrieved Context"
+          ],
+          [
+            "LLM (Generation)"
+          ],
+          [
+            "Final Answer\nCitations / Sources"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-14-16.svg"
+      },
+      {
+        "type": "heading",
+        "text": "13.8 Benefits and Use Cases"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "Details"
+        ],
+        "rows": [
+          [
+            "Accuracy",
+            "Can provide factual, up-to-date answers"
+          ],
+          [
+            "Reduced Hallucination",
+            "Uses documents rather than relying only on learned knowledge"
+          ],
+          [
+            "Domain Specific",
+            "Works with private/organizational data"
+          ],
+          [
+            "Scalability",
+            "Can handle large document collections"
+          ],
+          [
+            "Flexibility",
+            "Works with PDFs, DB, web and other data sources"
+          ],
+          [
+            "Use Cases",
+            "Chat with documents, internal Q&A, customer support, research assistants, knowledge management"
+          ]
+        ]
+      },
+      {
+        "type": "note",
+        "text": "RAG does not guarantee truth or authorization. Enforce document access before retrieval, validate sources and freshness, treat retrieved text as untrusted data, and allow “not enough evidence.” FAISS is a similarity-search library, not a complete managed database. Chunk size and overlap here are examples to evaluate, not universal defaults."
+      }
+    ]
+  },
+  {
+    "page": 15,
+    "title": "Vector Databases and Semantic Search",
+    "sourceFile": "1792805788918.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "14.1 What is a Vector Database?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "A vector database stores, indexes and searches high-dimensional vectors or embeddings.",
+          "It enables similarity search over unstructured data such as text and images.",
+          "It focuses on vector similarity rather than only exact keyword matches.",
+          "It is used in RAG, recommendation systems, image search and AI applications."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "14.2 Why Vector Databases are Needed"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Traditional keyword search can miss meaning and context.",
+          "Embeddings convert data into numerical vectors.",
+          "Vector indexes support similarity search over millions of vectors.",
+          "They can use indexing algorithms such as HNSW, IVF and PQ.",
+          "Useful for semantic search, RAG, chatbots and recommendations."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "14.3 Vector Representation"
+      },
+      {
+        "type": "diagram",
+        "title": "Text to a vector representation",
+        "layers": [
+          [
+            "Text\n“The cat sits”"
+          ],
+          [
+            "Embedding Model\nall-MiniLM, OpenAI, etc."
+          ],
+          [
+            "Vector\n[0.12, −0.34, 0.56, 0.21, …]\n768 dimensions (example)"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-15-05.svg"
+      },
+      {
+        "type": "heading",
+        "text": "14.4 Example Embeddings"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Text",
+          "Vector (5 dimensions, illustrative)"
+        ],
+        "rows": [
+          [
+            "“The cat”",
+            "[0.10, 0.23, −0.11, 0.45, 0.08]"
+          ],
+          [
+            "“A dog”",
+            "[0.12, 0.20, −0.10, 0.40, 0.07]"
+          ],
+          [
+            "“Car”",
+            "[−0.50, 0.10, 0.60, −0.20, 0.30]"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "14.5 Similarity Search"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Finds vectors most similar to a query vector.",
+          "Common metrics: cosine similarity, Euclidean distance and dot product."
+        ]
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Metric",
+          "Formula",
+          "Range",
+          "Use Case"
+        ],
+        "rows": [
+          [
+            "Cosine Similarity",
+            "cos(θ) = (A · B) / (‖A‖ ‖B‖)",
+            "−1 to 1 for nonzero vectors",
+            "Common for text"
+          ],
+          [
+            "Euclidean Distance",
+            "d(A, B) = √Σᵢ(Aᵢ − Bᵢ)²",
+            "0 to ∞",
+            "General purpose; lower is closer"
+          ],
+          [
+            "Dot Product",
+            "A · B = Σᵢ AᵢBᵢ",
+            "−∞ to ∞",
+            "Used in some embedding models"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "14.6 Vector Database Workflow"
+      },
+      {
+        "type": "diagram",
+        "title": "Index documents and retrieve similar chunks",
+        "layers": [
+          [
+            "Documents\nText, PDF, Web"
+          ],
+          [
+            "1. Split into Chunks\nSmaller pieces, e.g. 500 tokens"
+          ],
+          [
+            "2. Generate Embeddings\nEmbedding model converts each chunk"
+          ],
+          [
+            "3. Store in Vector DB\nVectors + metadata"
+          ],
+          [
+            "4. Query Embedding\nSearch for similar chunks"
+          ],
+          [
+            "5. Retrieve Top K Similar Chunks\nRank by similarity score"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-15-12.svg"
+      },
+      {
+        "type": "heading",
+        "text": "14.7 Popular Vector Databases"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Database",
+          "Type in Notes",
+          "Key Features in Notes",
+          "Use Cases"
+        ],
+        "rows": [
+          [
+            "Pinecone",
+            "Managed (Cloud)",
+            "Scalable, easy to use, low latency",
+            "RAG, semantic search, AI apps"
+          ],
+          [
+            "Weaviate",
+            "Open Source",
+            "Hybrid vector + keyword search, GraphQL",
+            "RAG, knowledge graphs, AI apps"
+          ],
+          [
+            "Qdrant",
+            "Open Source",
+            "Fast search, filtering, payload support",
+            "RAG, search, recommendations"
+          ],
+          [
+            "Milvus",
+            "Open Source",
+            "Distributed, large-scale, high performance",
+            "Enterprise, large datasets"
+          ],
+          [
+            "Chroma",
+            "Open Source",
+            "Simple, lightweight, good for prototyping",
+            "RAG, local apps, learning"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "14.8 Example: Semantic Search"
+      },
+      {
+        "type": "paragraph",
+        "text": "Query: “Best places to visit in Goa”. Query embedding q = [0.21, −0.11, 0.33, …]."
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Document",
+          "Illustrative Vector",
+          "Illustrative Score"
+        ],
+        "rows": [
+          [
+            "1. Goa travel guide",
+            "[0.20, −0.10, 0.31, …]",
+            "0.95"
+          ],
+          [
+            "2. Best beaches in India",
+            "[0.15, −0.05, 0.28, …]",
+            "0.87"
+          ],
+          [
+            "3. Himalayan treks",
+            "[−0.30, 0.40, −0.12, …]",
+            "0.12"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "Top result: Document 1, with the highest illustrative similarity score."
+      },
+      {
+        "type": "heading",
+        "text": "14.9 Metadata Filtering (Hybrid Search)"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Vector databases can filter using metadata such as category, date and source.",
+          "This helps retrieve more relevant results."
+        ]
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Chunk",
+          "Text",
+          "Metadata"
+        ],
+        "rows": [
+          [
+            "1",
+            "Goa travel guide",
+            "{\"category\":\"travel\",\"location\":\"Goa\"}"
+          ],
+          [
+            "2",
+            "Delhi food guide",
+            "{\"category\":\"food\",\"location\":\"Delhi\"}"
+          ],
+          [
+            "3",
+            "Java tutorial",
+            "{\"category\":\"education\",\"topic\":\"Java\"}"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "Query: “travel places in Goa” + filter: category = travel."
+      },
+      {
+        "type": "heading",
+        "text": "14.10 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Vector databases enable similarity search over embeddings.",
+          "They use efficient indexing techniques such as HNSW, IVF and PQ.",
+          "They support metadata filtering; some support hybrid search.",
+          "Useful for RAG, recommendations and AI applications.",
+          "Examples include Pinecone, Weaviate, Qdrant, Milvus and Chroma.",
+          "Choose based on scalability, features and the use case."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The incomplete vectors and scores are illustrative and cannot be recomputed from the shown coordinates. Metadata filtering is not the same as hybrid ranking, which typically combines lexical and vector search. Authorization filters must come from trusted identity context. Product features and hosting options listed here reflect the source examples; verify them before selecting a product."
+      }
+    ]
+  },
+  {
+    "page": 16,
+    "title": "Evaluation and Hallucination Control",
+    "sourceFile": "1792805788803 (1).jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "15.1 Why Evaluation is Important"
+      },
+      {
+        "type": "list",
+        "items": [
+          "LLMs can generate fluent but incorrect answers.",
+          "We need to evaluate quality, relevance, accuracy and safety.",
+          "Evaluation helps compare models, prompts and RAG strategies.",
+          "Essential for chatbots, enterprise search and AI agents.",
+          "It supports more reliable AI systems."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.2 What is Hallucination?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "A hallucination is incorrect or fabricated information not supported by facts or context.",
+          "It may sound believable while being wrong.",
+          "Common in knowledge questions, numbers, citations and domain-specific answers.",
+          "RAG, prompting and evaluation can help reduce hallucinations."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.3 Types of Hallucinations"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Type",
+          "Description",
+          "Example of an Incorrect Answer"
+        ],
+        "rows": [
+          [
+            "Factual Hallucination",
+            "Incorrect facts or fake information",
+            "“Taj Mahal was built in 1600” — incorrect year"
+          ],
+          [
+            "Contextual Hallucination",
+            "Not aligned with given context",
+            "Answering about a different topic"
+          ],
+          [
+            "Citation Hallucination",
+            "Fake references",
+            "“According to Smith (2020)…” when no such reference exists"
+          ],
+          [
+            "Numerical Hallucination",
+            "Incorrect numbers or calculations",
+            "“India has 5 billion people” — incorrect"
+          ],
+          [
+            "Logical Hallucination",
+            "Illogical or contradictory statements",
+            "Claims that violate basic logic"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.4 Evaluation Metrics"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Metric",
+          "Description",
+          "Use Case"
+        ],
+        "rows": [
+          [
+            "Accuracy",
+            "Correctness of answer",
+            "General QA"
+          ],
+          [
+            "Faithfulness",
+            "Grounded in provided context",
+            "RAG, factual QA"
+          ],
+          [
+            "Relevance",
+            "Answers the actual question",
+            "Search, chatbots"
+          ],
+          [
+            "Context Precision",
+            "Relevance of retrieved chunks",
+            "RAG retrieval"
+          ],
+          [
+            "Context Recall",
+            "Coverage of necessary sources",
+            "RAG retrieval"
+          ],
+          [
+            "F1 Score",
+            "Balance of precision and recall",
+            "Task-specific evaluation"
+          ],
+          [
+            "BLEU / ROUGE",
+            "Traditional text-overlap measures",
+            "Summarization and generation"
+          ],
+          [
+            "BERTScore",
+            "Semantic similarity using embeddings",
+            "Model evaluation"
+          ],
+          [
+            "RAGAS",
+            "RAG evaluation framework",
+            "RAG applications"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.5 RAGAS Evaluation Framework"
+      },
+      {
+        "type": "list",
+        "items": [
+          "RAGAS is a framework for evaluating RAG systems.",
+          "It provides metrics for retrieval quality, answer quality and faithfulness.",
+          "Used for testing and benchmarking RAG pipelines."
+        ]
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Metric in Notes",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Context Precision",
+            "How relevant retrieved chunks are"
+          ],
+          [
+            "Context Recall",
+            "How many relevant chunks were retrieved"
+          ],
+          [
+            "Faithfulness",
+            "Whether the answer is grounded in context"
+          ],
+          [
+            "Answer Relevancy",
+            "How relevant the answer is to the question"
+          ],
+          [
+            "Answer Correctness",
+            "Overall correctness of the final answer"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.6 Techniques to Control Hallucinations"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Use RAG with trusted, up-to-date sources.",
+          "Provide clear and specific instructions.",
+          "Use structured output formats such as JSON or tables.",
+          "Add citations/source references.",
+          "Use lower temperature for factual tasks when supported.",
+          "Validate answers using external tools or APIs.",
+          "Apply guardrails and content filters.",
+          "Use function calling or tools to fetch real-time data."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.7 RAG with Citation Example"
+      },
+      {
+        "type": "diagram",
+        "title": "Evidence-grounded answer with citations",
+        "layers": [
+          [
+            "User Query"
+          ],
+          [
+            "Retrieve Relevant Documents (RAG)"
+          ],
+          [
+            "Generate Answer with Citations"
+          ],
+          [
+            "Final Output\nAnswer + Sources"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-16-14.svg"
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "text": "Query: “What is the capital of France?”\nRetrieved Context: [Doc1: “Paris is the capital of France …”]\nLLM Answer: “The capital of France is Paris.”\nCitations printed in the source example:\n[1] Europe Travel Guide (2023)\n[2] Wikipedia — France (2024)"
+      },
+      {
+        "type": "heading",
+        "text": "15.8 Best Practices"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Consider RAG for domain-specific or private data when retrieval fits the task.",
+          "Evaluate answers using multiple metrics, including semantic similarity and task checks.",
+          "Show sources/citations to users.",
+          "Keep prompts clear and avoid ambiguous questions.",
+          "Use metadata filtering to retrieve relevant documents.",
+          "Continuously monitor and evaluate outputs.",
+          "Implement guardrails to detect harmful or incorrect content."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "15.9 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Evaluation is essential for reliable AI applications.",
+          "Hallucinations are common and can be reduced, not eliminated by one technique.",
+          "Use RAG, clear prompts, citations and evaluation metrics.",
+          "Tools such as RAGAS help measure RAG performance.",
+          "Validate important answers against trusted sources."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "Low temperature can reduce output variation; it does not make an answer true. A citation must identify an actually retrieved source and support the associated claim. The two source labels in the example are placeholders, not verified references. Metric names and definitions vary by framework version. Human review and task-specific checks remain necessary, especially when an LLM grades another LLM."
+      }
+    ]
+  },
+  {
+    "page": 17,
+    "title": "Security, Cost and Performance in Generative AI",
+    "sourceFile": "1792805788849.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "16.1 Why It is Important"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Generative AI applications may process sensitive data and can be expensive to run.",
+          "We need data security, privacy, cost control and good performance.",
+          "These concerns help build reliable, safe and scalable applications.",
+          "They matter for enterprise adoption and production environments."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.2 Security Risks in Generative AI"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Risk",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Data Leakage",
+            "Sensitive data exposed in prompts or outputs"
+          ],
+          [
+            "Prompt Injection",
+            "Malicious prompts try to manipulate model behavior"
+          ],
+          [
+            "Model Jailbreak",
+            "Techniques to bypass safety restrictions"
+          ],
+          [
+            "Insecure Plugins/Tools",
+            "External tools introduce security risks"
+          ],
+          [
+            "Data Privacy",
+            "User data may be stored or used for training depending on service terms"
+          ],
+          [
+            "Adversarial Attacks",
+            "Crafted inputs induce harmful or incorrect outputs"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.3 Security Best Practices"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Do not send sensitive or confidential data to unapproved systems.",
+          "Use data masking and anonymization where appropriate.",
+          "Implement input validation and output/content checks.",
+          "Use role-based access control for applications.",
+          "Log and monitor prompts and responses with appropriate redaction and access controls.",
+          "Use HTTPS, authentication and secure API endpoints.",
+          "Regularly test prompt injection and jailbreak attempts.",
+          "Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples in the notes."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.4 Cost Factors in Generative AI"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Factor",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Model Usage",
+            "Input/output token charges"
+          ],
+          [
+            "Model Size",
+            "Larger models often require more compute"
+          ],
+          [
+            "Inference Type",
+            "Real-time inference vs batch processing"
+          ],
+          [
+            "Context Length",
+            "Longer contexts increase input token usage"
+          ],
+          [
+            "Fine-tuning",
+            "Training compute costs"
+          ],
+          [
+            "Infrastructure",
+            "GPU/CPU instances, storage and network"
+          ],
+          [
+            "Third-party Services",
+            "API credits or subscriptions"
+          ],
+          [
+            "Data Storage",
+            "Documents, embeddings and logs"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.5 Cost Optimization Strategies"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Use smaller, efficient models when quality permits; source examples include GPT-3.5 and LLaMA.",
+          "Cache repeated queries with correct authorization boundaries.",
+          "Use vector retrieval to select relevant context.",
+          "Optimize prompts to be short and clear.",
+          "Use batch processing for non-real-time work.",
+          "Consider quantization for self-hosted deployment.",
+          "Monitor token usage and set limits/quotas.",
+          "Choose cloud or self-hosted infrastructure to fit the task."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.6 Performance Metrics"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Metric",
+          "Description",
+          "Goal"
+        ],
+        "rows": [
+          [
+            "Latency",
+            "Time to get a response",
+            "Lower is better"
+          ],
+          [
+            "Throughput",
+            "Requests per second",
+            "Higher within quality/error targets"
+          ],
+          [
+            "Token Processing Speed",
+            "Generated tokens per second",
+            "Higher within quality targets"
+          ],
+          [
+            "Accuracy / Quality",
+            "Relevance and correctness",
+            "Higher is better"
+          ],
+          [
+            "Resource Usage",
+            "CPU, GPU, memory utilization",
+            "Efficient usage"
+          ],
+          [
+            "Availability",
+            "Uptime of service",
+            "Target such as 99.9%, per application"
+          ],
+          [
+            "Scalability",
+            "Handle increasing load",
+            "Scale smoothly"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.7 Performance Optimization Techniques"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Use quantization such as 8-bit or 4-bit to reduce memory usage.",
+          "Use GPU acceleration where beneficial.",
+          "Cache frequent queries, e.g. Redis.",
+          "Stream responses to reduce perceived latency.",
+          "Optimize prompt length and remove unnecessary context.",
+          "Consider inference frameworks such as vLLM, TensorRT and ONNX.",
+          "Use load balancing and autoscaling for high traffic.",
+          "Monitor and profile regularly."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "16.8 Example Architecture (Secure and Scalable)"
+      },
+      {
+        "type": "diagram",
+        "title": "Secure and scalable application architecture",
+        "layers": [
+          [
+            "User (Frontend)"
+          ],
+          [
+            "API Gateway\nAuth, Rate Limit, Input Validation"
+          ],
+          [
+            "Application\nLLM + RAG"
+          ],
+          [
+            "LLM\nProvider / self-hosted",
+            "Vector DB\nEmbeddings",
+            "Cache\nRedis"
+          ],
+          [
+            "Secure Storage\nEncrypted Data"
+          ],
+          [
+            "Monitoring & Logging\nELK / Prometheus / Grafana"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-17-15.svg"
+      },
+      {
+        "type": "heading",
+        "text": "16.9 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Security, cost and performance are critical for real-world applications.",
+          "Protect data and prevent misuse.",
+          "Use cost and performance optimization techniques.",
+          "Continuously monitor, evaluate and improve.",
+          "Choose tools and infrastructure based on the use case and requirements."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The source’s model names and token billing unit are historical examples, not pricing guidance. Never rely on a prompt as an access-control boundary: enforce tenant and resource permissions in the application and tools. Logs and caches also need isolation and retention controls. Encryption and filtering alone do not establish compliance; this page is a technical study outline, not legal guidance."
+      }
+    ]
+  },
+  {
+    "page": 18,
+    "title": "Fine-Tuning and Adaptation Techniques",
+    "sourceFile": "1792805788874.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "17.1 What is Fine-Tuning?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Fine-tuning means further training a pre-trained LLM on a smaller, domain-specific dataset.",
+          "It can teach domain patterns, a specific style and task behavior.",
+          "It may improve accuracy and consistency for a measured task.",
+          "Use cases include customer support, code generation, legal documents and medical Q&A in the notes."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "17.2 Types of Model Adaptation"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Type",
+          "Description",
+          "Use Case"
+        ],
+        "rows": [
+          [
+            "Full Fine-Tuning",
+            "Update all parameters",
+            "High performance with sufficient data and compute"
+          ],
+          [
+            "Parameter-Efficient Fine-Tuning (PEFT)",
+            "Update a small set of parameters",
+            "Cost-effective adaptation"
+          ],
+          [
+            "LoRA (Low-Rank Adaptation)",
+            "Add small trainable matrices",
+            "Efficient adaptation of large models"
+          ],
+          [
+            "QLoRA",
+            "LoRA with 4-bit quantization",
+            "Lower memory use"
+          ],
+          [
+            "Instruction Tuning",
+            "Train on instruction-response data",
+            "Better instruction following"
+          ],
+          [
+            "Domain Adaptation",
+            "Fine-tune on domain-specific data",
+            "Enterprise/industry use cases"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "17.3 Full Fine-Tuning vs LoRA"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "Full Fine-Tuning",
+          "LoRA / QLoRA"
+        ],
+        "rows": [
+          [
+            "Parameters Updated",
+            "All parameters",
+            "Small adapter parameter set"
+          ],
+          [
+            "Memory Requirement",
+            "Very high",
+            "Lower"
+          ],
+          [
+            "Training Time",
+            "High",
+            "Often lower; depends on setup"
+          ],
+          [
+            "Cost",
+            "Expensive",
+            "Often more cost-effective"
+          ],
+          [
+            "Performance",
+            "Strong with sufficient data",
+            "Can work well with less data"
+          ],
+          [
+            "Use Case",
+            "Advanced, large dataset",
+            "Many resource-constrained adaptation tasks"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "17.4 Fine-Tuning Process (Steps)"
+      },
+      {
+        "type": "diagram",
+        "title": "Fine-tuning from dataset to monitored deployment",
+        "layers": [
+          [
+            "1. Prepare Dataset\nInstruction, input-output pairs"
+          ],
+          [
+            "2. Preprocess Data\nCleaning, formatting, tokenization"
+          ],
+          [
+            "3. Choose Fine-Tuning Method\nFull, LoRA, QLoRA, etc."
+          ],
+          [
+            "4. Train the Model\nFrameworks such as Hugging Face"
+          ],
+          [
+            "5. Evaluate Model\nHeld-out dataset and metrics"
+          ],
+          [
+            "6. Deploy and Monitor\nCloud or local"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-18-07.svg"
+      },
+      {
+        "type": "heading",
+        "text": "17.5 Training Data Format (Example)"
+      },
+      {
+        "type": "paragraph",
+        "text": "Commonly used format in the notes: instruction-input-output JSONL. Each training record occupies one line in a JSONL file."
+      },
+      {
+        "type": "code",
+        "language": "json",
+        "text": "{\"instruction\":\"Summarize the given text\",\"input\":\"Large Language Models are powerful …\",\"output\":\"Large Language Models (LLMs) are AI models trained on massive text data to understand and generate human-like text.\"}"
+      },
+      {
+        "type": "heading",
+        "text": "17.6 Popular Frameworks and Tools"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Tool / Framework",
+          "Purpose",
+          "Features Listed in Notes"
+        ],
+        "rows": [
+          [
+            "Hugging Face Transformers",
+            "Model training and fine-tuning",
+            "Full fine-tuning and integration with PEFT/LoRA/QLoRA"
+          ],
+          [
+            "PEFT (Hugging Face)",
+            "Parameter-efficient fine-tuning",
+            "LoRA, prefix tuning, adapter methods"
+          ],
+          [
+            "TRL (Hugging Face)",
+            "Post-training / RLHF and SFT",
+            "Supervised fine-tuning and reinforcement-learning tooling"
+          ],
+          [
+            "DeepSpeed",
+            "Large-scale training",
+            "Memory optimization, distributed training"
+          ],
+          [
+            "BitsAndBytes",
+            "4-bit and 8-bit quantization",
+            "Lower memory usage"
+          ],
+          [
+            "Unsloth",
+            "Faster fine-tuning workflows",
+            "Optimized supported LLM training, LoRA/QLoRA"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "17.7 Fine-Tuning Architecture"
+      },
+      {
+        "type": "diagram",
+        "title": "Domain adaptation architecture",
+        "layers": [
+          [
+            "Domain Dataset\nInstructions, Q&A, Documents"
+          ],
+          [
+            "Data Preprocessing\nCleaning and Formatting"
+          ],
+          [
+            "Tokenization\nUsing model tokenizer"
+          ],
+          [
+            "Pre-trained LLM\nLLaMA, Mistral, Phi, Gemma",
+            "Fine-Tuning\nLoRA / QLoRA / Full"
+          ],
+          [
+            "Trained Model\nDomain Specific"
+          ],
+          [
+            "Evaluation\nAccuracy, Relevance"
+          ],
+          [
+            "Deployment\nAPI / Application"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ]
+          ],
+          [
+            [
+              5,
+              0
+            ],
+            [
+              6,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-18-14.svg"
+      },
+      {
+        "type": "heading",
+        "text": "17.8 Evaluation Metrics"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Metric",
+          "Description",
+          "Use Case"
+        ],
+        "rows": [
+          [
+            "Accuracy",
+            "Correctness of model output",
+            "Classification, QA"
+          ],
+          [
+            "F1 Score",
+            "Balance of precision and recall",
+            "Information extraction"
+          ],
+          [
+            "BLEU / ROUGE",
+            "Text-overlap similarity",
+            "Summarization tasks"
+          ],
+          [
+            "Human Evaluation",
+            "Manual review of responses",
+            "General use case"
+          ],
+          [
+            "Domain-Specific Metrics",
+            "Custom task metrics",
+            "Enterprise applications"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "17.9 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Fine-tuning adapts a pre-trained model to tasks and domains.",
+          "LoRA and QLoRA are parameter-efficient techniques.",
+          "Use high-quality, domain-specific training data.",
+          "Evaluate with appropriate metrics.",
+          "Deploy with monitoring and continued evaluation.",
+          "Choose a method based on data, compute, cost and performance requirements."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "Fine-tuning does not guarantee fewer hallucinations or fresh facts. Measure against a baseline, protect sensitive training data and prevent train/test leakage. Instruction tuning describes the data/objective and can use full fine-tuning or PEFT; these categories overlap. Framework features in the source are examples, not version-specific installation instructions."
+      }
+    ]
+  },
+  {
+    "page": 19,
+    "title": "Real-World Generative AI System Design",
+    "sourceFile": "1792805788985.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "18.1 What is Generative AI System Design?"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Designing end-to-end systems that use LLMs to solve real-world problems.",
+          "Includes data ingestion, storage, retrieval, inference, caching, monitoring and scaling.",
+          "Focuses on reliability, low latency, cost control and safety.",
+          "Used for chatbots, document Q&A, search, content generation and code assistants."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "18.2 Key Components"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Component",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Data Sources",
+            "Documents, PDFs, websites, databases, APIs"
+          ],
+          [
+            "Ingestion Pipeline",
+            "Load, parse and chunk data"
+          ],
+          [
+            "Embedding Model",
+            "Convert text into vectors"
+          ],
+          [
+            "Vector Database",
+            "Store/search embeddings: Pinecone, Qdrant, Weaviate"
+          ],
+          [
+            "LLM",
+            "Generate final answer using retrieved context"
+          ],
+          [
+            "Orchestration Layer",
+            "Manage workflow: LangChain, LlamaIndex or custom code"
+          ],
+          [
+            "API Layer",
+            "Expose functionality, e.g. FastAPI"
+          ],
+          [
+            "Caching",
+            "Store repeated queries and responses, e.g. Redis"
+          ],
+          [
+            "Monitoring",
+            "Track performance, logs and errors, e.g. ELK/Grafana"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "18.3 High-Level Architecture"
+      },
+      {
+        "type": "diagram",
+        "title": "Application request and document-ingestion paths",
+        "layers": [
+          [
+            "User (Frontend)",
+            "Data Sources\nPDF, DB, Web"
+          ],
+          [
+            "API Gateway\nAuth, Rate Limit",
+            "Ingestion Pipeline\nLoad, Parse, Chunk"
+          ],
+          [
+            "Application Layer\nLangChain / Custom",
+            "Embedding Model\nOpenAI / SBERT"
+          ],
+          [
+            "LLM\nProvider / self-hosted",
+            "Vector DB\nEmbeddings",
+            "Cache\nRedis"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              2
+            ]
+          ],
+          [
+            [
+              3,
+              2
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-19-05.svg"
+      },
+      {
+        "type": "heading",
+        "text": "18.4 Detailed Workflow (RAG Example)"
+      },
+      {
+        "type": "diagram",
+        "title": "RAG request lifecycle",
+        "layers": [
+          [
+            "1. User Query\nUser asks a question"
+          ],
+          [
+            "2. Query Processing\nClean, rephrase, create embedding"
+          ],
+          [
+            "3. Similarity Search\nFind relevant chunks in Vector DB"
+          ],
+          [
+            "4. Context Construction\nCombine retrieved chunks with prompt"
+          ],
+          [
+            "5. LLM Inference\nGenerate answer using context"
+          ],
+          [
+            "6. Post Processing\nFormat answer, add verified citations"
+          ],
+          [
+            "7. Response to User"
+          ]
+        ],
+        "edges": null,
+        "path": "docs/generative-ai/diagrams/page-19-07.svg"
+      },
+      {
+        "type": "heading",
+        "text": "18.5 Design Considerations"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Aspect",
+          "Considerations"
+        ],
+        "rows": [
+          [
+            "Latency",
+            "Caching, smaller models, optimized retrieval"
+          ],
+          [
+            "Scalability",
+            "Load balancing, autoscaling, stateless services"
+          ],
+          [
+            "Cost",
+            "Efficient models, caching, batch processing"
+          ],
+          [
+            "Data Freshness",
+            "Update and re-index data"
+          ],
+          [
+            "Security",
+            "Authentication, authorization and encryption"
+          ],
+          [
+            "Reliability",
+            "Monitoring, logging, fallback models"
+          ],
+          [
+            "Evaluation",
+            "Metrics to assess answer quality"
+          ],
+          [
+            "User Experience",
+            "Fast response, streaming, citations, good UI/UX"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "18.6 Example: Enterprise Document Q&A System"
+      },
+      {
+        "type": "diagram",
+        "title": "Enterprise document question answering",
+        "layers": [
+          [
+            "User (Web App)",
+            "Company Documents\nPDF, DOCX, Confluence, DB"
+          ],
+          [
+            "FastAPI\nAPI Layer",
+            "Loader & Chunking\nSplit, Clean"
+          ],
+          [
+            "LangChain\nOrchestration",
+            "Embedding Model\nOpenAI / SBERT"
+          ],
+          [
+            "LLM\nProvider / LLaMA",
+            "Vector DB\nQdrant / Pinecone",
+            "Cache\nRedis"
+          ]
+        ],
+        "edges": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          [
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              2
+            ]
+          ],
+          [
+            [
+              3,
+              2
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        ],
+        "path": "docs/generative-ai/diagrams/page-19-11.svg"
+      },
+      {
+        "type": "heading",
+        "text": "18.7 Real-World Use Cases"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Use Case",
+          "Description"
+        ],
+        "rows": [
+          [
+            "Enterprise Chatbot",
+            "Answer questions from internal documents"
+          ],
+          [
+            "Customer Support",
+            "Automate support with company knowledge base"
+          ],
+          [
+            "Code Assistant",
+            "Generate/explain code using internal repositories"
+          ],
+          [
+            "Document Summarization",
+            "Summarize reports, contracts and research papers"
+          ],
+          [
+            "Healthcare Assistant",
+            "Answer queries using trusted medical documents"
+          ],
+          [
+            "Legal Document Analysis",
+            "Extract key information from legal contracts"
+          ],
+          [
+            "Education Assistant",
+            "Personalized learning using textbooks and notes"
+          ],
+          [
+            "Business Analytics",
+            "Generate insights from internal data and reports"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "18.8 Best Practices"
+      },
+      {
+        "type": "list",
+        "items": [
+          "Use high-quality, domain-specific data.",
+          "Implement appropriate chunking and metadata.",
+          "Consider hybrid vector + keyword search.",
+          "Add verified citations for transparency.",
+          "Cache frequent queries with isolation and freshness rules.",
+          "Monitor performance and user feedback.",
+          "Implement safety checks and content filtering.",
+          "Continuously evaluate and improve."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "18.9 Common Challenges and Solutions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "Challenge",
+          "Possible Solution"
+        ],
+        "rows": [
+          [
+            "Irrelevant Answers",
+            "Better chunking, hybrid search, reranking"
+          ],
+          [
+            "High Latency",
+            "Caching, smaller models, optimized infrastructure"
+          ],
+          [
+            "High Cost",
+            "Efficient models, less unnecessary context, caching"
+          ],
+          [
+            "Outdated Information",
+            "Data updates and re-indexing"
+          ],
+          [
+            "Hallucinations",
+            "RAG, citations, validation and guardrails"
+          ],
+          [
+            "Data Security",
+            "Access control, encryption, appropriate private deployment"
+          ],
+          [
+            "Scaling Issues",
+            "Load balancing, autoscaling; Kubernetes when justified"
+          ],
+          [
+            "Evaluation Difficulty",
+            "Automated checks plus human review"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "18.10 Key Takeaways"
+      },
+      {
+        "type": "list",
+        "items": [
+          "System design matters when building production AI applications.",
+          "RAG is a common architecture for document-grounded answers.",
+          "Focus on scalability, cost, security and quality.",
+          "Choose tools and frameworks for the use case.",
+          "Continuously monitor, evaluate and improve."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "The diagrams are conceptual, not production deployment blueprints. Authenticate each request; enforce tenant/document authorization before retrieval and in tools; partition caches by authorization scope. Set deadlines, retry budgets, safe fallback behavior and deletion/re-indexing rules. High-stakes medical or legal outputs need appropriate expert validation. A retrieved citation must remain linked to the document version actually used."
+      }
+    ]
+  },
+  {
+    "page": 20,
+    "title": "Generative AI Interview Questions and Final Revision",
+    "sourceFile": "1792805788949.jpeg",
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "19.1 Important Interview Topics"
+      },
+      {
+        "type": "list",
+        "items": [
+          "LLM fundamentals: architecture, training, inference.",
+          "Prompt engineering and advanced techniques.",
+          "RAG: retrieval, embeddings, vector databases.",
+          "LangChain and LlamaIndex.",
+          "Fine-tuning: PEFT, LoRA, QLoRA, instruction tuning.",
+          "Evaluation metrics and hallucination control.",
+          "Model deployment and scaling.",
+          "Security, cost control and performance.",
+          "Real-world system design and use cases."
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.2 LLM Fundamentals — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "What are LLMs?",
+            "Definition, pre-training, Transformer, use cases"
+          ],
+          [
+            "2",
+            "How does a Transformer work?",
+            "Attention, self-attention, encoder-decoder, tokens"
+          ],
+          [
+            "3",
+            "What is the difference between BERT and GPT?",
+            "Architecture, use cases, training objective"
+          ],
+          [
+            "4",
+            "What are token, context window and temperature?",
+            "Tokenization, context length, sampling and output variation"
+          ],
+          [
+            "5",
+            "What are hallucinations?",
+            "Causes, examples, mitigation techniques"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.3 Prompt Engineering — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "What is prompt engineering?",
+            "Definition, importance, examples"
+          ],
+          [
+            "2",
+            "How do you write effective prompts?",
+            "Clear instructions, examples, format, constraints"
+          ],
+          [
+            "3",
+            "What are few-shot, zero-shot and chain-of-thought?",
+            "Differences, use cases, inspectable explanations"
+          ],
+          [
+            "4",
+            "What is prompt templating?",
+            "Dynamic prompts, variables"
+          ],
+          [
+            "5",
+            "What are guardrails in prompting?",
+            "Safety, checks, role-based prompts and their limits"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.4 RAG and Vector Databases — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "What is RAG?",
+            "Definition, components, benefits"
+          ],
+          [
+            "2",
+            "How does semantic search work?",
+            "Embeddings, similarity, vector DB"
+          ],
+          [
+            "3",
+            "Which vector databases have you used?",
+            "Examples in source: Pinecone, Qdrant, Weaviate; describe your actual experience"
+          ],
+          [
+            "4",
+            "How do you chunk documents?",
+            "Chunk size, overlap, strategies"
+          ],
+          [
+            "5",
+            "How do you improve retrieval quality?",
+            "Better chunking, metadata, reranking, hybrid search"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.5 Fine-Tuning and Adaptation — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "What is fine-tuning?",
+            "Full fine-tuning vs PEFT"
+          ],
+          [
+            "2",
+            "What are LoRA and QLoRA?",
+            "Low-rank adaptation, 4-bit base weights"
+          ],
+          [
+            "3",
+            "How do you use instruction tuning?",
+            "Instruction-response data, chatbot/assistant tasks"
+          ],
+          [
+            "4",
+            "Which frameworks have you used?",
+            "Hugging Face, PEFT, TRL; discuss actual experience"
+          ],
+          [
+            "5",
+            "What are the challenges in fine-tuning?",
+            "Data quality, overfitting, cost, evaluation"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.6 LangChain and LlamaIndex — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "What is LangChain?",
+            "Chains/workflows, agents, tools, memory"
+          ],
+          [
+            "2",
+            "What are LangChain agents?",
+            "Types, tool use, examples"
+          ],
+          [
+            "3",
+            "What is LlamaIndex?",
+            "Data ingestion, indexing, retrieval"
+          ],
+          [
+            "4",
+            "LangChain vs LlamaIndex?",
+            "Differences and use cases"
+          ],
+          [
+            "5",
+            "How do you integrate a vector DB with LangChain/LlamaIndex?",
+            "Steps, code, use case"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.7 Deployment and Scaling — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "How do you deploy an LLM application?",
+            "FastAPI, Docker, Kubernetes where needed"
+          ],
+          [
+            "2",
+            "How do you handle high traffic?",
+            "Load balancing, autoscaling"
+          ],
+          [
+            "3",
+            "What are scaling strategies?",
+            "Horizontal/vertical scaling, caching"
+          ],
+          [
+            "4",
+            "How do you reduce inference cost?",
+            "Smaller models, quantization, caching, batch processing"
+          ],
+          [
+            "5",
+            "What monitoring tools do you use?",
+            "Prometheus, Grafana, ELK; explain what you measure"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.8 System Design — Sample Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "Design a RAG-based Q&A system.",
+            "Architecture, components, flow"
+          ],
+          [
+            "2",
+            "Design a chatbot for internal documents.",
+            "Data ingestion, indexing, security"
+          ],
+          [
+            "3",
+            "Design a multi-agent AI system.",
+            "Agents, orchestration, tools"
+          ],
+          [
+            "4",
+            "How do you handle large documents?",
+            "Chunking, hierarchical indexing"
+          ],
+          [
+            "5",
+            "How do you ensure security and privacy?",
+            "Encryption, access control, PII handling"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.9 Common Scenario-Based Questions"
+      },
+      {
+        "type": "table",
+        "headers": [
+          "No.",
+          "Question",
+          "Key Points to Cover"
+        ],
+        "rows": [
+          [
+            "1",
+            "How do you handle irrelevant answers?",
+            "Reranking, better retrieval, guardrails"
+          ],
+          [
+            "2",
+            "How do you reduce hallucinations?",
+            "RAG, citations, validation"
+          ],
+          [
+            "3",
+            "How do you choose the right model?",
+            "Task, cost, performance"
+          ],
+          [
+            "4",
+            "How do you evaluate model quality?",
+            "Accuracy, faithfulness, task metrics, RAGAS"
+          ],
+          [
+            "5",
+            "How do you improve prompt results?",
+            "Clear instruction, examples, context, format"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "text": "19.10 Final Revision Checklist"
+      },
+      {
+        "type": "checklist",
+        "items": [
+          "Understand LLM architecture and key concepts.",
+          "Practice prompt engineering with different techniques.",
+          "Revise RAG, embeddings and vector databases.",
+          "Go through LangChain and LlamaIndex workflows.",
+          "Understand fine-tuning: PEFT, LoRA, QLoRA.",
+          "Revise evaluation metrics, RAGAS and hallucination control.",
+          "Practice system design for real-world use cases.",
+          "Be familiar with deployment, scaling and monitoring.",
+          "Understand security, cost control and performance.",
+          "Go through common interview questions and coding examples.",
+          "Prepare real-world projects and explain your experience clearly."
+        ]
+      },
+      {
+        "type": "note",
+        "text": "These are the sample interview prompts and answer cues present in the image, not full worked solutions. The separate Mock Interviews section contains the previously added solved interview questions. Explain only tools and projects you have actually used; use the other examples for practice."
+      }
+    ]
+  }
+]

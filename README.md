@@ -2,7 +2,13 @@
 
 **Live portal:** https://bikoochangmai.github.io/crack_interview_Java/
 
-A free, static GitHub Pages preparation portal for Java Full-Stack / Senior Engineer / Solution Architect interviews. **405 interview and mock questions + 20 Java coding exercises = 425 trackable items**. No backend or login needed.
+A free, static GitHub Pages preparation portal for Java Full-Stack / Senior Engineer / Solution Architect interviews. **406 interview, mock and illustrated study entries + 20 Java coding exercises = 426 trackable items**. No backend or login needed.
+
+## Illustrated Generative AI study notes
+
+[Open the single-page Generative AI guide](docs/generative-ai/index.html): all 20 supplied image pages recreated as 20 subsections with selectable text, 39 colorful SVG diagrams, comparison tables, formulas, Python examples and interview revision prompts. Includes a contents menu, search, local study checkboxes and print styling. Also linked from **AI Engineering** in the portal. Source photographs stay on the user's device; names and signatures are omitted from the recreated material. Editorial clarifications distinguish schematic examples from verified results.
+
+Regenerate the page and its portal entry with `python scripts/build_ai_image_notes.py`; validate it with `python scripts/validate_ai_image_notes.py`.
 
 
 ## Terraform, GitHub Actions, virtual threads and coding expansion

@@ -31,6 +31,9 @@ jobs:
       - name: Validate system-design tutorials and portal links
         run: python scripts/validate_system_design_tutorials.py
 
+      - name: Validate illustrated Generative AI HTML notes
+        run: python scripts/validate_ai_image_notes.py
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

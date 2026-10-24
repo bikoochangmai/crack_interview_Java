@@ -11781,5 +11781,98 @@
     ],
     "studyGuide": "docs/mock/behavioral.md",
     "guidePath": "docs/mock/behavioral.md"
+  },
+  {
+    "id": 406,
+    "category": "AI Engineering — Illustrated Generative AI Notes",
+    "question": "Generative AI — complete illustrated developer study notes (20 subsections)?",
+    "priority": "High",
+    "answer": "A single HTML study page recreates all 20 supplied image pages, including text, colorful diagrams, tables, formulas, Python examples and interview revision prompts.",
+    "explanation": "Read in order from foundations to real-world system design, or use the contents and search to jump to a topic. Each subsection corresponds to one source page.",
+    "why": "Use this as an illustrated study companion to the existing AI Engineering lessons and solved mock interviews.",
+    "notesPath": "docs/generative-ai/index.html",
+    "detailStatus": "Expanded",
+    "lessonSections": [
+      {
+        "title": "Source page 1: Generative AI — Complete Developer Study Notes",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 2: Introduction to Generative AI",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 3: Types of Generative AI Models",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 4: LLM Fundamentals",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 5: Prompt Engineering",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 6: Tokenization and Embeddings",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 7: Transformer Architecture for Generative AI",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 8: Self-Attention Mechanism",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 9: Multi-Head Attention",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 10: Positional Encoding",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 11: Model Training and Fine-Tuning",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 12: Tokenization Methods and Vocabulary",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 13: AI Agents and Tool Use",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 14: RAG — Retrieval-Augmented Generation",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 15: Vector Databases and Semantic Search",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 16: Evaluation and Hallucination Control",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 17: Security, Cost and Performance in Generative AI",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 18: Fine-Tuning and Adaptation Techniques",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 19: Real-World Generative AI System Design",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      },
+      {
+        "title": "Source page 20: Generative AI Interview Questions and Final Revision",
+        "explanation": "Open the single-page illustrated guide and select this subsection from its contents."
+      }
+    ]
   }
 ]
