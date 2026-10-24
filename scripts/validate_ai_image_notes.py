@@ -63,7 +63,12 @@ def main():
     questions=json.loads((ROOT/'data/questions.json').read_text(encoding='utf-8'))
     item=next(q for q in questions if q['id']==406)
     assert item['notesPath']=='docs/generative-ai/index.html'
-    assert item['category'].startswith('AI Engineering') and len(item['lessonSections'])==20
+    assert item['category'].startswith('AI Engineering') and 'lessonSections' not in item
+    assert len([b for b in item['contentBlocks'] if b['type']=='chapter'])==20
+    assert len([b for b in item['contentBlocks'] if b['type']=='table'])==tables
+    assert len([b for b in item['contentBlocks'] if b['type']=='image'])==39
+    assert 'source page' not in text.lower()
+    assert 'Open the single-page illustrated guide and select this subsection' not in json.dumps(item)
     print(f'PASS: one HTML page, 20 source pages, {tables} complete tables, 39 SVG diagrams, 40 interview prompts, all local links, no removed name or embedded source photos.')
 
 if __name__=='__main__':main()
