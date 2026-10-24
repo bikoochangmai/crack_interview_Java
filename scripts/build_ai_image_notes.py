@@ -30,8 +30,7 @@ def flow(title, *layers, edges=None):
 
 b = page(1, 'Generative AI — Complete Developer Study Notes', '1792805787192.jpeg')
 p('Concepts • Practical Examples • Projects • Interview Preparation')
-p('20 pages, recreated as one HTML learning page with 20 subsections.')
-note('Reading guide: the photographed notes are organized in their printed page order. Text, comparison tables, formulas, code and diagram labels are recreated below. Blue clarification boxes distinguish editorial corrections from the supplied notes. Model names, tools, dimensions, scores and outputs in the notes are study examples, not a current product catalogue or measured results. The original photos are not embedded.')
+note('Study the foundations first, then work through model architecture, retrieval, evaluation and system design. Model names, dimensions, scores and outputs are illustrative unless explicitly measured. Use the worked examples and revision questions to check your understanding.')
 flow('Complete developer learning path', 'Foundations and model types', 'Prompts, tokens and embeddings', 'Transformers, attention and training', 'Agents, retrieval and evaluation', 'Security, adaptation and system design', 'Interview questions and final revision')
 
 b = page(2, 'Introduction to Generative AI', '1792805788662.jpeg')
@@ -47,7 +46,7 @@ h('1.5 Generative AI vs Traditional AI')
 table('Aspect|Traditional AI (Discriminative)|Generative AI (Generative)', 'Goal|Predict a label or category|Generate new content', 'Output|Fixed set of labels (classification)|Open-ended, creative output', 'Learning|Learns decision boundary|Learns data distribution', 'Examples|Spam detection, image classification|Text generation, image generation', 'Typical Models|Logistic Regression, SVM, CNN|Transformers, Diffusion Models, GANs, VAEs', 'Use Cases|Analysis, prediction, detection|Content creation, design, automation')
 h('1.6 High-Level Architecture of Generative AI')
 flow('From prompt to generated content', 'Input (Prompt)', 'Tokenizer\nConvert text to tokens', 'Embedding Layer\nToken representations', 'Generative Model\nTransformer / Diffusion / GAN', 'Output (Generated Content)\nText / Image / Audio / Video / Code')
-note('The source repeats the label 1.1 for Key Characteristics; it is numbered 1.4 here. The tokenizer/embedding pipeline is a text-model illustration: image, audio, diffusion and GAN pipelines do not all share this exact sequence. Generated content can reproduce training material and must still be checked.')
+note('The tokenizer/embedding pipeline is a text-model illustration: image, audio, diffusion and GAN pipelines do not all share this exact sequence. Generated content can reproduce training material and must still be checked.')
 
 b = page(3, 'Types of Generative AI Models', '1792805788708.jpeg')
 h('2.1 Major Types of Generative AI Models')
@@ -56,10 +55,10 @@ li('Large Language Models (LLMs)', 'Diffusion Models', 'Generative Adversarial N
 h('2.2 Comparison of Model Types')
 table('Model Type|Key Idea|Common Use Cases', 'LLMs|Predict next token based on context|Text generation, chatbots, summarization', 'Diffusion Models|Denoise data step by step|Image, video, audio generation', 'GANs|Generator vs Discriminator|Realistic image generation, data synthesis', 'VAEs|Learn latent representation|Image generation, anomaly detection', 'Autoregressive Models|Model sequential distribution|Text, speech, time series', 'Multimodal Models|Work with multiple input modalities|Text + Image, Text + Audio, Text + Video')
 h('2.3 Large Language Models (LLMs)')
-li('Based on Transformer architecture.', 'Trained on massive text data using self-supervised learning.', 'Learn to predict the next token in a sequence.', 'Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral.')
+li('Based on Transformer architecture.', 'Trained on massive text data using self-supervised learning.', 'Learn to predict the next token in a sequence.', 'Examples: GPT, LLaMA, Claude, Gemini, Mistral.')
 flow('Language-model generation', 'Input Prompt', 'Tokenizer\nText → Tokens', 'Transformer Model\nProcess using attention layers', 'Next Token Prediction\nGenerate next token')
 h('2.4 Diffusion Models')
-li('Learn to generate data by gradually removing noise from a random input.', 'Work in two processes: forward (add noise) and reverse (denoise).', 'Excellent for high-quality image and video generation.', 'Examples in the notes: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora.')
+li('Learn to generate data by gradually removing noise from a random input.', 'Work in two processes: forward (add noise) and reverse (denoise).', 'Excellent for high-quality image and video generation.', 'Examples: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora.')
 flow('Diffusion: denoising progression', 'Random Noise', 'Step 1 (denoise)', 'Step 2 (denoise)', 'Step n (Generated Image)')
 h('2.5 Generative Adversarial Networks (GANs)')
 li('Consist of two neural networks: Generator creates fake data; Discriminator distinguishes real vs fake data.', 'Both networks are trained together in a competitive manner: adversarial training.', 'Widely used for realistic image generation.', 'Examples: DCGAN, StyleGAN, BigGAN.')
@@ -70,12 +69,12 @@ flow('VAE: encode, sample and reconstruct', 'Input (x)', 'Encoder q(z|x)\nMean (
 h('2.7 Autoregressive Models')
 li('Model the joint probability of data as a product of conditional probabilities.', 'Generate data token by token in a sequential manner.', 'Widely used in text, speech and time-series generation.', 'Examples: GPT (autoregressive), PixelRNN, WaveNet.')
 h('2.8 Multimodal Generative AI Models')
-li('Work with multiple input and output modalities: text, image, audio, video.', 'Can understand and generate content across different formats.', 'Examples in the notes: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal).')
-note('These groups overlap: an LLM can be autoregressive and multimodal. The named model versions are examples from the source. Denoising is shown as labeled stages rather than the tiny cat photographs. VQ-VAE uses a discrete codebook; it is not identical to a Gaussian-latent VAE.')
+li('Work with multiple input and output modalities: text, image, audio, video.', 'Can understand and generate content across different formats.', 'Examples: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal).')
+note('These groups overlap: an LLM can be autoregressive and multimodal. The named model versions are illustrative examples. Denoising is shown as labeled stages rather than the tiny cat photographs. VQ-VAE uses a discrete codebook; it is not identical to a Gaussian-latent VAE.')
 
 b = page(4, 'LLM Fundamentals', '1792805788229.jpeg')
 h('3.1 What is a Large Language Model (LLM)?')
-li('An LLM is a type of generative AI model trained on massive text data to understand, generate and manipulate human language.', 'It learns the probability distribution of the next token given the previous tokens.', 'LLMs are based on the Transformer architecture and use a self-attention mechanism.', 'Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral.')
+li('An LLM is a type of generative AI model trained on massive text data to understand, generate and manipulate human language.', 'It learns the probability distribution of the next token given the previous tokens.', 'LLMs are based on the Transformer architecture and use a self-attention mechanism.', 'Examples: GPT, LLaMA, Claude, Gemini, Mistral.')
 h('3.2 How LLMs Generate Text')
 li('LLMs generate text token by token.', 'Given an input prompt, the model predicts the next token using learned patterns from training data.', 'This process repeats until an end condition is met.', 'Decoding strategies such as greedy search, beam search or sampling select the next token.')
 flow('Repeated next-token generation', 'Input Prompt\n“Explain Generative AI”', 'LLM (Transformer)\nGenerate next token repeatedly', 'Output\n“Generative AI is a type of …”')
@@ -92,7 +91,7 @@ table('Component|Purpose', 'Tokenizer|Convert text to tokens', 'Embedding Layer|
 h('3.7 Next Token Prediction (Mathematical View)')
 p('LLMs model the conditional probability of a sequence. During inference, the model predicts the next token xₜ₊₁ based on previous tokens x₁, x₂, …, xₜ. A linear layer produces vocabulary logits and softmax produces probabilities.')
 code('P(x₁, x₂, …, xₙ) = ∏ᵢ₌₁ⁿ P(xᵢ | x₁, x₂, …, xᵢ₋₁)\n\nP(xₜ₊₁ = w) = exp(z_w) / Σᵥ∈V exp(z_v)')
-note('z_w is the logit for vocabulary token w, not the hidden state itself as the source shorthand suggests. Greedy decoding selects the highest-probability token; sampling need not. The layer diagram shows the source’s simplified post-normalization layout; exact layouts vary by architecture.')
+note('z_w is the logit for vocabulary token w, not the hidden state itself. Greedy decoding selects the highest-probability token; sampling need not. The layer diagram shows a simplified post-normalization layout; exact layouts vary by architecture.')
 
 b = page(5, 'Prompt Engineering', '1792805788525.jpeg')
 h('4.1 What is Prompt Engineering?')
@@ -100,7 +99,7 @@ li('Prompt engineering is the process of designing effective input prompts to ge
 h('4.2 Anatomy of a Good Prompt')
 flow('Good Prompt = Instruction + Context + Input + Output Format', 'Good Prompt', ('Instruction\nWhat to do? (Clear task)', 'Context\nBackground (domain, role)', 'Input\nData or specific details', 'Output Format\nList, table, code, explanation'))
 h('4.3 Prompting Techniques')
-table('Technique|Description', 'Zero-Shot Prompting|Give only a task instruction.', 'Few-Shot Prompting|Provide a few examples in the prompt.', 'Chain-of-Thought (CoT) Prompting|The source suggests asking the model to think step by step.', 'Role Prompting|Assign a specific role to the model.', 'Instruction Prompting|Clearly specify the task and format.', 'Self-Consistency|Generate multiple answers and pick the best one.', 'Tree of Thoughts (ToT)|Explore multiple reasoning paths (advanced).')
+table('Technique|Description', 'Zero-Shot Prompting|Give only a task instruction.', 'Few-Shot Prompting|Provide a few examples in the prompt.', 'Chain-of-Thought (CoT) Prompting|Ask for an explanation with intermediate calculations and checks.', 'Role Prompting|Assign a specific role to the model.', 'Instruction Prompting|Clearly specify the task and format.', 'Self-Consistency|Generate multiple answers and pick the best one.', 'Tree of Thoughts (ToT)|Explore multiple reasoning paths (advanced).')
 h('4.4 Examples of Prompts')
 table('Type|Prompt|Use Case', 'Zero-Shot|Explain quantum computing in simple words.|Basic question', 'Few-Shot|Classify the sentiment: “I love this!” → Positive; “This is bad” → Negative; “Amazing experience” → ?|Classification tasks', 'Chain-of-Thought|Solve this step by step: If a car travels 120 km in 2 hours, what is the speed?|Reasoning and math', 'Role Prompting|You are a Java expert. Explain microservices architecture in simple terms.|Domain-specific questions', 'Instruction|Summarize the following text in 5 bullet points: [paste text]|Summarization')
 h('4.5 Prompting Styles and Use Cases')
@@ -131,7 +130,7 @@ b = page(6, 'Tokenization and Embeddings', '1792805788835.jpeg')
 h('5.1 What is Tokenization?')
 li('Tokenization converts text into smaller units called tokens: words, subwords or characters.', 'It helps the model process text data.', 'Modern LLMs use subword tokenization techniques to handle rare words and reduce vocabulary size.', 'The same text can be tokenized differently depending on the tokenizer and model.')
 h('5.2 Types of Tokenization')
-table('Type|Description|Example', 'Word Tokenization|Split text into words|“AI is amazing” → [AI, is, amazing]', 'Character Tokenization|Split into characters|“AI” → [A, I]', 'Subword Tokenization|Split into subwords (common in LLMs)|“unbelievable” → [un, believable]', 'Byte Pair Encoding (BPE)|Merges frequent subword units|“low” + “er” → “lower”', 'SentencePiece|Unsupervised, language-agnostic tokenizer tooling|Used in models such as LLaMA, T5, Gemini in the notes', 'WordPiece|Used in BERT models|“playing” → [play, ##ing]')
+table('Type|Description|Example', 'Word Tokenization|Split text into words|“AI is amazing” → [AI, is, amazing]', 'Character Tokenization|Split into characters|“AI” → [A, I]', 'Subword Tokenization|Split into subwords (common in LLMs)|“unbelievable” → [un, believable]', 'Byte Pair Encoding (BPE)|Merges frequent subword units|“low” + “er” → “lower”', 'SentencePiece|Unsupervised, language-agnostic tokenizer tooling|Used in models such as LLaMA, T5, Gemini', 'WordPiece|Used in BERT models|“playing” → [play, ##ing]')
 h('5.3 Byte Pair Encoding (BPE) — How It Works')
 li('1. Start with character-level tokens.', '2. Find the most frequent pair of tokens.', '3. Merge the pair into a new token.', '4. Repeat until the desired vocabulary size is reached.')
 code('''Example: build a vocabulary for “lowest”.
@@ -212,7 +211,7 @@ p('Input: “The cat sat on the mat”. Tokens: [The, cat, sat, on, the, mat].')
 table('Token|Important Tokens it Attends To (Illustrative)', 'The|cat, mat', 'cat|The, sat', 'sat|cat, on', 'on|sat, the, mat', 'the|The, mat', 'mat|The, on')
 h('7.8 Key Takeaways')
 li('Self-attention allows tokens to attend to one another in parallel.', 'It captures long-range dependencies.', 'It uses Query, Key and Value vectors.', 'It uses scaled dot-product attention with softmax.', 'Output is a weighted sum of value vectors.', 'It is a core component of models such as GPT, LLaMA and BERT.')
-note('The example attention relationships are illustrative, not measured attention weights. In a causal decoder, future-token edges in this unmasked example are forbidden. The source workflow labels the final shape [n, d_k]; the general correct shape is [n, d_v], which only equals it when d_v = d_k.')
+note('The example attention relationships are illustrative, not measured attention weights. In a causal decoder, future-token edges in this unmasked example are forbidden. The output shape is [n, d_v]; it equals [n, d_k] only when d_v = d_k.')
 
 b = page(9, 'Multi-Head Attention', '1792805788745.jpeg')
 h('8.1 What is Multi-Head Attention?')
@@ -307,7 +306,7 @@ Equivalent factor notation: ΔW = A B_factor, B_factor ∈ ℝ^(r×k).''')
 flow('Frozen weights plus a trainable low-rank update', 'Input X', ('Pre-trained Weight W\nFrozen', 'LoRA Update\nA (d × r) · Bᵀ (r × k)'), 'Add: W + ΔW', 'Output')
 h('10.8 Key Takeaways')
 li('Pre-training teaches general language patterns.', 'Fine-tuning adapts a model to a task or domain.', 'Next-token prediction is the causal-LM training objective.', 'Parameter-efficient methods such as LoRA and QLoRA are widely used.', 'Fine-tuning usually requires less data and compute than pre-training.', 'It can improve performance for real-world applications.')
-note('The source mixes ABᵀ with dimensions for AB. The factors above make both notations dimensionally consistent. BERT uses masked language modeling rather than causal next-token prediction. More epochs are not automatically better: monitor held-out quality and forgetting; multiple passes over a huge corpus are not required in every pre-training run.')
+note('Use dimensionally consistent factors for AB or ABᵀ. BERT uses masked language modeling rather than causal next-token prediction. More epochs are not automatically better: monitor held-out quality and forgetting; multiple passes over a huge corpus are not required in every pre-training run.')
 
 b = page(12, 'Tokenization Methods and Vocabulary', '1792805788803.jpeg')
 h('11.1 What is Tokenization?')
@@ -318,7 +317,7 @@ h('11.3 Types of Tokenization')
 table('Type|Example|Pros|Cons', 'Word level|“The cat” → [The, cat]|Simple, interpretable|Large vocabulary, unknown words', 'Character level|“cat” → [c, a, t]|Handles any covered character|Very long sequences', 'Subword level: BPE, WordPiece, Unigram|“playing” → [play, ing]|Good balance; handles new words|More complex than word level', 'Byte level|“cat” → [99, 97, 116]|Works for any encoded text, including emojis|Longer sequences before merges')
 h('11.4 Word-Level Tokenization Example')
 p('Sentence: “The cat sat on the mat”. Split by space → [The, cat, sat, on, the, mat]. Map to IDs using a vocabulary.')
-table('Token|ID (Example from Source)', 'The|10', 'cat|25', 'sat|30', 'on|18', 'the|10', 'mat|45')
+table('Token|ID (Example)', 'The|10', 'cat|25', 'sat|30', 'on|18', 'the|10', 'mat|45')
 h('11.5 Subword Tokenization (Byte Pair Encoding — BPE)')
 li('Start with characters as the initial vocabulary.', 'Find the most frequent pair of tokens.', 'Merge the pair into a new token.', 'Repeat for a fixed number of merges.', 'This creates subword units that can handle new words.')
 code('''Training words: [lower, lowest, newer, wider]
@@ -326,7 +325,7 @@ code('''Training words: [lower, lowest, newer, wider]
 2. Example frequent pair: (l, o) → lo
 3. Next example merge: (lo, w) → low
 4. Continue …
-Illustrative final splits printed in the source:
+Illustrative final splits:
 “lower”  → [low, er]
 “newer”  → [new, er]
 “widest” → [wide, st]''')
@@ -338,7 +337,7 @@ h('11.7 Special Tokens')
 table('Token|Purpose', '<pad>|Padding to equal sequence lengths', '<unk>|Unknown token, not in vocabulary', '<bos>|Beginning of sequence', '<eos>|End of sequence', '<sep>|Separator between sentences in some models', '<mask>|Masked language modeling, e.g. BERT')
 h('11.8 Key Takeaways')
 li('Tokenization converts text into tokens.', 'Subword tokenization such as BPE, WordPiece and Unigram is common in modern LLMs.', 'A vocabulary maps each token to a unique ID.', 'Special tokens help model training and inference.', 'Tokenization is crucial for handling diverse and unseen words.')
-note('The source assigns both “The” and “the” to ID 10 in its first table. That requires normalization such as lowercasing; a case-sensitive tokenizer normally treats them separately. The BPE merges and final splits are schematic, not a learned vocabulary verified from the four listed words. Special-token names and presence vary by tokenizer.')
+note('Mapping “The” and “the” to the same ID requires normalization such as lowercasing; a case-sensitive tokenizer normally treats them separately. The BPE merges and final splits are schematic, not a learned vocabulary verified from the four listed words. Special-token names and presence vary by tokenizer.')
 
 b = page(13, 'AI Agents and Tool Use', '1792805788846.jpeg')
 h('12.1 What are AI Agents?')
@@ -363,7 +362,7 @@ Result summary: Use the observed API response to answer.
 Final Answer: “The current weather in Delhi is 28°C with clear skies.”''')
 h('12.8 Key Takeaways')
 li('AI agents use LLMs to plan and take actions.', 'They can use external tools such as APIs, databases and files.', 'A ReAct-style loop alternates planning, action and observation.', 'Different agents fit different use cases.', 'Tools and memory make agents more capable.', 'Examples include travel planning, automation, research and data analysis.')
-note('The source’s “Thought” lines are rendered as inspectable plan/result summaries; they are not private model reasoning or proof of correctness. The weather is example data, not a live report. Tool permissions, input validation, iteration limits and approval for sensitive actions must be enforced by application code.')
+note('Plan/result summaries describe observable steps; they are not private model reasoning or proof of correctness. The weather is example data, not a live report. Tool permissions, input validation, iteration limits and approval for sensitive actions must be enforced by application code.')
 
 b = page(14, 'RAG — Retrieval-Augmented Generation', '1792805788697.jpeg')
 h('13.1 What is RAG?')
@@ -379,7 +378,7 @@ li('Load data from sources such as PDF, web and database.', 'Split documents int
 flow('Chunking with 50-token overlap', 'Original Text\nLarge Document', 'Split into Chunks\nchunk_size = 500 tokens\noverlap = 50 tokens', ('Chunk 1\nTokens 1–500', 'Chunk 2\nTokens 451–950', 'Chunk 3\nTokens 901–1400'))
 h('13.6 Embeddings and Vector Database')
 li('Convert each chunk into a high-dimensional embedding vector using an embedding model.', 'Similar chunks can have similar vector representations.', 'Store vectors in a vector database for similarity search.')
-table('Component|Description|Examples from Notes', 'Embedding Model|Converts text to vector|all-MiniLM-L6-v2, OpenAI, BGE', 'Vector Database|Stores and searches vectors|Qdrant, Pinecone, Weaviate, FAISS', 'Similarity Search|Finds relevant chunks using vector similarity|Cosine Similarity, Dot Product')
+table('Component|Description|Examples', 'Embedding Model|Converts text to vector|all-MiniLM-L6-v2, OpenAI, BGE', 'Vector Database|Stores and searches vectors|Qdrant, Pinecone, Weaviate, FAISS', 'Similarity Search|Finds relevant chunks using vector similarity|Cosine Similarity, Dot Product')
 h('13.7 Retrieval and Generation')
 li('Convert the user query into an embedding vector.', 'Retrieve top-K relevant chunks using similarity search.', 'Add retrieved context to the prompt.', 'Send the augmented prompt to the LLM to generate the answer.')
 flow('Retrieval and generation path', 'User Query', 'Query Embedding', 'Vector DB\nSimilarity Search', 'Top K Chunks', 'Augmented Prompt\nQuery + Retrieved Context', 'LLM (Generation)', 'Final Answer\nCitations / Sources')
@@ -402,7 +401,7 @@ table('Metric|Formula|Range|Use Case', 'Cosine Similarity|cos(θ) = (A · B) / (
 h('14.6 Vector Database Workflow')
 flow('Index documents and retrieve similar chunks', 'Documents\nText, PDF, Web', '1. Split into Chunks\nSmaller pieces, e.g. 500 tokens', '2. Generate Embeddings\nEmbedding model converts each chunk', '3. Store in Vector DB\nVectors + metadata', '4. Query Embedding\nSearch for similar chunks', '5. Retrieve Top K Similar Chunks\nRank by similarity score')
 h('14.7 Popular Vector Databases')
-table('Database|Type in Notes|Key Features in Notes|Use Cases', 'Pinecone|Managed (Cloud)|Scalable, easy to use, low latency|RAG, semantic search, AI apps', 'Weaviate|Open Source|Hybrid vector + keyword search, GraphQL|RAG, knowledge graphs, AI apps', 'Qdrant|Open Source|Fast search, filtering, payload support|RAG, search, recommendations', 'Milvus|Open Source|Distributed, large-scale, high performance|Enterprise, large datasets', 'Chroma|Open Source|Simple, lightweight, good for prototyping|RAG, local apps, learning')
+table('Database|Type|Key Features|Use Cases', 'Pinecone|Managed (Cloud)|Scalable, easy to use, low latency|RAG, semantic search, AI apps', 'Weaviate|Open Source|Hybrid vector + keyword search, GraphQL|RAG, knowledge graphs, AI apps', 'Qdrant|Open Source|Fast search, filtering, payload support|RAG, search, recommendations', 'Milvus|Open Source|Distributed, large-scale, high performance|Enterprise, large datasets', 'Chroma|Open Source|Simple, lightweight, good for prototyping|RAG, local apps, learning')
 h('14.8 Example: Semantic Search')
 p('Query: “Best places to visit in Goa”. Query embedding q = [0.21, −0.11, 0.33, …].')
 table('Document|Illustrative Vector|Illustrative Score', '1. Goa travel guide|[0.20, −0.10, 0.31, …]|0.95', '2. Best beaches in India|[0.15, −0.05, 0.28, …]|0.87', '3. Himalayan treks|[−0.30, 0.40, −0.12, …]|0.12')
@@ -413,7 +412,7 @@ table('Chunk|Text|Metadata', '1|Goa travel guide|{"category":"travel","location"
 p('Query: “travel places in Goa” + filter: category = travel.')
 h('14.10 Key Takeaways')
 li('Vector databases enable similarity search over embeddings.', 'They use efficient indexing techniques such as HNSW, IVF and PQ.', 'They support metadata filtering; some support hybrid search.', 'Useful for RAG, recommendations and AI applications.', 'Examples include Pinecone, Weaviate, Qdrant, Milvus and Chroma.', 'Choose based on scalability, features and the use case.')
-note('The incomplete vectors and scores are illustrative and cannot be recomputed from the shown coordinates. Metadata filtering is not the same as hybrid ranking, which typically combines lexical and vector search. Authorization filters must come from trusted identity context. Product features and hosting options listed here reflect the source examples; verify them before selecting a product.')
+note('The incomplete vectors and scores are illustrative and cannot be recomputed from the shown coordinates. Metadata filtering is not the same as hybrid ranking, which typically combines lexical and vector search. Authorization filters must come from trusted identity context. Verify current product features and hosting options before selecting a product.')
 
 b = page(16, 'Evaluation and Hallucination Control', '1792805788803 (1).jpeg')
 h('15.1 Why Evaluation is Important')
@@ -434,7 +433,7 @@ flow('Evidence-grounded answer with citations', 'User Query', 'Retrieve Relevant
 code('''Query: “What is the capital of France?”
 Retrieved Context: [Doc1: “Paris is the capital of France …”]
 LLM Answer: “The capital of France is Paris.”
-Citations printed in the source example:
+Illustrative citation labels:
 [1] Europe Travel Guide (2023)
 [2] Wikipedia — France (2024)''')
 h('15.8 Best Practices')
@@ -449,11 +448,11 @@ li('Generative AI applications may process sensitive data and can be expensive t
 h('16.2 Security Risks in Generative AI')
 table('Risk|Description', 'Data Leakage|Sensitive data exposed in prompts or outputs', 'Prompt Injection|Malicious prompts try to manipulate model behavior', 'Model Jailbreak|Techniques to bypass safety restrictions', 'Insecure Plugins/Tools|External tools introduce security risks', 'Data Privacy|User data may be stored or used for training depending on service terms', 'Adversarial Attacks|Crafted inputs induce harmful or incorrect outputs')
 h('16.3 Security Best Practices')
-li('Do not send sensitive or confidential data to unapproved systems.', 'Use data masking and anonymization where appropriate.', 'Implement input validation and output/content checks.', 'Use role-based access control for applications.', 'Log and monitor prompts and responses with appropriate redaction and access controls.', 'Use HTTPS, authentication and secure API endpoints.', 'Regularly test prompt injection and jailbreak attempts.', 'Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples in the notes.')
+li('Do not send sensitive or confidential data to unapproved systems.', 'Use data masking and anonymization where appropriate.', 'Implement input validation and output/content checks.', 'Use role-based access control for applications.', 'Log and monitor prompts and responses with appropriate redaction and access controls.', 'Use HTTPS, authentication and secure API endpoints.', 'Regularly test prompt injection and jailbreak attempts.', 'Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples.')
 h('16.4 Cost Factors in Generative AI')
 table('Factor|Description', 'Model Usage|Input/output token charges', 'Model Size|Larger models often require more compute', 'Inference Type|Real-time inference vs batch processing', 'Context Length|Longer contexts increase input token usage', 'Fine-tuning|Training compute costs', 'Infrastructure|GPU/CPU instances, storage and network', 'Third-party Services|API credits or subscriptions', 'Data Storage|Documents, embeddings and logs')
 h('16.5 Cost Optimization Strategies')
-li('Use smaller, efficient models when quality permits; source examples include GPT-3.5 and LLaMA.', 'Cache repeated queries with correct authorization boundaries.', 'Use vector retrieval to select relevant context.', 'Optimize prompts to be short and clear.', 'Use batch processing for non-real-time work.', 'Consider quantization for self-hosted deployment.', 'Monitor token usage and set limits/quotas.', 'Choose cloud or self-hosted infrastructure to fit the task.')
+li('Use smaller, efficient models when quality permits; evaluate model size against task quality.', 'Cache repeated queries with correct authorization boundaries.', 'Use vector retrieval to select relevant context.', 'Optimize prompts to be short and clear.', 'Use batch processing for non-real-time work.', 'Consider quantization for self-hosted deployment.', 'Monitor token usage and set limits/quotas.', 'Choose cloud or self-hosted infrastructure to fit the task.')
 h('16.6 Performance Metrics')
 table('Metric|Description|Goal', 'Latency|Time to get a response|Lower is better', 'Throughput|Requests per second|Higher within quality/error targets', 'Token Processing Speed|Generated tokens per second|Higher within quality targets', 'Accuracy / Quality|Relevance and correctness|Higher is better', 'Resource Usage|CPU, GPU, memory utilization|Efficient usage', 'Availability|Uptime of service|Target such as 99.9%, per application', 'Scalability|Handle increasing load|Scale smoothly')
 h('16.7 Performance Optimization Techniques')
@@ -462,11 +461,11 @@ h('16.8 Example Architecture (Secure and Scalable)')
 flow('Secure and scalable application architecture', 'User (Frontend)', 'API Gateway\nAuth, Rate Limit, Input Validation', 'Application\nLLM + RAG', ('LLM\nProvider / self-hosted', 'Vector DB\nEmbeddings', 'Cache\nRedis'), 'Secure Storage\nEncrypted Data', 'Monitoring & Logging\nELK / Prometheus / Grafana')
 h('16.9 Key Takeaways')
 li('Security, cost and performance are critical for real-world applications.', 'Protect data and prevent misuse.', 'Use cost and performance optimization techniques.', 'Continuously monitor, evaluate and improve.', 'Choose tools and infrastructure based on the use case and requirements.')
-note('The source’s model names and token billing unit are historical examples, not pricing guidance. Never rely on a prompt as an access-control boundary: enforce tenant and resource permissions in the application and tools. Logs and caches also need isolation and retention controls. Encryption and filtering alone do not establish compliance; this page is a technical study outline, not legal guidance.')
+note('Model names and token billing units are illustrative, not pricing guidance. Never rely on a prompt as an access-control boundary: enforce tenant and resource permissions in the application and tools. Logs and caches also need isolation and retention controls. Encryption and filtering alone do not establish compliance; this page is a technical study outline, not legal guidance.')
 
 b = page(18, 'Fine-Tuning and Adaptation Techniques', '1792805788874.jpeg')
 h('17.1 What is Fine-Tuning?')
-li('Fine-tuning means further training a pre-trained LLM on a smaller, domain-specific dataset.', 'It can teach domain patterns, a specific style and task behavior.', 'It may improve accuracy and consistency for a measured task.', 'Use cases include customer support, code generation, legal documents and medical Q&A in the notes.')
+li('Fine-tuning means further training a pre-trained LLM on a smaller, domain-specific dataset.', 'It can teach domain patterns, a specific style and task behavior.', 'It may improve accuracy and consistency for a measured task.', 'Use cases include customer support, code generation, legal documents and medical Q&A.')
 h('17.2 Types of Model Adaptation')
 table('Type|Description|Use Case', 'Full Fine-Tuning|Update all parameters|High performance with sufficient data and compute', 'Parameter-Efficient Fine-Tuning (PEFT)|Update a small set of parameters|Cost-effective adaptation', 'LoRA (Low-Rank Adaptation)|Add small trainable matrices|Efficient adaptation of large models', 'QLoRA|LoRA with 4-bit quantization|Lower memory use', 'Instruction Tuning|Train on instruction-response data|Better instruction following', 'Domain Adaptation|Fine-tune on domain-specific data|Enterprise/industry use cases')
 h('17.3 Full Fine-Tuning vs LoRA')
@@ -474,7 +473,7 @@ table('Aspect|Full Fine-Tuning|LoRA / QLoRA', 'Parameters Updated|All parameters
 h('17.4 Fine-Tuning Process (Steps)')
 flow('Fine-tuning from dataset to monitored deployment', '1. Prepare Dataset\nInstruction, input-output pairs', '2. Preprocess Data\nCleaning, formatting, tokenization', '3. Choose Fine-Tuning Method\nFull, LoRA, QLoRA, etc.', '4. Train the Model\nFrameworks such as Hugging Face', '5. Evaluate Model\nHeld-out dataset and metrics', '6. Deploy and Monitor\nCloud or local')
 h('17.5 Training Data Format (Example)')
-p('Commonly used format in the notes: instruction-input-output JSONL. Each training record occupies one line in a JSONL file.')
+p('Commonly used format: instruction-input-output JSONL. Each training record occupies one line in a JSONL file.')
 code('''{"instruction":"Summarize the given text","input":"Large Language Models are powerful …","output":"Large Language Models (LLMs) are AI models trained on massive text data to understand and generate human-like text."}''', 'json')
 h('17.6 Popular Frameworks and Tools')
 table('Tool / Framework|Purpose|Features Listed in Notes', 'Hugging Face Transformers|Model training and fine-tuning|Full fine-tuning and integration with PEFT/LoRA/QLoRA', 'PEFT (Hugging Face)|Parameter-efficient fine-tuning|LoRA, prefix tuning, adapter methods', 'TRL (Hugging Face)|Post-training / RLHF and SFT|Supervised fine-tuning and reinforcement-learning tooling', 'DeepSpeed|Large-scale training|Memory optimization, distributed training', 'BitsAndBytes|4-bit and 8-bit quantization|Lower memory usage', 'Unsloth|Faster fine-tuning workflows|Optimized supported LLM training, LoRA/QLoRA')
@@ -484,7 +483,7 @@ h('17.8 Evaluation Metrics')
 table('Metric|Description|Use Case', 'Accuracy|Correctness of model output|Classification, QA', 'F1 Score|Balance of precision and recall|Information extraction', 'BLEU / ROUGE|Text-overlap similarity|Summarization tasks', 'Human Evaluation|Manual review of responses|General use case', 'Domain-Specific Metrics|Custom task metrics|Enterprise applications')
 h('17.9 Key Takeaways')
 li('Fine-tuning adapts a pre-trained model to tasks and domains.', 'LoRA and QLoRA are parameter-efficient techniques.', 'Use high-quality, domain-specific training data.', 'Evaluate with appropriate metrics.', 'Deploy with monitoring and continued evaluation.', 'Choose a method based on data, compute, cost and performance requirements.')
-note('Fine-tuning does not guarantee fewer hallucinations or fresh facts. Measure against a baseline, protect sensitive training data and prevent train/test leakage. Instruction tuning describes the data/objective and can use full fine-tuning or PEFT; these categories overlap. Framework features in the source are examples, not version-specific installation instructions.')
+note('Fine-tuning does not guarantee fewer hallucinations or fresh facts. Measure against a baseline, protect sensitive training data and prevent train/test leakage. Instruction tuning describes the data/objective and can use full fine-tuning or PEFT; these categories overlap. Framework features listed here are examples, not version-specific installation instructions.')
 
 b = page(19, 'Real-World Generative AI System Design', '1792805788985.jpeg')
 h('18.1 What is Generative AI System Design?')
@@ -517,7 +516,7 @@ table('No.|Question|Key Points to Cover', '1|What are LLMs?|Definition, pre-trai
 h('19.3 Prompt Engineering — Sample Questions')
 table('No.|Question|Key Points to Cover', '1|What is prompt engineering?|Definition, importance, examples', '2|How do you write effective prompts?|Clear instructions, examples, format, constraints', '3|What are few-shot, zero-shot and chain-of-thought?|Differences, use cases, inspectable explanations', '4|What is prompt templating?|Dynamic prompts, variables', '5|What are guardrails in prompting?|Safety, checks, role-based prompts and their limits')
 h('19.4 RAG and Vector Databases — Sample Questions')
-table('No.|Question|Key Points to Cover', '1|What is RAG?|Definition, components, benefits', '2|How does semantic search work?|Embeddings, similarity, vector DB', '3|Which vector databases have you used?|Examples in source: Pinecone, Qdrant, Weaviate; describe your actual experience', '4|How do you chunk documents?|Chunk size, overlap, strategies', '5|How do you improve retrieval quality?|Better chunking, metadata, reranking, hybrid search')
+table('No.|Question|Key Points to Cover', '1|What is RAG?|Definition, components, benefits', '2|How does semantic search work?|Embeddings, similarity, vector DB', '3|Which vector databases have you used?|Examples: Pinecone, Qdrant, Weaviate; describe your actual experience', '4|How do you chunk documents?|Chunk size, overlap, strategies', '5|How do you improve retrieval quality?|Better chunking, metadata, reranking, hybrid search')
 h('19.5 Fine-Tuning and Adaptation — Sample Questions')
 table('No.|Question|Key Points to Cover', '1|What is fine-tuning?|Full fine-tuning vs PEFT', '2|What are LoRA and QLoRA?|Low-rank adaptation, 4-bit base weights', '3|How do you use instruction tuning?|Instruction-response data, chatbot/assistant tasks', '4|Which frameworks have you used?|Hugging Face, PEFT, TRL; discuss actual experience', '5|What are the challenges in fine-tuning?|Data quality, overfitting, cost, evaluation')
 h('19.6 LangChain and LlamaIndex — Sample Questions')
@@ -530,7 +529,7 @@ h('19.9 Common Scenario-Based Questions')
 table('No.|Question|Key Points to Cover', '1|How do you handle irrelevant answers?|Reranking, better retrieval, guardrails', '2|How do you reduce hallucinations?|RAG, citations, validation', '3|How do you choose the right model?|Task, cost, performance', '4|How do you evaluate model quality?|Accuracy, faithfulness, task metrics, RAGAS', '5|How do you improve prompt results?|Clear instruction, examples, context, format')
 h('19.10 Final Revision Checklist')
 b.append({'type':'checklist','items':['Understand LLM architecture and key concepts.', 'Practice prompt engineering with different techniques.', 'Revise RAG, embeddings and vector databases.', 'Go through LangChain and LlamaIndex workflows.', 'Understand fine-tuning: PEFT, LoRA, QLoRA.', 'Revise evaluation metrics, RAGAS and hallucination control.', 'Practice system design for real-world use cases.', 'Be familiar with deployment, scaling and monitoring.', 'Understand security, cost control and performance.', 'Go through common interview questions and coding examples.', 'Prepare real-world projects and explain your experience clearly.']})
-note('These are the sample interview prompts and answer cues present in the image, not full worked solutions. The separate Mock Interviews section contains the previously added solved interview questions. Explain only tools and projects you have actually used; use the other examples for practice.')
+note('These interview prompts include answer cues for revision. The separate Mock Interviews section contains the previously added solved interview questions. Explain only tools and projects you have actually used; use the other examples for practice.')
 
 enrich(PAGES)
 
@@ -616,12 +615,12 @@ def main():
         previous=f'<a href="#page-{n-1:02}">← Previous section</a>' if n>1 else '<a href="#contents">Contents</a>'
         following=f'<a href="#page-{n+1:02}">Next section →</a>' if n<20 else '<a href="#contents">Back to contents ↑</a>'
         articles.append(f'<article id="page-{n:02}" class="note-section" aria-labelledby="title-{n}"><h2 id="title-{n}">{escape(item["title"])}</h2><label class="section-read"><input type="checkbox" data-check="page-{n}"> Mark this section studied</label>{blocks}<nav class="section-navigation" aria-label="Section {n} navigation">{previous}{following}</nav></article>')
-    html='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Twenty illustrated Generative AI study-note sections: LLMs, prompts, attention, training, agents, RAG, evaluation and system design."><title>Generative AI — Complete Developer Study Notes</title><link rel="stylesheet" href="../../css/ai-notes.css"><script src="../../js/ai-notes.js" defer></script></head><body><a class="skip-link" href="#notes">Skip to study notes</a><header class="notes-hero"><div class="shell"><a class="back-link" href="../../index.html">← Learning hub · AI Engineering</a><div class="eyebrow">AI LEARNING / ILLUSTRATED STUDY NOTES</div><h1>Generative AI<span>Complete Developer Study Notes</span></h1><p>A complete Generative AI tutorial in one place. Concepts, practical examples, colorful diagrams, comparison tables, formulas and interview preparation.</p><div class="hero-tags"><span>20 subsections</span><span>Selectable text</span><span>Colorful SVG charts</span><span>Print friendly</span></div><div class="notes-tools"><label>Find in these notes<input id="notes-search" type="search" placeholder="Try: LoRA, causal mask, RAG…"></label><button id="print-notes" type="button">Print / Save PDF</button><button id="show-all" type="button">Show all sections</button><a href="#contents">Browse contents ↓</a></div><p id="notes-status" role="status" aria-live="polite">20 sections · Progress is stored in this browser.</p><noscript><p>All notes and charts are available without JavaScript. Use your browser’s Find and Print commands.</p></noscript></div></header><div class="shell notes-layout"><aside class="contents" id="contents"><h2>On this page</h2><ol>'''+toc+'''</ol><p>Study progress is local to this browser. Original photographs remain on your device.</p></aside><main id="notes">'''+''.join(articles)+'''</main></div><footer class="shell notes-footer"><a href="../../index.html">Return to the learning hub</a><p>Recreated from the supplied study-note images. Illustrative values and model/tool examples are labeled; clarifications are separate from the source notes.</p></footer></body></html>'''
+    html='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Twenty illustrated Generative AI study-note sections: LLMs, prompts, attention, training, agents, RAG, evaluation and system design."><title>Generative AI — Complete Developer Study Notes</title><link rel="stylesheet" href="../../css/ai-notes.css"><script src="../../js/ai-notes.js" defer></script></head><body><a class="skip-link" href="#notes">Skip to study notes</a><header class="notes-hero"><div class="shell"><a class="back-link" href="../../index.html">← Learning hub · AI Engineering</a><div class="eyebrow">AI LEARNING / ILLUSTRATED STUDY NOTES</div><h1>Generative AI<span>Complete Developer Study Notes</span></h1><p>A complete Generative AI tutorial in one place. Concepts, practical examples, colorful diagrams, comparison tables, formulas and interview preparation.</p><div class="hero-tags"><span>20 subsections</span><span>Selectable text</span><span>Colorful SVG charts</span><span>Print friendly</span></div><div class="notes-tools"><label>Find in these notes<input id="notes-search" type="search" placeholder="Try: LoRA, causal mask, RAG…"></label><button id="print-notes" type="button">Print / Save PDF</button><button id="show-all" type="button">Show all sections</button><a href="#contents">Browse contents ↓</a></div><p id="notes-status" role="status" aria-live="polite">20 sections · Progress is stored in this browser.</p><noscript><p>All notes and charts are available without JavaScript. Use your browser’s Find and Print commands.</p></noscript></div></header><div class="shell notes-layout"><aside class="contents" id="contents"><h2>On this page</h2><ol>'''+toc+'''</ol><p>Study progress is saved locally in this browser.</p></aside><main id="notes">'''+''.join(articles)+'''</main></div><footer class="shell notes-footer"><a href="../../index.html">Return to the learning hub</a><p>Generative AI concepts, worked examples and interview preparation. Illustrative values are labeled; reference links support further study.</p></footer></body></html>'''
     expected={Path(block['path']).name for page in PAGES for block in page['blocks'] if block.get('path')}
     for asset in (OUT/'diagrams').glob('page-*.svg'):
         if asset.name not in expected: asset.unlink()
     (OUT/'index.html').write_text(html,encoding='utf-8')
-    (ROOT/'data/ai-study-notes.json').write_text(json.dumps(PAGES,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    (ROOT/'data/ai-study-notes.json').write_text(json.dumps([{k:v for k,v in page.items() if k!='sourceFile'} for page in PAGES],ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     path=ROOT/'data/questions.json'; questions=json.loads(path.read_text(encoding='utf-8'))
     content=[]
     for topic in PAGES:

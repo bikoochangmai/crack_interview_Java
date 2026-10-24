@@ -11800,12 +11800,8 @@
         "text": "Concepts • Practical Examples • Projects • Interview Preparation"
       },
       {
-        "type": "paragraph",
-        "text": "20 pages, recreated as one HTML learning page with 20 subsections."
-      },
-      {
         "type": "note",
-        "text": "Reading guide: the photographed notes are organized in their printed page order. Text, comparison tables, formulas, code and diagram labels are recreated below. Blue clarification boxes distinguish editorial corrections from the supplied notes. Model names, tools, dimensions, scores and outputs in the notes are study examples, not a current product catalogue or measured results. The original photos are not embedded."
+        "text": "Study the foundations first, then work through model architecture, retrieval, evaluation and system design. Model names, dimensions, scores and outputs are illustrative unless explicitly measured. Use the worked examples and revision questions to check your understanding."
       },
       {
         "type": "image",
@@ -11831,8 +11827,8 @@
           ]
         ],
         "edges": null,
-        "assetId": 3,
-        "path": "docs/generative-ai/diagrams/page-01-03.svg",
+        "assetId": 2,
+        "path": "docs/generative-ai/diagrams/page-01-02.svg",
         "text": "Complete developer learning path"
       },
       {
@@ -12002,7 +11998,7 @@
       },
       {
         "type": "note",
-        "text": "The source repeats the label 1.1 for Key Characteristics; it is numbered 1.4 here. The tokenizer/embedding pipeline is a text-model illustration: image, audio, diffusion and GAN pipelines do not all share this exact sequence. Generated content can reproduce training material and must still be checked."
+        "text": "The tokenizer/embedding pipeline is a text-model illustration: image, audio, diffusion and GAN pipelines do not all share this exact sequence. Generated content can reproduce training material and must still be checked."
       },
       {
         "type": "heading",
@@ -12125,9 +12121,9 @@
           "Based on Transformer architecture.",
           "Trained on massive text data using self-supervised learning.",
           "Learn to predict the next token in a sequence.",
-          "Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral."
+          "Examples: GPT, LLaMA, Claude, Gemini, Mistral."
         ],
-        "text": "Based on Transformer architecture. Trained on massive text data using self-supervised learning. Learn to predict the next token in a sequence. Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral."
+        "text": "Based on Transformer architecture. Trained on massive text data using self-supervised learning. Learn to predict the next token in a sequence. Examples: GPT, LLaMA, Claude, Gemini, Mistral."
       },
       {
         "type": "image",
@@ -12161,9 +12157,9 @@
           "Learn to generate data by gradually removing noise from a random input.",
           "Work in two processes: forward (add noise) and reverse (denoise).",
           "Excellent for high-quality image and video generation.",
-          "Examples in the notes: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora."
+          "Examples: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora."
         ],
-        "text": "Learn to generate data by gradually removing noise from a random input. Work in two processes: forward (add noise) and reverse (denoise). Excellent for high-quality image and video generation. Examples in the notes: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora."
+        "text": "Learn to generate data by gradually removing noise from a random input. Work in two processes: forward (add noise) and reverse (denoise). Excellent for high-quality image and video generation. Examples: Stable Diffusion, DALL·E (diffusion based), Imagen, Sora."
       },
       {
         "type": "image",
@@ -12335,13 +12331,13 @@
         "items": [
           "Work with multiple input and output modalities: text, image, audio, video.",
           "Can understand and generate content across different formats.",
-          "Examples in the notes: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal)."
+          "Examples: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal)."
         ],
-        "text": "Work with multiple input and output modalities: text, image, audio, video. Can understand and generate content across different formats. Examples in the notes: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal)."
+        "text": "Work with multiple input and output modalities: text, image, audio, video. Can understand and generate content across different formats. Examples: DALL·E (text to image), GPT-4V (text + image), LLaVA, Gemini (multimodal)."
       },
       {
         "type": "note",
-        "text": "These groups overlap: an LLM can be autoregressive and multimodal. The named model versions are examples from the source. The diffusion illustration distinguishes training from generation and shows schematic changing states, not real model output. VQ-VAE uses a discrete codebook; it is not identical to a Gaussian-latent VAE."
+        "text": "These groups overlap: an LLM can be autoregressive and multimodal. The named model versions are illustrative examples. The diffusion illustration distinguishes training from generation and shows schematic changing states, not real model output. VQ-VAE uses a discrete codebook; it is not identical to a Gaussian-latent VAE."
       },
       {
         "type": "heading",
@@ -12394,9 +12390,9 @@
           "An LLM is a type of generative AI model trained on massive text data to understand, generate and manipulate human language.",
           "It learns the probability distribution of the next token given the previous tokens.",
           "LLMs are based on the Transformer architecture and use a self-attention mechanism.",
-          "Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral."
+          "Examples: GPT, LLaMA, Claude, Gemini, Mistral."
         ],
-        "text": "An LLM is a type of generative AI model trained on massive text data to understand, generate and manipulate human language. It learns the probability distribution of the next token given the previous tokens. LLMs are based on the Transformer architecture and use a self-attention mechanism. Examples in the notes: GPT, LLaMA, Claude, Gemini, Mistral."
+        "text": "An LLM is a type of generative AI model trained on massive text data to understand, generate and manipulate human language. It learns the probability distribution of the next token given the previous tokens. LLMs are based on the Transformer architecture and use a self-attention mechanism. Examples: GPT, LLaMA, Claude, Gemini, Mistral."
       },
       {
         "type": "heading",
@@ -12563,7 +12559,7 @@
       },
       {
         "type": "note",
-        "text": "z_w is the logit for vocabulary token w, not the hidden state itself as the source shorthand suggests. Greedy decoding selects the highest-probability token; sampling need not. The layer diagram shows the source’s simplified post-normalization layout; exact layouts vary by architecture."
+        "text": "z_w is the logit for vocabulary token w, not the hidden state itself. Greedy decoding selects the highest-probability token; sampling need not. The layer diagram shows a simplified post-normalization layout; exact layouts vary by architecture."
       },
       {
         "type": "heading",
@@ -12659,7 +12655,7 @@
           ],
           [
             "Chain-of-Thought (CoT) Prompting",
-            "The source suggests asking the model to think step by step."
+            "Ask for an explanation with intermediate calculations and checks."
           ],
           [
             "Role Prompting",
@@ -12678,7 +12674,7 @@
             "Explore multiple reasoning paths (advanced)."
           ]
         ],
-        "text": "Technique Description Zero-Shot Prompting Give only a task instruction. Few-Shot Prompting Provide a few examples in the prompt. Chain-of-Thought (CoT) Prompting The source suggests asking the model to think step by step. Role Prompting Assign a specific role to the model. Instruction Prompting Clearly specify the task and format. Self-Consistency Generate multiple answers and pick the best one. Tree of Thoughts (ToT) Explore multiple reasoning paths (advanced)."
+        "text": "Technique Description Zero-Shot Prompting Give only a task instruction. Few-Shot Prompting Provide a few examples in the prompt. Chain-of-Thought (CoT) Prompting Ask for an explanation with intermediate calculations and checks. Role Prompting Assign a specific role to the model. Instruction Prompting Clearly specify the task and format. Self-Consistency Generate multiple answers and pick the best one. Tree of Thoughts (ToT) Explore multiple reasoning paths (advanced)."
       },
       {
         "type": "heading",
@@ -12902,7 +12898,7 @@
           [
             "SentencePiece",
             "Unsupervised, language-agnostic tokenizer tooling",
-            "Used in models such as LLaMA, T5, Gemini in the notes"
+            "Used in models such as LLaMA, T5, Gemini"
           ],
           [
             "WordPiece",
@@ -12910,7 +12906,7 @@
             "“playing” → [play, ##ing]"
           ]
         ],
-        "text": "Type Description Example Word Tokenization Split text into words “AI is amazing” → [AI, is, amazing] Character Tokenization Split into characters “AI” → [A, I] Subword Tokenization Split into subwords (common in LLMs) “unbelievable” → [un, believable] Byte Pair Encoding (BPE) Merges frequent subword units “low” + “er” → “lower” SentencePiece Unsupervised, language-agnostic tokenizer tooling Used in models such as LLaMA, T5, Gemini in the notes WordPiece Used in BERT models “playing” → [play, ##ing]"
+        "text": "Type Description Example Word Tokenization Split text into words “AI is amazing” → [AI, is, amazing] Character Tokenization Split into characters “AI” → [A, I] Subword Tokenization Split into subwords (common in LLMs) “unbelievable” → [un, believable] Byte Pair Encoding (BPE) Merges frequent subword units “low” + “er” → “lower” SentencePiece Unsupervised, language-agnostic tokenizer tooling Used in models such as LLaMA, T5, Gemini WordPiece Used in BERT models “playing” → [play, ##ing]"
       },
       {
         "type": "heading",
@@ -13790,7 +13786,7 @@
       },
       {
         "type": "note",
-        "text": "The example attention relationships are illustrative, not measured attention weights. In a causal decoder, future-token edges in this unmasked example are forbidden. The source workflow labels the final shape [n, d_k]; the general correct shape is [n, d_v], which only equals it when d_v = d_k."
+        "text": "The example attention relationships are illustrative, not measured attention weights. In a causal decoder, future-token edges in this unmasked example are forbidden. The output shape is [n, d_v]; it equals [n, d_k] only when d_v = d_k."
       },
       {
         "type": "heading",
@@ -14687,7 +14683,7 @@
       },
       {
         "type": "note",
-        "text": "The source mixes ABᵀ with dimensions for AB. The factors above make both notations dimensionally consistent. BERT uses masked language modeling rather than causal next-token prediction. More epochs are not automatically better: monitor held-out quality and forgetting; multiple passes over a huge corpus are not required in every pre-training run."
+        "text": "Use dimensionally consistent factors for AB or ABᵀ. BERT uses masked language modeling rather than causal next-token prediction. More epochs are not automatically better: monitor held-out quality and forgetting; multiple passes over a huge corpus are not required in every pre-training run."
       },
       {
         "type": "heading",
@@ -14789,7 +14785,7 @@
         "type": "table",
         "headers": [
           "Token",
-          "ID (Example from Source)"
+          "ID (Example)"
         ],
         "rows": [
           [
@@ -14817,7 +14813,7 @@
             "45"
           ]
         ],
-        "text": "Token ID (Example from Source) The 10 cat 25 sat 30 on 18 the 10 mat 45"
+        "text": "Token ID (Example) The 10 cat 25 sat 30 on 18 the 10 mat 45"
       },
       {
         "type": "heading",
@@ -14837,7 +14833,7 @@
       {
         "type": "code",
         "language": "text",
-        "text": "Training words: [lower, lowest, newer, wider]\n1. Start with characters: [l, o, w, e, r, s, t, n, i, d]\n2. Example frequent pair: (l, o) → lo\n3. Next example merge: (lo, w) → low\n4. Continue …\nIllustrative final splits printed in the source:\n“lower”  → [low, er]\n“newer”  → [new, er]\n“widest” → [wide, st]"
+        "text": "Training words: [lower, lowest, newer, wider]\n1. Start with characters: [l, o, w, e, r, s, t, n, i, d]\n2. Example frequent pair: (l, o) → lo\n3. Next example merge: (lo, w) → low\n4. Continue …\nIllustrative final splits:\n“lower”  → [low, er]\n“newer”  → [new, er]\n“widest” → [wide, st]"
       },
       {
         "type": "heading",
@@ -14968,7 +14964,7 @@
       },
       {
         "type": "note",
-        "text": "The source assigns both “The” and “the” to ID 10 in its first table. That requires normalization such as lowercasing; a case-sensitive tokenizer normally treats them separately. The BPE merges and final splits are schematic, not a learned vocabulary verified from the four listed words. Special-token names and presence vary by tokenizer."
+        "text": "Mapping “The” and “the” to the same ID requires normalization such as lowercasing; a case-sensitive tokenizer normally treats them separately. The BPE merges and final splits are schematic, not a learned vocabulary verified from the four listed words. Special-token names and presence vary by tokenizer."
       },
       {
         "type": "heading",
@@ -15412,7 +15408,7 @@
       },
       {
         "type": "note",
-        "text": "The source’s “Thought” lines are rendered as inspectable plan/result summaries; they are not private model reasoning or proof of correctness. The weather is example data, not a live report. Tool permissions, input validation, iteration limits and approval for sensitive actions must be enforced by application code."
+        "text": "Plan/result summaries describe observable steps; they are not private model reasoning or proof of correctness. The weather is example data, not a live report. Tool permissions, input validation, iteration limits and approval for sensitive actions must be enforced by application code."
       },
       {
         "type": "heading",
@@ -15609,7 +15605,7 @@
         "headers": [
           "Component",
           "Description",
-          "Examples from Notes"
+          "Examples"
         ],
         "rows": [
           [
@@ -15628,7 +15624,7 @@
             "Cosine Similarity, Dot Product"
           ]
         ],
-        "text": "Component Description Examples from Notes Embedding Model Converts text to vector all-MiniLM-L6-v2, OpenAI, BGE Vector Database Stores and searches vectors Qdrant, Pinecone, Weaviate, FAISS Similarity Search Finds relevant chunks using vector similarity Cosine Similarity, Dot Product"
+        "text": "Component Description Examples Embedding Model Converts text to vector all-MiniLM-L6-v2, OpenAI, BGE Vector Database Stores and searches vectors Qdrant, Pinecone, Weaviate, FAISS Similarity Search Finds relevant chunks using vector similarity Cosine Similarity, Dot Product"
       },
       {
         "type": "heading",
@@ -15943,8 +15939,8 @@
         "type": "table",
         "headers": [
           "Database",
-          "Type in Notes",
-          "Key Features in Notes",
+          "Type",
+          "Key Features",
           "Use Cases"
         ],
         "rows": [
@@ -15979,7 +15975,7 @@
             "RAG, local apps, learning"
           ]
         ],
-        "text": "Database Type in Notes Key Features in Notes Use Cases Pinecone Managed (Cloud) Scalable, easy to use, low latency RAG, semantic search, AI apps Weaviate Open Source Hybrid vector + keyword search, GraphQL RAG, knowledge graphs, AI apps Qdrant Open Source Fast search, filtering, payload support RAG, search, recommendations Milvus Open Source Distributed, large-scale, high performance Enterprise, large datasets Chroma Open Source Simple, lightweight, good for prototyping RAG, local apps, learning"
+        "text": "Database Type Key Features Use Cases Pinecone Managed (Cloud) Scalable, easy to use, low latency RAG, semantic search, AI apps Weaviate Open Source Hybrid vector + keyword search, GraphQL RAG, knowledge graphs, AI apps Qdrant Open Source Fast search, filtering, payload support RAG, search, recommendations Milvus Open Source Distributed, large-scale, high performance Enterprise, large datasets Chroma Open Source Simple, lightweight, good for prototyping RAG, local apps, learning"
       },
       {
         "type": "heading",
@@ -16079,7 +16075,7 @@
       },
       {
         "type": "note",
-        "text": "The incomplete vectors and scores are illustrative and cannot be recomputed from the shown coordinates. Metadata filtering is not the same as hybrid ranking, which typically combines lexical and vector search. Authorization filters must come from trusted identity context. Product features and hosting options listed here reflect the source examples; verify them before selecting a product."
+        "text": "The incomplete vectors and scores are illustrative and cannot be recomputed from the shown coordinates. Metadata filtering is not the same as hybrid ranking, which typically combines lexical and vector search. Authorization filters must come from trusted identity context. Verify current product features and hosting options before selecting a product."
       },
       {
         "type": "heading",
@@ -16335,7 +16331,7 @@
       {
         "type": "code",
         "language": "text",
-        "text": "Query: “What is the capital of France?”\nRetrieved Context: [Doc1: “Paris is the capital of France …”]\nLLM Answer: “The capital of France is Paris.”\nCitations printed in the source example:\n[1] Europe Travel Guide (2023)\n[2] Wikipedia — France (2024)"
+        "text": "Query: “What is the capital of France?”\nRetrieved Context: [Doc1: “Paris is the capital of France …”]\nLLM Answer: “The capital of France is Paris.”\nIllustrative citation labels:\n[1] Europe Travel Guide (2023)\n[2] Wikipedia — France (2024)"
       },
       {
         "type": "heading",
@@ -16463,9 +16459,9 @@
           "Log and monitor prompts and responses with appropriate redaction and access controls.",
           "Use HTTPS, authentication and secure API endpoints.",
           "Regularly test prompt injection and jailbreak attempts.",
-          "Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples in the notes."
+          "Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples."
         ],
-        "text": "Do not send sensitive or confidential data to unapproved systems. Use data masking and anonymization where appropriate. Implement input validation and output/content checks. Use role-based access control for applications. Log and monitor prompts and responses with appropriate redaction and access controls. Use HTTPS, authentication and secure API endpoints. Regularly test prompt injection and jailbreak attempts. Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples in the notes."
+        "text": "Do not send sensitive or confidential data to unapproved systems. Use data masking and anonymization where appropriate. Implement input validation and output/content checks. Use role-based access control for applications. Log and monitor prompts and responses with appropriate redaction and access controls. Use HTTPS, authentication and secure API endpoints. Regularly test prompt injection and jailbreak attempts. Address applicable privacy and compliance requirements, such as the GDPR/HIPAA examples."
       },
       {
         "type": "heading",
@@ -16520,7 +16516,7 @@
       {
         "type": "list",
         "items": [
-          "Use smaller, efficient models when quality permits; source examples include GPT-3.5 and LLaMA.",
+          "Use smaller, efficient models when quality permits; evaluate model size against task quality.",
           "Cache repeated queries with correct authorization boundaries.",
           "Use vector retrieval to select relevant context.",
           "Optimize prompts to be short and clear.",
@@ -16529,7 +16525,7 @@
           "Monitor token usage and set limits/quotas.",
           "Choose cloud or self-hosted infrastructure to fit the task."
         ],
-        "text": "Use smaller, efficient models when quality permits; source examples include GPT-3.5 and LLaMA. Cache repeated queries with correct authorization boundaries. Use vector retrieval to select relevant context. Optimize prompts to be short and clear. Use batch processing for non-real-time work. Consider quantization for self-hosted deployment. Monitor token usage and set limits/quotas. Choose cloud or self-hosted infrastructure to fit the task."
+        "text": "Use smaller, efficient models when quality permits; evaluate model size against task quality. Cache repeated queries with correct authorization boundaries. Use vector retrieval to select relevant context. Optimize prompts to be short and clear. Use batch processing for non-real-time work. Consider quantization for self-hosted deployment. Monitor token usage and set limits/quotas. Choose cloud or self-hosted infrastructure to fit the task."
       },
       {
         "type": "heading",
@@ -16731,7 +16727,7 @@
       },
       {
         "type": "note",
-        "text": "The source’s model names and token billing unit are historical examples, not pricing guidance. Never rely on a prompt as an access-control boundary: enforce tenant and resource permissions in the application and tools. Logs and caches also need isolation and retention controls. Encryption and filtering alone do not establish compliance; this page is a technical study outline, not legal guidance."
+        "text": "Model names and token billing units are illustrative, not pricing guidance. Never rely on a prompt as an access-control boundary: enforce tenant and resource permissions in the application and tools. Logs and caches also need isolation and retention controls. Encryption and filtering alone do not establish compliance; this page is a technical study outline, not legal guidance."
       },
       {
         "type": "heading",
@@ -16778,9 +16774,9 @@
           "Fine-tuning means further training a pre-trained LLM on a smaller, domain-specific dataset.",
           "It can teach domain patterns, a specific style and task behavior.",
           "It may improve accuracy and consistency for a measured task.",
-          "Use cases include customer support, code generation, legal documents and medical Q&A in the notes."
+          "Use cases include customer support, code generation, legal documents and medical Q&A."
         ],
-        "text": "Fine-tuning means further training a pre-trained LLM on a smaller, domain-specific dataset. It can teach domain patterns, a specific style and task behavior. It may improve accuracy and consistency for a measured task. Use cases include customer support, code generation, legal documents and medical Q&A in the notes."
+        "text": "Fine-tuning means further training a pre-trained LLM on a smaller, domain-specific dataset. It can teach domain patterns, a specific style and task behavior. It may improve accuracy and consistency for a measured task. Use cases include customer support, code generation, legal documents and medical Q&A."
       },
       {
         "type": "heading",
@@ -16910,7 +16906,7 @@
       },
       {
         "type": "paragraph",
-        "text": "Commonly used format in the notes: instruction-input-output JSONL. Each training record occupies one line in a JSONL file."
+        "text": "Commonly used format: instruction-input-output JSONL. Each training record occupies one line in a JSONL file."
       },
       {
         "type": "code",
@@ -17127,7 +17123,7 @@
       },
       {
         "type": "note",
-        "text": "Fine-tuning does not guarantee fewer hallucinations or fresh facts. Measure against a baseline, protect sensitive training data and prevent train/test leakage. Instruction tuning describes the data/objective and can use full fine-tuning or PEFT; these categories overlap. Framework features in the source are examples, not version-specific installation instructions."
+        "text": "Fine-tuning does not guarantee fewer hallucinations or fresh facts. Measure against a baseline, protect sensitive training data and prevent train/test leakage. Instruction tuning describes the data/objective and can use full fine-tuning or PEFT; these categories overlap. Framework features listed here are examples, not version-specific installation instructions."
       },
       {
         "type": "heading",
@@ -17816,7 +17812,7 @@
           [
             "3",
             "Which vector databases have you used?",
-            "Examples in source: Pinecone, Qdrant, Weaviate; describe your actual experience"
+            "Examples: Pinecone, Qdrant, Weaviate; describe your actual experience"
           ],
           [
             "4",
@@ -17829,7 +17825,7 @@
             "Better chunking, metadata, reranking, hybrid search"
           ]
         ],
-        "text": "No. Question Key Points to Cover 1 What is RAG? Definition, components, benefits 2 How does semantic search work? Embeddings, similarity, vector DB 3 Which vector databases have you used? Examples in source: Pinecone, Qdrant, Weaviate; describe your actual experience 4 How do you chunk documents? Chunk size, overlap, strategies 5 How do you improve retrieval quality? Better chunking, metadata, reranking, hybrid search"
+        "text": "No. Question Key Points to Cover 1 What is RAG? Definition, components, benefits 2 How does semantic search work? Embeddings, similarity, vector DB 3 Which vector databases have you used? Examples: Pinecone, Qdrant, Weaviate; describe your actual experience 4 How do you chunk documents? Chunk size, overlap, strategies 5 How do you improve retrieval quality? Better chunking, metadata, reranking, hybrid search"
       },
       {
         "type": "heading",
@@ -18054,7 +18050,7 @@
       },
       {
         "type": "note",
-        "text": "These are the sample interview prompts and answer cues present in the image, not full worked solutions. The separate Mock Interviews section contains the previously added solved interview questions. Explain only tools and projects you have actually used; use the other examples for practice."
+        "text": "These interview prompts include answer cues for revision. The separate Mock Interviews section contains the previously added solved interview questions. Explain only tools and projects you have actually used; use the other examples for practice."
       },
       {
         "type": "heading",

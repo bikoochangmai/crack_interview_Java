@@ -55,4 +55,4 @@ Build a compliance audit assistant using Spring Boot + Angular + PostgreSQL/pgve
 
 ## Illustrated study companion
 
-[Generative AI — Complete Developer Study Notes](generative-ai/index.html) recreates all 20 supplied image pages in one HTML page with subsections, colorful diagrams, comparison tables, formulas, code, search and revision checkboxes.
+[Generative AI — Complete Developer Study Notes](generative-ai/index.html) covers 20 tutorial topics in one HTML page with subsections, colorful diagrams, comparison tables, formulas, code, search and revision checkboxes.

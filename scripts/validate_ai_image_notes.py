@@ -27,7 +27,8 @@ def normal(text): return re.sub(r'\s+',' ',text).strip()
 def main():
     pages=json.loads((ROOT/'data/ai-study-notes.json').read_text(encoding='utf-8'))
     assert [p['page'] for p in pages]==list(range(1,21))
-    assert len({p['sourceFile'] for p in pages})==20
+    assert len({p['title'] for p in pages})==20
+    assert all('sourceFile' not in p for p in pages)
     expected=[0,6,8,7,8,8,8,8,8,10,8,8,8,8,10,9,9,9,10,10]
     assert [sum(b['type']=='heading' and not b.get('added') for b in p['blocks']) for p in pages]==expected
     assert all(any(b.get('added') for b in p['blocks']) for p in pages[1:])
@@ -74,6 +75,8 @@ def main():
     assert len([b for b in item['contentBlocks'] if b['type']=='chapter'])==20
     assert len([b for b in item['contentBlocks'] if b['type']=='table'])==tables
     assert len([b for b in item['contentBlocks'] if b['type']=='image'])==35
+    for phrase in ['source page','photographed','recreated','supplied study','original photos','present in the image','20 pages, recreated']:
+        assert phrase not in text.lower(),phrase
     assert 'source page' not in text.lower()
     assert 'Open the single-page illustrated guide and select this subsection' not in json.dumps(item)
     subprocess.run([sys.executable,str(ROOT/'examples/ai/notes_worked_examples.py')],check=True)
